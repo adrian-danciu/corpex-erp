@@ -28,9 +28,11 @@ async function main() {
   // Test 1: Create a user
   const user = await prisma.user.create({
     data: {
+      firstName: 'Test',
+      lastName: 'User',
       email: 'test@example.com',
       password: 'test123',
-      role: 'EMPLOYEE',
+      role: 'USER',
     },
   });
   console.log('✅ Created user:', user);

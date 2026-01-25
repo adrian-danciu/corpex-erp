@@ -1,0 +1,47 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input CreateUserInput {
+  email: String!
+  firstName: String!
+  lastName: String!
+  password: String!
+  role: Role!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Mutation {
+  """Create a new user account"""
+  createUser(createUserInput: CreateUserInput!): User!
+}
+
+type Query {
+  """Get a user by ID"""
+  user(id: String!): User
+
+  """Get all users"""
+  users: [User!]!
+}
+
+"""User role in the system"""
+enum Role {
+  ADMIN
+  FINANCE
+  MANAGER
+  USER
+}
+
+type User {
+  createdAt: DateTime!
+  email: String!
+  firstName: String!
+  id: ID!
+  lastName: String!
+  role: Role!
+  updatedAt: DateTime!
+}

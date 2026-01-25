@@ -1,12 +1,16 @@
 import "./App.css";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import LoginPage from "./pages/LoginPage";
+import UserCreatePage from "./pages/UserCreatePage";
 
 function App() {
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-      <h1 className="text-5xl font-extrabold text-blue-400 drop-shadow-lg">
-        Tailwind funcționează!
-      </h1>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/it/user-create" element={<UserCreatePage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
