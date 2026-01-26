@@ -1,6 +1,7 @@
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
+import { useMutation } from "@apollo/client/react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -15,21 +16,27 @@ import {
 import {
   createUserSchema,
   type CreateUserFormData,
-  type UserCreationData,
   UserRole
 } from "@/lib/schemas";
 import { generateEmail } from "@/lib/utils/email-generator";
 import { generatePassword } from "@/lib/utils/password-generator";
+import { CREATE_USER_MUTATION } from "@/graphql/mutations/user.mutations";
 
 export default function UserCreateForm() {
   const [generatedEmail, setGeneratedEmail] = useState<string>("");
+  const [successMessage, setSuccessMessage] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState<string>("");
+
+  // Apollo mutation hook
+  const [createUser, { loading: mutationLoading }] = useMutation(CREATE_USER_MUTATION);
 
   const {
     register,
     handleSubmit,
     watch,
     control,
-    formState: { errors, isSubmitting },
+    reset,
+    formState: { errors },
   } = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
@@ -54,26 +61,46 @@ export default function UserCreateForm() {
   }, [firstName, lastName]);
 
   const onSubmit = async (data: CreateUserFormData) => {
-    // Generate ID and password
-    const userId = crypto.randomUUID();
-    const password = generatePassword();
+    try {
+      setErrorMessage("");
+      setSuccessMessage("");
 
-    // Combine form data with auto-generated fields
-    const userData: UserCreationData = {
-      ...data,
-      id: userId,
-      email: generatedEmail,
-      password: password,
-    };
+      // Generate password
+      const password = generatePassword();
 
-    // TODO: Send to backend API
-    console.log("User creation data:", userData);
-    console.log("Password (will be sent to user via email):", password);
+      // Prepare mutation variables
+      const createUserInput = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: generatedEmail,
+        password: password,
+        role: data.role,
+      };
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log("Creating user with data:", createUserInput);
 
-    alert(`User created successfully!\n\nEmail: ${userData.email}\nPassword has been sent to the user's email.`);
+      // Call GraphQL mutation
+      const result = await createUser({
+        variables: { createUserInput },
+      });
+
+      console.log("User created successfully:", result.data);
+
+      // Show success message
+      setSuccessMessage(
+        `User created successfully! Email: ${generatedEmail}\nPassword has been sent to the user's email.`
+      );
+
+      // Reset form
+      reset();
+      setGeneratedEmail("");
+
+    } catch (error: any) {
+      console.error("Error creating user:", error);
+      setErrorMessage(
+        error.message || "Failed to create user. Please try again."
+      );
+    }
   };
 
   return (
@@ -175,9 +202,23 @@ export default function UserCreateForm() {
             </p>
           </div>
 
+          {/* Success Message */}
+          {successMessage && (
+            <div className="bg-green-50 border border-green-200 rounded-md p-4">
+              <p className="text-sm text-green-800 whitespace-pre-line">{successMessage}</p>
+            </div>
+          )}
+
+          {/* Error Message */}
+          {errorMessage && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-4">
+              <p className="text-sm text-red-800">{errorMessage}</p>
+            </div>
+          )}
+
           {/* Submit Button */}
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Creating User..." : "Create User"}
+          <Button type="submit" className="w-full" disabled={mutationLoading}>
+            {mutationLoading ? "Creating User..." : "Create User"}
           </Button>
         </form>
       </CardContent>

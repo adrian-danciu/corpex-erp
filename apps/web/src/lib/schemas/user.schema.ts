@@ -3,12 +3,13 @@ import { z } from "zod";
 /**
  * User roles enum
  * Defines the access levels for different user types
+ * IMPORTANT: Must match backend GraphQL enum values (uppercase)
  */
 export const UserRole = {
-  USER: "user",
-  MANAGER: "manager",
-  FINANCE: "finance",
-  ADMIN: "admin",
+  USER: "USER",
+  MANAGER: "MANAGER",
+  FINANCE: "FINANCE",
+  ADMIN: "ADMIN",
 } as const;
 
 export type UserRoleType = (typeof UserRole)[keyof typeof UserRole];
