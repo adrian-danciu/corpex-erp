@@ -6,6 +6,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -16,10 +17,12 @@ import { UsersModule } from './users/users.module';
       sortSchema: true,
       playground: true, // Enable GraphQL Playground for development
       introspection: true, // Enable introspection
+      context: ({ req, res }) => ({ req, res }), // Pass request/response to context
     }),
     // Database
     PrismaModule,
     // Feature Modules
+    AuthModule,
     UsersModule,
   ],
   controllers: [AppController],
