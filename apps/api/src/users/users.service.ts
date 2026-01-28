@@ -1,7 +1,7 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserInput } from './dto/create-user.input';
-import { User } from '@prisma/client';
+import { User as PrismaUser } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -15,7 +15,7 @@ export class UsersService {
    * @param createUserInput - User data from frontend
    * @returns Created user (without password)
    */
-  async create(createUserInput: CreateUserInput): Promise<User> {
+  async create(createUserInput: CreateUserInput): Promise<PrismaUser> {
     // Check if user with email already exists
     const existingUser = await this.prisma.user.findUnique({
       where: { email: createUserInput.email },
@@ -51,7 +51,7 @@ export class UsersService {
    * Find all users
    * @returns Array of all users
    */
-  async findAll(): Promise<User[]> {
+  async findAll(): Promise<PrismaUser[]> {
     return this.prisma.user.findMany({
       orderBy: {
         createdAt: 'desc',
@@ -64,7 +64,7 @@ export class UsersService {
    * @param id - User ID
    * @returns User or null
    */
-  async findOne(id: string): Promise<User | null> {
+  async findOne(id: string): Promise<PrismaUser | null> {
     return this.prisma.user.findUnique({
       where: { id },
     });
@@ -75,7 +75,7 @@ export class UsersService {
    * @param email - User email
    * @returns User or null
    */
-  async findByEmail(email: string): Promise<User | null> {
+  async findByEmail(email: string): Promise<PrismaUser | null> {
     return this.prisma.user.findUnique({
       where: { email },
     });
@@ -92,5 +92,62 @@ export class UsersService {
     hashedPassword: string,
   ): Promise<boolean> {
     return bcrypt.compare(plainPassword, hashedPassword);
+  }
+
+  /**
+   * Change user password
+   * @param userId - User ID
+   * @param currentPassword - Current password for verification
+   * @param newPassword - New password to set
+   * @returns Updated user
+   */
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<PrismaUser> {
+    // Get user with password
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Verify current password
+    const isPasswordValid = await this.verifyPassword(
+      currentPassword,
+      user.password,
+    );
+
+    if (!isPasswordValid) {
+      throw new Error('Current password is incorrect');
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, this.SALT_ROUNDS);
+
+    // Update password
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+  }
+
+  /**
+   * Update user profile picture
+   * @param userId - User ID
+   * @param profilePicture - Profile picture URL (optional)
+   * @returns Updated user
+   */
+  async updateProfilePicture(
+    userId: string,
+    profilePicture?: string,
+  ): Promise<PrismaUser> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { profilePicture },
+    });
   }
 }

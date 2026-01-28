@@ -8,6 +8,11 @@ type AuthResponse {
   user: User!
 }
 
+input ChangePasswordInput {
+  currentPassword: String!
+  newPassword: String!
+}
+
 input CreateUserInput {
   email: String!
   firstName: String!
@@ -27,10 +32,16 @@ input LoginInput {
 }
 
 type Mutation {
+  """Change user password"""
+  changePassword(changePasswordInput: ChangePasswordInput!): User!
+
   """Create a new user account"""
   createUser(createUserInput: CreateUserInput!): User!
   login(loginInput: LoginInput!): AuthResponse!
   refreshToken(refreshToken: String!): String!
+
+  """Update user profile picture"""
+  updateProfilePicture(updateProfilePictureInput: UpdateProfilePictureInput!): User!
 }
 
 type Query {
@@ -51,12 +62,17 @@ enum Role {
   USER
 }
 
+input UpdateProfilePictureInput {
+  profilePicture: String
+}
+
 type User {
   createdAt: DateTime!
   email: String!
   firstName: String!
   id: ID!
   lastName: String!
+  profilePicture: String
   role: Role!
   updatedAt: DateTime!
 }

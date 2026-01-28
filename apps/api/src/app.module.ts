@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
@@ -10,6 +11,11 @@ import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
+    // Environment Configuration - Load .env file
+    ConfigModule.forRoot({
+      isGlobal: true, // Makes ConfigModule available globally
+      envFilePath: '.env',
+    }),
     // GraphQL Configuration
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,

@@ -7,6 +7,7 @@ interface AuthStore extends AuthState {
   logout: () => void;
   updateToken: (accessToken: string) => void;
   setUser: (user: User) => void;
+  updateUser: (user: User) => void;
   setLoading: (isLoading: boolean) => void;
 }
 
@@ -53,6 +54,10 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       setUser: (user) => {
+        set({ user });
+      },
+
+      updateUser: (user) => {
         set({ user });
       },
 

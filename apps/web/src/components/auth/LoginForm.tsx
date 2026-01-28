@@ -22,7 +22,7 @@ export default function LoginForm() {
     onCompleted: (data: any) => {
       const { accessToken, refreshToken, user } = data.login;
       login(accessToken, refreshToken, user);
-      navigate("/it/user-create");
+      navigate("/dashboard");
     },
     onError: (error) => {
       console.error("Login error:", error);

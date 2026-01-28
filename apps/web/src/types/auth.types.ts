@@ -3,6 +3,7 @@ export interface User {
   firstName: string;
   lastName: string;
   email: string;
+  profilePicture?: string;
   role: UserRole;
   createdAt?: string;
   updatedAt?: string;

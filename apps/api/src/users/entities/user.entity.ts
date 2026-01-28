@@ -24,6 +24,9 @@ export class User {
   // Password is intentionally NOT exposed in GraphQL
   // password: string;
 
+  @Field(() => String, { nullable: true })
+  profilePicture?: string | null;
+
   @Field(() => Role)
   role: Role;
 

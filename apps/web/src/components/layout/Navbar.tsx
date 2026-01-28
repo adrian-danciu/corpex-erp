@@ -1,9 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth.store";
 import { Button } from "../ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 
-export default function Navbar() {
+interface NavbarProps {
+  onMenuClick?: () => void;
+}
+
+export default function Navbar({ onMenuClick }: NavbarProps) {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
 
@@ -21,10 +25,18 @@ export default function Navbar() {
   const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
 
   return (
-    <nav className="w-full border-b bg-white shadow-sm">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Left side - Logo/Brand */}
+    <nav className="w-full border-b bg-white shadow-sm md:hidden">
+      <div className="flex h-16 items-center justify-between px-4">
+        {/* Left side - Menu button and Logo/Brand */}
         <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onMenuClick}
+            className="md:hidden"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
           <div className="text-xl font-bold text-slate-900">
             Corpex ERP
           </div>
