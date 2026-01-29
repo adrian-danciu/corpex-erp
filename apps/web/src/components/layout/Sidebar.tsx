@@ -13,6 +13,9 @@ import {
   ChevronLeft,
   ChevronRight,
   UserCircle,
+  UserCheck,
+  Calendar,
+  Briefcase,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -23,52 +26,79 @@ interface SidebarProps {
   onToggleCollapse: () => void;
 }
 
-// Placeholder menu items - will be filtered by role later
+// Menu items with role-based access control
 const menuItems = [
   {
     title: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
+    roles: [], // Available to all authenticated users
   },
   {
     title: "Users",
     href: "/users",
     icon: Users,
+    roles: ["ADMIN", "MANAGER"], // Only admins and managers
+  },
+  {
+    title: "Employees",
+    href: "/hr/employees",
+    icon: UserCheck,
+    roles: ["ADMIN", "HR", "MANAGER"], // HR module access
+  },
+  {
+    title: "Leave Requests",
+    href: "/hr/leave-requests",
+    icon: Calendar,
+    roles: [], // All employees can request leave
+  },
+  {
+    title: "Approvals",
+    href: "/hr/approvals",
+    icon: Briefcase,
+    roles: ["ADMIN", "MANAGER"], // Only managers can approve
   },
   {
     title: "Projects",
     href: "/projects",
     icon: FolderKanban,
+    roles: [], // Available to all for now
   },
   {
     title: "Inventory",
     href: "/inventory",
     icon: Package,
+    roles: [], // Available to all for now
   },
   {
     title: "Documents",
     href: "/documents",
     icon: FileText,
+    roles: [], // Available to all for now
   },
   {
     title: "Finance",
     href: "/finance",
     icon: DollarSign,
+    roles: ["ADMIN", "FINANCE", "MANAGER"], // Finance module access
   },
   {
     title: "Reports",
     href: "/reports",
     icon: BarChart3,
+    roles: ["ADMIN", "MANAGER"], // Reports for management
   },
   {
     title: "Profile",
     href: "/profile",
     icon: UserCircle,
+    roles: [], // Available to all authenticated users
   },
   {
     title: "Settings",
     href: "/settings",
     icon: Settings,
+    roles: ["ADMIN"], // Only admins can access settings
   },
 ];
 
@@ -86,6 +116,14 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
   const initials = user
     ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()
     : "";
+
+  // Filter menu items based on user role
+  const visibleMenuItems = menuItems.filter((item) => {
+    // If no roles specified, show to all users
+    if (item.roles.length === 0) return true;
+    // Otherwise, check if user has one of the required roles
+    return user && item.roles.includes(user.role);
+  });
 
   return (
     <aside
@@ -116,7 +154,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
 
         {/* Navigation Links */}
         <nav className="flex-1 space-y-1 p-2 overflow-y-auto">
-          {menuItems.map((item) => {
+          {visibleMenuItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.href;
 

@@ -17,8 +17,8 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
   // Check role if required
   if (requiredRole && requiredRole.length > 0) {
     if (!requiredRole.includes(user.role)) {
-      // User doesn't have required role - redirect to login or unauthorized page
-      return <Navigate to="/" replace />;
+      // User doesn't have required role - redirect to dashboard
+      return <Navigate to="/dashboard" replace />;
     }
   }
 

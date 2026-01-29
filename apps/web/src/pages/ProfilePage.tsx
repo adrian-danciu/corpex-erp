@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { User as UserType } from "@/types/auth.types";
 import { useAuthStore } from "@/stores/auth.store";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,10 +49,12 @@ export default function ProfilePage() {
     }
   );
 
-  const [updateProfilePictureMutation, { loading: updatingPicture }] = useMutation(
+  const [updateProfilePictureMutation, { loading: updatingPicture }] = useMutation<{
+    updateProfilePicture: UserType;
+  }>(
     UPDATE_PROFILE_PICTURE_MUTATION,
     {
-      onCompleted: (data: any) => {
+      onCompleted: (data) => {
         updateUser(data.updateProfilePicture);
         setPictureSuccess(true);
         setTimeout(() => setPictureSuccess(false), 5000);

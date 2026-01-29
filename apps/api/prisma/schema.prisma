@@ -8,20 +8,92 @@ datasource db {
 }
 
 model User {
-  id             String   @id @default(uuid())
-  firstName      String
-  lastName       String
-  email          String   @unique
-  password       String
-  profilePicture String?
-  role           Role     @default(USER)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                    String         @id @default(uuid())
+  firstName             String
+  lastName              String
+  email                 String         @unique
+  password              String
+  profilePicture        String?
+  role                  Role           @default(USER)
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  employee              Employee?
+  leaveRequests         LeaveRequest[] @relation("EmployeeLeaveRequests")
+  approvedLeaveRequests LeaveRequest[] @relation("ApproverLeaveRequests")
 }
 
 enum Role {
   USER
   MANAGER
   FINANCE
+  HR
   ADMIN
+}
+
+model Employee {
+  id               String        @id @default(uuid())
+  userId           String        @unique
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  personalId       String        @unique // CNP (Cod Numeric Personal)
+  dateOfBirth      DateTime
+  phoneNumber      String
+  address          String
+  city             String
+  country          String        @default("Romania")
+  position         String        // Job title/function
+  department       String
+  contractType     ContractType
+  employmentDate   DateTime
+  contractEndDate  DateTime?     // For fixed-term contracts
+  salary           Float?        // Optional, sensitive data
+  annualLeaveDays  Int           @default(21) // Legal minimum in Romania
+  remainingLeave   Int           @default(21)
+  managerId        String?
+  manager          Employee?     @relation("ManagerSubordinates", fields: [managerId], references: [id])
+  subordinates     Employee[]    @relation("ManagerSubordinates")
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+enum ContractType {
+  FULL_TIME
+  PART_TIME
+  INTERNSHIP
+  FIXED_TERM
+  TEMPORARY
+}
+
+model LeaveRequest {
+  id          String            @id @default(uuid())
+  employeeId  String
+  employee    User              @relation("EmployeeLeaveRequests", fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveType   LeaveType
+  startDate   DateTime
+  endDate     DateTime
+  days        Int               // Number of days requested
+  reason      String?
+  status      LeaveStatus       @default(PENDING)
+  approverId  String?
+  approver    User?             @relation("ApproverLeaveRequests", fields: [approverId], references: [id])
+  comments    String?           // Comments from approver
+  approvedAt  DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+enum LeaveType {
+  ANNUAL        // Concediu de odihnă
+  MEDICAL       // Concediu medical
+  UNPAID        // Concediu fără plată
+  MATERNITY     // Concediu de maternitate
+  PATERNITY     // Concediu de paternitate
+  STUDY         // Concediu de studii
+  SPECIAL       // Evenimente deosebite (căsătorie, deces, etc.)
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
 }

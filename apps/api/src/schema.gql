@@ -2,6 +2,12 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+input ApproveLeaveRequestInput {
+  approved: Boolean!
+  comments: String
+  leaveRequestId: String!
+}
+
 type AuthResponse {
   accessToken: String!
   refreshToken: String!
@@ -11,6 +17,41 @@ type AuthResponse {
 input ChangePasswordInput {
   currentPassword: String!
   newPassword: String!
+}
+
+"""Type of employment contract"""
+enum ContractType {
+  FIXED_TERM
+  FULL_TIME
+  INTERNSHIP
+  PART_TIME
+  TEMPORARY
+}
+
+input CreateEmployeeInput {
+  address: String!
+  annualLeaveDays: Int! = 21
+  city: String!
+  contractEndDate: DateTime
+  contractType: ContractType!
+  country: String! = "Romania"
+  dateOfBirth: DateTime!
+  department: String!
+  employmentDate: DateTime!
+  managerId: String
+  personalId: String!
+  phoneNumber: String!
+  position: String!
+  salary: Float
+  userId: String!
+}
+
+input CreateLeaveRequestInput {
+  days: Int!
+  endDate: DateTime!
+  leaveType: LeaveType!
+  reason: String
+  startDate: DateTime!
 }
 
 input CreateUserInput {
@@ -26,26 +67,135 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+type Employee {
+  address: String!
+  annualLeaveDays: Int!
+  city: String!
+  contractEndDate: DateTime
+  contractType: ContractType!
+  country: String!
+  createdAt: DateTime!
+  dateOfBirth: DateTime!
+  department: String!
+  employmentDate: DateTime!
+  id: ID!
+  manager: Employee
+  managerId: String
+  personalId: String!
+  phoneNumber: String!
+  position: String!
+  remainingLeave: Int!
+  salary: Float
+  subordinates: [Employee!]
+  updatedAt: DateTime!
+  user: User!
+  userId: String!
+}
+
+type LeaveRequest {
+  approvedAt: DateTime
+  approver: User
+  approverId: String
+  comments: String
+  createdAt: DateTime!
+  days: Int!
+  employee: User!
+  employeeId: String!
+  endDate: DateTime!
+  id: ID!
+  leaveType: LeaveType!
+  reason: String
+  startDate: DateTime!
+  status: LeaveStatus!
+  updatedAt: DateTime!
+}
+
+"""Status of leave request"""
+enum LeaveStatus {
+  APPROVED
+  CANCELLED
+  PENDING
+  REJECTED
+}
+
+"""Type of leave request"""
+enum LeaveType {
+  ANNUAL
+  MATERNITY
+  MEDICAL
+  PATERNITY
+  SPECIAL
+  STUDY
+  UNPAID
+}
+
 input LoginInput {
   email: String!
   password: String!
 }
 
 type Mutation {
+  """Approve or reject a leave request"""
+  approveOrRejectLeaveRequest(approveLeaveRequestInput: ApproveLeaveRequestInput!): LeaveRequest!
+
+  """Cancel a leave request"""
+  cancelLeaveRequest(leaveRequestId: String!): LeaveRequest!
+
   """Change user password"""
   changePassword(changePasswordInput: ChangePasswordInput!): User!
+
+  """Create a new employee record"""
+  createEmployee(createEmployeeInput: CreateEmployeeInput!): Employee!
+
+  """Create a new leave request"""
+  createLeaveRequest(createLeaveRequestInput: CreateLeaveRequestInput!): LeaveRequest!
 
   """Create a new user account"""
   createUser(createUserInput: CreateUserInput!): User!
   login(loginInput: LoginInput!): AuthResponse!
   refreshToken(refreshToken: String!): String!
 
+  """Delete an employee record"""
+  removeEmployee(id: String!): Employee!
+
+  """Update an employee record"""
+  updateEmployee(updateEmployeeInput: UpdateEmployeeInput!): Employee!
+
   """Update user profile picture"""
   updateProfilePicture(updateProfilePictureInput: UpdateProfilePictureInput!): User!
 }
 
 type Query {
+  """Get an employee by ID"""
+  employee(id: String!): Employee
+
+  """Get an employee by user ID"""
+  employeeByUserId(userId: String!): Employee
+
+  """Get all employees"""
+  employees: [Employee!]!
+
+  """Get employees by department"""
+  employeesByDepartment(department: String!): [Employee!]!
+
+  """Get a leave request by ID"""
+  leaveRequest(id: String!): LeaveRequest
+
+  """Get all leave requests"""
+  leaveRequests: [LeaveRequest!]!
   me: User!
+
+  """Get current user employee profile"""
+  myEmployeeProfile: Employee
+
+  """Get leave requests of current user"""
+  myLeaveRequests: [LeaveRequest!]!
+
+  """Get subordinates of current user (if manager)"""
+  mySubordinates: [Employee!]!
+
+  """Get pending leave requests for current user subordinates"""
+  pendingLeaveRequestsForManager: [LeaveRequest!]!
 
   """Get a user by ID"""
   user(id: String!): User
@@ -58,8 +208,29 @@ type Query {
 enum Role {
   ADMIN
   FINANCE
+  HR
   MANAGER
   USER
+}
+
+input UpdateEmployeeInput {
+  address: String
+  annualLeaveDays: Int
+  city: String
+  contractEndDate: DateTime
+  contractType: ContractType
+  country: String = "Romania"
+  dateOfBirth: DateTime
+  department: String
+  employmentDate: DateTime
+  id: String!
+  managerId: String
+  personalId: String
+  phoneNumber: String
+  position: String
+  remainingLeave: Int
+  salary: Float
+  userId: String
 }
 
 input UpdateProfilePictureInput {

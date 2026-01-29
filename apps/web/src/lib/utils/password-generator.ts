@@ -84,7 +84,7 @@ export function isStrongPassword(password: string): boolean {
   const hasUppercase = /[A-Z]/.test(password);
   const hasLowercase = /[a-z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
-  const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password);
+  const hasSpecialChar = /[!@#$%^&*()_+\-=[\]{}|;:,.<>?]/.test(password);
   const hasMinLength = password.length >= 8;
 
   return hasUppercase && hasLowercase && hasNumber && hasSpecialChar && hasMinLength;

@@ -95,10 +95,10 @@ export default function UserCreateForm() {
       reset();
       setGeneratedEmail("");
 
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error creating user:", error);
       setErrorMessage(
-        error.message || "Failed to create user. Please try again."
+        error instanceof Error ? error.message : "Failed to create user. Please try again."
       );
     }
   };

@@ -2,6 +2,7 @@ import { useMutation } from "@apollo/client/react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import type { FormEvent } from "react";
+import type { User } from "@/types/auth.types";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -18,8 +19,10 @@ export default function LoginForm() {
   const [errors, setErrors] = useState({ email: "", password: "" });
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const [loginMutation, { loading }] = useMutation(LOGIN_MUTATION, {
-    onCompleted: (data: any) => {
+  const [loginMutation, { loading }] = useMutation<{
+    login: { accessToken: string; refreshToken: string; user: User };
+  }>(LOGIN_MUTATION, {
+    onCompleted: (data) => {
       const { accessToken, refreshToken, user } = data.login;
       login(accessToken, refreshToken, user);
       navigate("/dashboard");

@@ -9,6 +9,7 @@ export const UserRole = {
   USER: "USER",
   MANAGER: "MANAGER",
   FINANCE: "FINANCE",
+  HR: "HR",
   ADMIN: "ADMIN",
 } as const;
 
@@ -33,7 +34,7 @@ export const createUserSchema = z.object({
     .max(50, "Last name is too long")
     .regex(/^[a-zA-Z\s-]+$/, "Last name can only contain letters, spaces, and hyphens"),
 
-  role: z.enum([UserRole.USER, UserRole.MANAGER, UserRole.FINANCE, UserRole.ADMIN], {
+  role: z.enum([UserRole.USER, UserRole.MANAGER, UserRole.FINANCE, UserRole.HR, UserRole.ADMIN], {
     required_error: "Role is required",
     invalid_type_error: "Invalid role selected",
   }),
