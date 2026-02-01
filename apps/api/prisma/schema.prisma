@@ -20,6 +20,8 @@ model User {
   employee              Employee?
   leaveRequests         LeaveRequest[] @relation("EmployeeLeaveRequests")
   approvedLeaveRequests LeaveRequest[] @relation("ApproverLeaveRequests")
+  invoices              Invoice[]      @relation("UserInvoices")
+  payments              Payment[]      @relation("UserPayments")
 }
 
 enum Role {
@@ -96,4 +98,113 @@ enum LeaveStatus {
   APPROVED
   REJECTED
   CANCELLED
+}
+
+// ==========================================
+// Finance Module
+// ==========================================
+
+enum PartnerType {
+  CLIENT
+  SUPPLIER
+  BOTH
+}
+
+enum InvoiceType {
+  FISCAL
+  PROFORMA
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  PARTIALLY_PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  CASH
+  CARD
+  OTHER
+}
+
+model Partner {
+  id                 String      @id @default(uuid())
+  name               String
+  cui                String      @unique // CUI / CIF
+  regCom             String?     // J-number (Registrul Comertului)
+  address            String
+  city               String
+  country            String      @default("Romania")
+  email              String?
+  phone              String?
+  contactPerson      String?
+  partnerType        PartnerType
+  bankName           String?
+  bankAccount        String?     // IBAN
+  notes              String?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  invoicesAsClient   Invoice[]   @relation("ClientInvoices")
+  invoicesAsSupplier Invoice[]   @relation("SupplierInvoices")
+}
+
+model Invoice {
+  id              String        @id @default(uuid())
+  series          String        @default("CORP")
+  number          Int           @default(autoincrement())
+  invoiceType     InvoiceType
+  status          InvoiceStatus @default(DRAFT)
+  partnerId       String
+  partner         Partner       @relation("ClientInvoices", fields: [partnerId], references: [id])
+  supplierId      String?
+  supplier        Partner?      @relation("SupplierInvoices", fields: [supplierId], references: [id])
+  isClientInvoice Boolean       @default(true) // true = we invoice them, false = they invoice us
+  issueDate       DateTime      @default(now())
+  dueDate         DateTime
+  deliveryDate    DateTime?
+  subtotal        Float         @default(0)
+  vatTotal        Float         @default(0)
+  total           Float         @default(0)
+  paidAmount      Float         @default(0)
+  currency        String        @default("RON")
+  notes           String?
+  createdById     String
+  createdBy       User          @relation("UserInvoices", fields: [createdById], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  items           InvoiceItem[]
+  payments        Payment[]
+
+  @@unique([series, number])
+}
+
+model InvoiceItem {
+  id          String  @id @default(uuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Float
+  unit        String  @default("buc") // buc, kg, ore, etc.
+  unitPrice   Float
+  vatRate     Float   @default(19) // percentage
+  amount      Float   // quantity * unitPrice
+  vatAmount   Float   // amount * vatRate / 100
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  invoiceId     String
+  invoice       Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amount        Float
+  paymentDate   DateTime
+  paymentMethod PaymentMethod
+  reference     String?       // bank ref / receipt number
+  notes         String?
+  createdById   String
+  createdBy     User          @relation("UserPayments", fields: [createdById], references: [id])
+  createdAt     DateTime      @default(now())
 }

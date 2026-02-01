@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
@@ -12,11 +13,15 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   UserCircle,
   UserCheck,
   Calendar,
   Briefcase,
+  Building2,
+  Receipt,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth.store";
@@ -26,79 +31,101 @@ interface SidebarProps {
   onToggleCollapse: () => void;
 }
 
+interface MenuItem {
+  title: string;
+  href: string;
+  icon: LucideIcon;
+  roles: string[];
+  children?: MenuItem[];
+}
+
 // Menu items with role-based access control
-const menuItems = [
+const menuItems: MenuItem[] = [
   {
     title: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    roles: [], // Available to all authenticated users
+    roles: [],
   },
   {
     title: "Users",
     href: "/users",
     icon: Users,
-    roles: ["ADMIN", "MANAGER"], // Only admins and managers
+    roles: ["ADMIN", "MANAGER"],
   },
   {
     title: "Employees",
     href: "/hr/employees",
     icon: UserCheck,
-    roles: ["ADMIN", "HR", "MANAGER"], // HR module access
+    roles: ["ADMIN", "HR", "MANAGER"],
   },
   {
     title: "Leave Requests",
     href: "/hr/leave-requests",
     icon: Calendar,
-    roles: [], // All employees can request leave
+    roles: [],
   },
   {
     title: "Approvals",
     href: "/hr/approvals",
     icon: Briefcase,
-    roles: ["ADMIN", "MANAGER"], // Only managers can approve
+    roles: ["ADMIN", "MANAGER"],
   },
   {
     title: "Projects",
     href: "/projects",
     icon: FolderKanban,
-    roles: [], // Available to all for now
+    roles: [],
   },
   {
     title: "Inventory",
     href: "/inventory",
     icon: Package,
-    roles: [], // Available to all for now
+    roles: [],
   },
   {
     title: "Documents",
     href: "/documents",
     icon: FileText,
-    roles: [], // Available to all for now
+    roles: [],
   },
   {
     title: "Finance",
     href: "/finance",
     icon: DollarSign,
-    roles: ["ADMIN", "FINANCE", "MANAGER"], // Finance module access
+    roles: ["ADMIN", "FINANCE", "MANAGER"],
+    children: [
+      {
+        title: "Partners",
+        href: "/finance/partners",
+        icon: Building2,
+        roles: ["ADMIN", "FINANCE", "MANAGER"],
+      },
+      {
+        title: "Invoices",
+        href: "/finance/invoices",
+        icon: Receipt,
+        roles: ["ADMIN", "FINANCE", "MANAGER"],
+      },
+    ],
   },
   {
     title: "Reports",
     href: "/reports",
     icon: BarChart3,
-    roles: ["ADMIN", "MANAGER"], // Reports for management
+    roles: ["ADMIN", "MANAGER"],
   },
   {
     title: "Profile",
     href: "/profile",
     icon: UserCircle,
-    roles: [], // Available to all authenticated users
+    roles: [],
   },
   {
     title: "Settings",
     href: "/settings",
     icon: Settings,
-    roles: ["ADMIN"], // Only admins can access settings
+    roles: ["ADMIN"],
   },
 ];
 
@@ -106,6 +133,22 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+
+  // Track which parent menus are expanded
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(() => {
+    // Auto-expand parent if we're on a child route
+    const initial: Record<string, boolean> = {};
+    menuItems.forEach((item) => {
+      if (item.children && location.pathname.startsWith(item.href)) {
+        initial[item.href] = true;
+      }
+    });
+    return initial;
+  });
+
+  const toggleMenu = (href: string) => {
+    setExpandedMenus((prev) => ({ ...prev, [href]: !prev[href] }));
+  };
 
   const handleLogout = () => {
     logout();
@@ -118,12 +161,83 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
     : "";
 
   // Filter menu items based on user role
-  const visibleMenuItems = menuItems.filter((item) => {
-    // If no roles specified, show to all users
+  const isVisible = (item: MenuItem) => {
     if (item.roles.length === 0) return true;
-    // Otherwise, check if user has one of the required roles
     return user && item.roles.includes(user.role);
-  });
+  };
+
+  const visibleMenuItems = menuItems.filter(isVisible);
+
+  const renderMenuItem = (item: MenuItem, isChild = false) => {
+    const Icon = item.icon;
+    const hasChildren = item.children && item.children.length > 0;
+    const isExpanded = expandedMenus[item.href];
+    const isActive =
+      location.pathname === item.href ||
+      (!hasChildren && item.href !== "/dashboard" && location.pathname.startsWith(item.href + "/"));
+    const isParentActive = hasChildren && location.pathname.startsWith(item.href);
+
+    if (hasChildren) {
+      const visibleChildren = item.children!.filter(isVisible);
+      if (visibleChildren.length === 0) return null;
+
+      return (
+        <div key={item.href}>
+          <button
+            onClick={() => {
+              toggleMenu(item.href);
+              navigate(item.href);
+            }}
+            className={cn(
+              "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              isParentActive
+                ? "bg-primary text-primary-foreground"
+                : "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
+              isCollapsed && "justify-center"
+            )}
+            title={isCollapsed ? item.title : undefined}
+          >
+            <Icon className="h-5 w-5 flex-shrink-0" />
+            {!isCollapsed && (
+              <>
+                <span className="flex-1 text-left">{item.title}</span>
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 transition-transform",
+                    isExpanded && "rotate-180"
+                  )}
+                />
+              </>
+            )}
+          </button>
+          {!isCollapsed && isExpanded && (
+            <div className="ml-4 mt-1 space-y-1 border-l border-slate-200 pl-2">
+              {visibleChildren.map((child) => renderMenuItem(child, true))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <Link
+        key={item.href}
+        to={item.href}
+        className={cn(
+          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+          isActive
+            ? "bg-primary text-primary-foreground"
+            : "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
+          isCollapsed && "justify-center",
+          isChild && "text-[13px]"
+        )}
+        title={isCollapsed ? item.title : undefined}
+      >
+        <Icon className={cn("h-5 w-5 flex-shrink-0", isChild && "h-4 w-4")} />
+        {!isCollapsed && <span>{item.title}</span>}
+      </Link>
+    );
+  };
 
   return (
     <aside
@@ -154,28 +268,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
 
         {/* Navigation Links */}
         <nav className="flex-1 space-y-1 p-2 overflow-y-auto">
-          {visibleMenuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.href;
-
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
-                  isCollapsed && "justify-center"
-                )}
-                title={isCollapsed ? item.title : undefined}
-              >
-                <Icon className={cn("h-5 w-5 flex-shrink-0")} />
-                {!isCollapsed && <span>{item.title}</span>}
-              </Link>
-            );
-          })}
+          {visibleMenuItems.map((item) => renderMenuItem(item))}
         </nav>
 
         {/* User info and logout at bottom */}

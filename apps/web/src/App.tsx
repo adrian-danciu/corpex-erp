@@ -9,6 +9,13 @@ import ProfilePage from "./pages/ProfilePage";
 import EmployeesPage from "./pages/hr/EmployeesPage";
 import LeaveRequestsPage from "./pages/hr/LeaveRequestsPage";
 import ApprovalsPage from "./pages/hr/ApprovalsPage";
+import FinanceOverviewPage from "./pages/finance/FinanceOverviewPage";
+import PartnersPage from "./pages/finance/PartnersPage";
+import PartnerCreatePage from "./pages/finance/PartnerCreatePage";
+import PartnerDetailPage from "./pages/finance/PartnerDetailPage";
+import InvoicesPage from "./pages/finance/InvoicesPage";
+import InvoiceCreatePage from "./pages/finance/InvoiceCreatePage";
+import InvoiceDetailPage from "./pages/finance/InvoiceDetailPage";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Layout from "./components/layout/Layout";
 import DashboardLayout from "./components/layout/DashboardLayout";
@@ -80,6 +87,77 @@ function App() {
               <ProtectedRoute requiredRole={["ADMIN", "MANAGER"]}>
                 <DashboardLayout>
                   <ApprovalsPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Finance Module Routes */}
+          <Route
+            path="/finance"
+            element={
+              <ProtectedRoute requiredRole={["ADMIN", "FINANCE", "MANAGER"]}>
+                <DashboardLayout>
+                  <FinanceOverviewPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/finance/partners"
+            element={
+              <ProtectedRoute requiredRole={["ADMIN", "FINANCE", "MANAGER"]}>
+                <DashboardLayout>
+                  <PartnersPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/finance/partners/new"
+            element={
+              <ProtectedRoute requiredRole={["ADMIN", "FINANCE", "MANAGER"]}>
+                <DashboardLayout>
+                  <PartnerCreatePage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/finance/partners/:id"
+            element={
+              <ProtectedRoute requiredRole={["ADMIN", "FINANCE", "MANAGER"]}>
+                <DashboardLayout>
+                  <PartnerDetailPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/finance/invoices"
+            element={
+              <ProtectedRoute requiredRole={["ADMIN", "FINANCE", "MANAGER"]}>
+                <DashboardLayout>
+                  <InvoicesPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/finance/invoices/new"
+            element={
+              <ProtectedRoute requiredRole={["ADMIN", "FINANCE", "MANAGER"]}>
+                <DashboardLayout>
+                  <InvoiceCreatePage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/finance/invoices/:id"
+            element={
+              <ProtectedRoute requiredRole={["ADMIN", "FINANCE", "MANAGER"]}>
+                <DashboardLayout>
+                  <InvoiceDetailPage />
                 </DashboardLayout>
               </ProtectedRoute>
             }

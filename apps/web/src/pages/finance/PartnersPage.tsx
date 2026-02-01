@@ -1,0 +1,228 @@
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Plus, Building2, Search, Phone, Mail } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import PartnerTypeBadge from "@/components/finance/PartnerTypeBadge";
+import { PartnerType } from "@/types/finance.types";
+import type { Partner } from "@/types/finance.types";
+
+// Mock data — will be replaced with API calls
+const mockPartners: Partner[] = [
+  {
+    id: "1", name: "SC Alpha Distribution SRL", cui: "RO12345678", regCom: "J40/1234/2018",
+    address: "Str. Industriei 45", city: "Bucharest", country: "Romania",
+    email: "office@alpha.ro", phone: "+40 21 123 4567", contactPerson: "Ion Popescu",
+    partnerType: PartnerType.CLIENT, bankName: "BCR", bankAccount: "RO49RNCB0090099999999999",
+    notes: null, createdAt: "2026-01-10", updatedAt: "2026-01-10",
+  },
+  {
+    id: "2", name: "SC Beta Logistics SA", cui: "RO87654321", regCom: "J40/5678/2015",
+    address: "Bd. Expozitiei 12", city: "Cluj-Napoca", country: "Romania",
+    email: "contact@beta.ro", phone: "+40 264 567 890", contactPerson: "Maria Ionescu",
+    partnerType: PartnerType.SUPPLIER, bankName: "BRD", bankAccount: "RO49BRDE0090099999999999",
+    notes: null, createdAt: "2026-01-05", updatedAt: "2026-01-05",
+  },
+  {
+    id: "3", name: "SC Gamma Services SRL", cui: "RO11223344", regCom: "J12/3456/2020",
+    address: "Str. Mihai Viteazul 8", city: "Timisoara", country: "Romania",
+    email: "info@gamma.ro", phone: "+40 256 789 012", contactPerson: "Andrei Vasile",
+    partnerType: PartnerType.BOTH, bankName: "ING", bankAccount: "RO49INGB0090099999999999",
+    notes: null, createdAt: "2025-12-20", updatedAt: "2025-12-20",
+  },
+  {
+    id: "4", name: "SC Delta Manufacturing SRL", cui: "RO55667788", regCom: "J40/9876/2019",
+    address: "Calea Vitan 200", city: "Bucharest", country: "Romania",
+    email: "sales@delta.ro", phone: "+40 21 987 6543", contactPerson: "Elena Stanescu",
+    partnerType: PartnerType.SUPPLIER, bankName: "Raiffeisen", bankAccount: "RO49RZBR0090099999999999",
+    notes: null, createdAt: "2025-11-15", updatedAt: "2025-11-15",
+  },
+];
+
+export default function PartnersPage() {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState<string>("ALL");
+
+  const filteredPartners = mockPartners.filter((partner) => {
+    const matchesSearch =
+      partner.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      partner.cui.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      partner.city.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesType = filterType === "ALL" || partner.partnerType === filterType;
+
+    return matchesSearch && matchesType;
+  });
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Partners</h1>
+          <p className="text-slate-600 mt-1">Manage clients and suppliers</p>
+        </div>
+        <Button onClick={() => navigate("/finance/partners/new")} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Add Partner
+        </Button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Partners</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{mockPartners.length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Clients</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {mockPartners.filter((p) => p.partnerType === PartnerType.CLIENT || p.partnerType === PartnerType.BOTH).length}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Suppliers</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {mockPartners.filter((p) => p.partnerType === PartnerType.SUPPLIER || p.partnerType === PartnerType.BOTH).length}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                placeholder="Search by name, CUI, or city..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="flex gap-2">
+              {["ALL", "CLIENT", "SUPPLIER", "BOTH"].map((type) => (
+                <Button
+                  key={type}
+                  variant={filterType === type ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilterType(type)}
+                >
+                  {type === "ALL" ? "All" : type === "BOTH" ? "Both" : type.charAt(0) + type.slice(1).toLowerCase()}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Partners Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            {filteredPartners.length} Partner{filteredPartners.length !== 1 ? "s" : ""}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {filteredPartners.length === 0 ? (
+            <div className="text-center py-12 text-slate-500">
+              <Building2 className="h-12 w-12 mx-auto mb-4 text-slate-300" />
+              <p className="text-lg font-medium">No partners found</p>
+              <p className="text-sm mt-1">
+                {searchQuery || filterType !== "ALL"
+                  ? "Try adjusting your search or filters"
+                  : "Get started by adding your first partner"}
+              </p>
+              {!searchQuery && filterType === "ALL" && (
+                <Button onClick={() => navigate("/finance/partners/new")} className="mt-4 gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add Partner
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b text-left text-sm font-medium text-slate-600">
+                    <th className="pb-3">Company</th>
+                    <th className="pb-3">CUI</th>
+                    <th className="pb-3">Type</th>
+                    <th className="pb-3">City</th>
+                    <th className="pb-3">Contact</th>
+                    <th className="pb-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm">
+                  {filteredPartners.map((partner) => (
+                    <tr
+                      key={partner.id}
+                      className="border-b hover:bg-slate-50 cursor-pointer"
+                      onClick={() => navigate(`/finance/partners/${partner.id}`)}
+                    >
+                      <td className="py-4">
+                        <p className="font-medium text-slate-900">{partner.name}</p>
+                        {partner.contactPerson && (
+                          <p className="text-xs text-slate-500">{partner.contactPerson}</p>
+                        )}
+                      </td>
+                      <td className="py-4 text-slate-700 font-mono text-xs">{partner.cui}</td>
+                      <td className="py-4">
+                        <PartnerTypeBadge type={partner.partnerType} />
+                      </td>
+                      <td className="py-4 text-slate-700">{partner.city}</td>
+                      <td className="py-4">
+                        <div className="space-y-1">
+                          {partner.phone && (
+                            <div className="flex items-center gap-1 text-slate-600">
+                              <Phone className="h-3 w-3" />
+                              <span className="text-xs">{partner.phone}</span>
+                            </div>
+                          )}
+                          {partner.email && (
+                            <div className="flex items-center gap-1 text-slate-600">
+                              <Mail className="h-3 w-3" />
+                              <span className="text-xs">{partner.email}</span>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/finance/partners/${partner.id}`);
+                          }}
+                        >
+                          View
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
