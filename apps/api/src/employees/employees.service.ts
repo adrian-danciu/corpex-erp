@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEmployeeInput } from './dto/create-employee.input';
 import { UpdateEmployeeInput } from './dto/update-employee.input';
@@ -31,9 +35,7 @@ export class EmployeesService {
     });
 
     if (existingUserEmployee) {
-      throw new ConflictException(
-        `User already has an employee record`,
-      );
+      throw new ConflictException(`User already has an employee record`);
     }
 
     // Create the employee
@@ -146,7 +148,9 @@ export class EmployeesService {
     const employee = await this.findOne(updateEmployeeInput.id);
 
     if (!employee) {
-      throw new NotFoundException(`Employee with ID ${updateEmployeeInput.id} not found`);
+      throw new NotFoundException(
+        `Employee with ID ${updateEmployeeInput.id} not found`,
+      );
     }
 
     return this.prisma.employee.update({

@@ -24,7 +24,10 @@ import { EmployeesModule } from './employees/employees.module';
       sortSchema: true,
       playground: true, // Enable GraphQL Playground for development
       introspection: true, // Enable introspection
-      context: ({ req, res }) => ({ req, res }), // Pass request/response to context
+      context: ({ req, res }: { req: Request; res: Response }) => ({
+        req,
+        res,
+      }), // Pass request/response to context
     }),
     // Database
     PrismaModule,

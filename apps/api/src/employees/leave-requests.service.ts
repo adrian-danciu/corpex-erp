@@ -158,9 +158,7 @@ export class LeaveRequestsService {
     }
 
     if (leaveRequest.status !== LeaveStatus.PENDING) {
-      throw new BadRequestException(
-        'Leave request has already been processed',
-      );
+      throw new BadRequestException('Leave request has already been processed');
     }
 
     // Check if approver is the manager of the employee
@@ -230,10 +228,7 @@ export class LeaveRequestsService {
    * @param leaveRequestId - Leave request ID to cancel
    * @returns Updated leave request
    */
-  async cancel(
-    userId: string,
-    leaveRequestId: string,
-  ): Promise<LeaveRequest> {
+  async cancel(userId: string, leaveRequestId: string): Promise<LeaveRequest> {
     const leaveRequest = await this.prisma.leaveRequest.findUnique({
       where: { id: leaveRequestId },
     });
@@ -252,9 +247,7 @@ export class LeaveRequestsService {
       leaveRequest.status !== LeaveStatus.PENDING &&
       leaveRequest.status !== LeaveStatus.APPROVED
     ) {
-      throw new BadRequestException(
-        'Leave request cannot be cancelled',
-      );
+      throw new BadRequestException('Leave request cannot be cancelled');
     }
 
     // If the request was approved and is annual leave, restore the days

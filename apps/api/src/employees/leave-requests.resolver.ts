@@ -10,9 +10,7 @@ import { User } from '../users/entities/user.entity';
 
 @Resolver(() => LeaveRequest)
 export class LeaveRequestsResolver {
-  constructor(
-    private readonly leaveRequestsService: LeaveRequestsService,
-  ) {}
+  constructor(private readonly leaveRequestsService: LeaveRequestsService) {}
 
   @Mutation(() => LeaveRequest, {
     description: 'Create a new leave request',

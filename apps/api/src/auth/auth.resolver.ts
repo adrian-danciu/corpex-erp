@@ -11,19 +11,23 @@ export class AuthResolver {
   constructor(private authService: AuthService) {}
 
   @Mutation(() => AuthResponse)
-  async login(@Args('loginInput') loginInput: LoginInput): Promise<AuthResponse> {
+  async login(
+    @Args('loginInput') loginInput: LoginInput,
+  ): Promise<AuthResponse> {
     return this.authService.login(loginInput);
   }
 
   @Mutation(() => String)
-  async refreshToken(@Args('refreshToken') refreshToken: string): Promise<string> {
+  async refreshToken(
+    @Args('refreshToken') refreshToken: string,
+  ): Promise<string> {
     const result = await this.authService.refreshToken(refreshToken);
     return result.accessToken;
   }
 
   @Query(() => User)
   @UseGuards(JwtAuthGuard)
-  async me(@Context() context: any): Promise<User> {
+  me(@Context() context: { req: { user: User } }): User {
     return context.req.user;
   }
 }

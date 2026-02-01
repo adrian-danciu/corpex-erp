@@ -76,7 +76,7 @@ export class AuthService {
    */
   async refreshToken(token: string): Promise<{ accessToken: string }> {
     try {
-      const payload = this.jwtService.verify(token);
+      const payload = this.jwtService.verify<JwtPayload>(token);
 
       // Verify user still exists
       const user = await this.usersService.findOne(payload.sub);
@@ -95,7 +95,7 @@ export class AuthService {
       });
 
       return { accessToken };
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
