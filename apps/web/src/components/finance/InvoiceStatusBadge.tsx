@@ -5,7 +5,7 @@ const statusConfig: Record<InvoiceStatus, { label: string; variant: "default" | 
   [InvoiceStatus.DRAFT]: { label: "Draft", variant: "secondary" },
   [InvoiceStatus.SENT]: { label: "Sent", variant: "outline" },
   [InvoiceStatus.PAID]: { label: "Paid", variant: "default" },
-  [InvoiceStatus.PARTIALLY_PAID]: { label: "Partially Paid", variant: "outline" },
+  [InvoiceStatus.PARTIALLY_PAID]: { label: "Partially", variant: "outline" },
   [InvoiceStatus.OVERDUE]: { label: "Overdue", variant: "destructive" },
   [InvoiceStatus.CANCELLED]: { label: "Cancelled", variant: "secondary" },
 };

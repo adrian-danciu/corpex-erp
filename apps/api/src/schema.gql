@@ -46,12 +46,58 @@ input CreateEmployeeInput {
   userId: String!
 }
 
+input CreateInvoiceInput {
+  currency: String! = "RON"
+  deliveryDate: DateTime
+  dueDate: DateTime!
+  invoiceType: InvoiceType!
+  isClientInvoice: Boolean! = true
+  issueDate: DateTime!
+  items: [CreateInvoiceItemInput!]!
+  notes: String
+  partnerId: String!
+  series: String! = "CORP"
+}
+
+input CreateInvoiceItemInput {
+  description: String!
+  quantity: Float!
+  unit: String! = "buc"
+  unitPrice: Float!
+  vatRate: Float! = 19
+}
+
 input CreateLeaveRequestInput {
   days: Int!
   endDate: DateTime!
   leaveType: LeaveType!
   reason: String
   startDate: DateTime!
+}
+
+input CreatePartnerInput {
+  address: String!
+  bankAccount: String
+  bankName: String
+  city: String!
+  contactPerson: String
+  country: String! = "Romania"
+  cui: String!
+  email: String
+  name: String!
+  notes: String
+  partnerType: PartnerType!
+  phone: String
+  regCom: String
+}
+
+input CreatePaymentInput {
+  amount: Float!
+  invoiceId: String!
+  notes: String
+  paymentDate: DateTime!
+  paymentMethod: PaymentMethod!
+  reference: String
 }
 
 input CreateUserInput {
@@ -90,6 +136,62 @@ type Employee {
   updatedAt: DateTime!
   user: User!
   userId: String!
+}
+
+type Invoice {
+  createdAt: DateTime!
+  createdBy: User!
+  createdById: String!
+  currency: String!
+  deliveryDate: DateTime
+  dueDate: DateTime!
+  id: ID!
+  invoiceType: InvoiceType!
+  isClientInvoice: Boolean!
+  issueDate: DateTime!
+  items: [InvoiceItem!]!
+  notes: String
+  number: Int!
+  paidAmount: Float!
+  partner: Partner!
+  partnerId: String!
+  payments: [Payment!]!
+  series: String!
+  status: InvoiceStatus!
+  subtotal: Float!
+  supplier: Partner
+  supplierId: String
+  total: Float!
+  updatedAt: DateTime!
+  vatTotal: Float!
+}
+
+type InvoiceItem {
+  amount: Float!
+  description: String!
+  id: ID!
+  invoiceId: String!
+  quantity: Float!
+  unit: String!
+  unitPrice: Float!
+  vatAmount: Float!
+  vatRate: Float!
+}
+
+"""Status of an invoice"""
+enum InvoiceStatus {
+  CANCELLED
+  DRAFT
+  OVERDUE
+  PAID
+  PARTIALLY_PAID
+  SENT
+}
+
+"""Type of invoice"""
+enum InvoiceType {
+  FISCAL
+  PROFORMA
 }
 
 type LeaveRequest {
@@ -147,11 +249,26 @@ type Mutation {
   """Create a new employee record"""
   createEmployee(createEmployeeInput: CreateEmployeeInput!): Employee!
 
+  """Create a new invoice"""
+  createInvoice(createInvoiceInput: CreateInvoiceInput!): Invoice!
+
   """Create a new leave request"""
   createLeaveRequest(createLeaveRequestInput: CreateLeaveRequestInput!): LeaveRequest!
 
+  """Create a new partner"""
+  createPartner(createPartnerInput: CreatePartnerInput!): Partner!
+
+  """Record a payment for an invoice"""
+  createPayment(createPaymentInput: CreatePaymentInput!): Payment!
+
   """Create a new user account"""
   createUser(createUserInput: CreateUserInput!): User!
+
+  """Delete an invoice"""
+  deleteInvoice(id: String!): Invoice!
+
+  """Delete a partner"""
+  deletePartner(id: String!): Partner!
   login(loginInput: LoginInput!): AuthResponse!
   refreshToken(refreshToken: String!): String!
 
@@ -161,8 +278,61 @@ type Mutation {
   """Update an employee record"""
   updateEmployee(updateEmployeeInput: UpdateEmployeeInput!): Employee!
 
+  """Update invoice status"""
+  updateInvoiceStatus(updateInvoiceStatusInput: UpdateInvoiceStatusInput!): Invoice!
+
+  """Update a partner"""
+  updatePartner(updatePartnerInput: UpdatePartnerInput!): Partner!
+
   """Update user profile picture"""
   updateProfilePicture(updateProfilePictureInput: UpdateProfilePictureInput!): User!
+}
+
+type Partner {
+  address: String!
+  bankAccount: String
+  bankName: String
+  city: String!
+  contactPerson: String
+  country: String!
+  createdAt: DateTime!
+  cui: String!
+  email: String
+  id: ID!
+  name: String!
+  notes: String
+  partnerType: PartnerType!
+  phone: String
+  regCom: String
+  updatedAt: DateTime!
+}
+
+"""Type of business partner"""
+enum PartnerType {
+  BOTH
+  CLIENT
+  SUPPLIER
+}
+
+type Payment {
+  amount: Float!
+  createdAt: DateTime!
+  createdBy: User!
+  createdById: String!
+  id: ID!
+  invoiceId: String!
+  notes: String
+  paymentDate: DateTime!
+  paymentMethod: PaymentMethod!
+  reference: String
+}
+
+"""Method of payment"""
+enum PaymentMethod {
+  BANK_TRANSFER
+  CARD
+  CASH
+  OTHER
 }
 
 type Query {
@@ -177,6 +347,12 @@ type Query {
 
   """Get employees by department"""
   employeesByDepartment(department: String!): [Employee!]!
+
+  """Get an invoice by ID"""
+  invoice(id: String!): Invoice
+
+  """Get all invoices"""
+  invoices: [Invoice!]!
 
   """Get a leave request by ID"""
   leaveRequest(id: String!): LeaveRequest
@@ -193,6 +369,12 @@ type Query {
 
   """Get subordinates of current user (if manager)"""
   mySubordinates: [Employee!]!
+
+  """Get a partner by ID"""
+  partner(id: String!): Partner
+
+  """Get all partners"""
+  partners: [Partner!]!
 
   """Get pending leave requests for current user subordinates"""
   pendingLeaveRequestsForManager: [LeaveRequest!]!
@@ -231,6 +413,28 @@ input UpdateEmployeeInput {
   remainingLeave: Int
   salary: Float
   userId: String
+}
+
+input UpdateInvoiceStatusInput {
+  id: String!
+  status: InvoiceStatus!
+}
+
+input UpdatePartnerInput {
+  address: String
+  bankAccount: String
+  bankName: String
+  city: String
+  contactPerson: String
+  country: String
+  cui: String
+  email: String
+  id: String!
+  name: String
+  notes: String
+  partnerType: PartnerType
+  phone: String
+  regCom: String
 }
 
 input UpdateProfilePictureInput {
