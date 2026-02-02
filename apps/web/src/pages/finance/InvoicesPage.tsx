@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@apollo/client/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,22 @@ export default function InvoicesPage() {
   const [filterStatus, setFilterStatus] = useState("ALL");
   const { data, loading, error } = useQuery<{ invoices: Invoice[] }>(GET_INVOICES_QUERY);
 
+  const filteredInvoices = useMemo(() => {
+    const invoices = data?.invoices || [];
+    return invoices.filter((invoice) => {
+      const matchesSearch =
+        invoice.partner.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        `${invoice.series}-${invoice.number}`.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesStatus = filterStatus === "ALL" || invoice.status === filterStatus;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [data?.invoices, searchQuery, filterStatus]);
+
+  const totalAmount = filteredInvoices.reduce((sum, inv) => sum + inv.total, 0);
+  const totalPaid = filteredInvoices.reduce((sum, inv) => sum + inv.paidAmount, 0);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -50,21 +66,6 @@ export default function InvoicesPage() {
       </div>
     );
   }
-
-  const invoices = data?.invoices || [];
-
-  const filteredInvoices = invoices.filter((invoice) => {
-    const matchesSearch =
-      invoice.partner.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      `${invoice.series}-${invoice.number}`.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesStatus = filterStatus === "ALL" || invoice.status === filterStatus;
-
-    return matchesSearch && matchesStatus;
-  });
-
-  const totalAmount = filteredInvoices.reduce((sum, inv) => sum + inv.total, 0);
-  const totalPaid = filteredInvoices.reduce((sum, inv) => sum + inv.paidAmount, 0);
 
   return (
     <div className="space-y-6">
