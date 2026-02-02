@@ -35,8 +35,7 @@ export const createUserSchema = z.object({
     .regex(/^[a-zA-Z\s-]+$/, "Last name can only contain letters, spaces, and hyphens"),
 
   role: z.enum([UserRole.USER, UserRole.MANAGER, UserRole.FINANCE, UserRole.HR, UserRole.ADMIN], {
-    required_error: "Role is required",
-    invalid_type_error: "Invalid role selected",
+    message: "Role is required",
   }),
 });
 

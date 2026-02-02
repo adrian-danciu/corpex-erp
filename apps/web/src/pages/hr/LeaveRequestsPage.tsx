@@ -32,8 +32,8 @@ export default function LeaveRequestsPage() {
     reason: "",
   });
 
-  const { data: leaveRequestsData, loading, error, refetch } = useQuery(GET_MY_LEAVE_REQUESTS_QUERY);
-  const { data: profileData } = useQuery(GET_MY_EMPLOYEE_PROFILE_QUERY);
+  const { data: leaveRequestsData, loading, error, refetch } = useQuery<{ myLeaveRequests: LeaveRequest[] }>(GET_MY_LEAVE_REQUESTS_QUERY);
+  const { data: profileData } = useQuery<{ myEmployeeProfile: { remainingLeave: number } | null }>(GET_MY_EMPLOYEE_PROFILE_QUERY);
 
   const [createLeaveRequest, { loading: creating }] = useMutation(CREATE_LEAVE_REQUEST_MUTATION, {
     onCompleted: () => {

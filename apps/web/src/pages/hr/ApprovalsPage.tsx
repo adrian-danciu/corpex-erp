@@ -17,10 +17,10 @@ export default function ApprovalsPage() {
   const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
   const [comments, setComments] = useState("");
 
-  const { data: requestsData, loading, error, refetch } = useQuery(
+  const { data: requestsData, loading, error, refetch } = useQuery<{ pendingLeaveRequestsForManager: LeaveRequest[] }>(
     GET_PENDING_LEAVE_REQUESTS_FOR_MANAGER_QUERY
   );
-  const { data: subordinatesData } = useQuery(GET_MY_SUBORDINATES_QUERY);
+  const { data: subordinatesData } = useQuery<{ mySubordinates: Employee[] }>(GET_MY_SUBORDINATES_QUERY);
 
   const [approveOrReject, { loading: processing }] = useMutation(
     APPROVE_OR_REJECT_LEAVE_REQUEST_MUTATION,

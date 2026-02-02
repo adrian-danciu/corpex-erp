@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function EmployeesPage() {
   const navigate = useNavigate();
-  const { data, loading, error } = useQuery(GET_EMPLOYEES_QUERY);
+  const { data, loading, error } = useQuery<{ employees: Employee[] }>(GET_EMPLOYEES_QUERY);
 
   if (loading) {
     return (

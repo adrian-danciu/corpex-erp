@@ -26,7 +26,7 @@ export const createInvoiceSchema = z.object({
   series: z.string().min(1, "Series is required").default("CORP"),
 
   invoiceType: z.enum([InvoiceTypeEnum.FISCAL, InvoiceTypeEnum.PROFORMA], {
-    required_error: "Invoice type is required",
+    message: "Invoice type is required",
   }),
 
   partnerId: z.string().min(1, "Partner is required"),
@@ -57,7 +57,7 @@ export const createPaymentSchema = z.object({
 
   paymentMethod: z.enum(
     [PaymentMethodEnum.BANK_TRANSFER, PaymentMethodEnum.CASH, PaymentMethodEnum.CARD, PaymentMethodEnum.OTHER],
-    { required_error: "Payment method is required" }
+    { message: "Payment method is required" }
   ),
 
   reference: z.string().max(100, "Reference is too long").optional().or(z.literal("")),

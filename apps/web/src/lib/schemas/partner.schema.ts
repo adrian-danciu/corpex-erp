@@ -60,7 +60,7 @@ export const createPartnerSchema = z.object({
     .or(z.literal("")),
 
   partnerType: z.enum([PartnerTypeEnum.CLIENT, PartnerTypeEnum.SUPPLIER, PartnerTypeEnum.BOTH], {
-    required_error: "Partner type is required",
+    message: "Partner type is required",
   }),
 
   bankName: z

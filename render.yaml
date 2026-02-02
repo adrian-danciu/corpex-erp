@@ -5,7 +5,7 @@ services:
     runtime: node
     rootDir: apps/api
     buildCommand: npm install -g bun && NODE_ENV=development bun install && bunx prisma generate && bun run build
-    startCommand: node dist/main.js
+    startCommand: node dist/src/main.js
     envVars:
       - key: NODE_ENV
         value: production

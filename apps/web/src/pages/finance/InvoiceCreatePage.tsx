@@ -49,7 +49,8 @@ export default function InvoiceCreatePage() {
     watch,
     formState: { errors },
   } = useForm<CreateInvoiceFormData>({
-    resolver: zodResolver(createInvoiceSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(createInvoiceSchema) as any,
     defaultValues: {
       series: "CORP",
       invoiceType: "FISCAL",
