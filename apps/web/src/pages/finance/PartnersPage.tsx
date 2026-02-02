@@ -1,51 +1,41 @@
 import { useState } from "react";
+import { useQuery } from "@apollo/client/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Building2, Search, Phone, Mail } from "lucide-react";
+import { Plus, Building2, Search, Phone, Mail, Loader2, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PartnerTypeBadge from "@/components/finance/PartnerTypeBadge";
 import { PartnerType } from "@/types/finance.types";
 import type { Partner } from "@/types/finance.types";
-
-// Mock data — will be replaced with API calls
-const mockPartners: Partner[] = [
-  {
-    id: "1", name: "SC Alpha Distribution SRL", cui: "RO12345678", regCom: "J40/1234/2018",
-    address: "Str. Industriei 45", city: "Bucharest", country: "Romania",
-    email: "office@alpha.ro", phone: "+40 21 123 4567", contactPerson: "Ion Popescu",
-    partnerType: PartnerType.CLIENT, bankName: "BCR", bankAccount: "RO49RNCB0090099999999999",
-    notes: null, createdAt: "2026-01-10", updatedAt: "2026-01-10",
-  },
-  {
-    id: "2", name: "SC Beta Logistics SA", cui: "RO87654321", regCom: "J40/5678/2015",
-    address: "Bd. Expozitiei 12", city: "Cluj-Napoca", country: "Romania",
-    email: "contact@beta.ro", phone: "+40 264 567 890", contactPerson: "Maria Ionescu",
-    partnerType: PartnerType.SUPPLIER, bankName: "BRD", bankAccount: "RO49BRDE0090099999999999",
-    notes: null, createdAt: "2026-01-05", updatedAt: "2026-01-05",
-  },
-  {
-    id: "3", name: "SC Gamma Services SRL", cui: "RO11223344", regCom: "J12/3456/2020",
-    address: "Str. Mihai Viteazul 8", city: "Timisoara", country: "Romania",
-    email: "info@gamma.ro", phone: "+40 256 789 012", contactPerson: "Andrei Vasile",
-    partnerType: PartnerType.BOTH, bankName: "ING", bankAccount: "RO49INGB0090099999999999",
-    notes: null, createdAt: "2025-12-20", updatedAt: "2025-12-20",
-  },
-  {
-    id: "4", name: "SC Delta Manufacturing SRL", cui: "RO55667788", regCom: "J40/9876/2019",
-    address: "Calea Vitan 200", city: "Bucharest", country: "Romania",
-    email: "sales@delta.ro", phone: "+40 21 987 6543", contactPerson: "Elena Stanescu",
-    partnerType: PartnerType.SUPPLIER, bankName: "Raiffeisen", bankAccount: "RO49RZBR0090099999999999",
-    notes: null, createdAt: "2025-11-15", updatedAt: "2025-11-15",
-  },
-];
+import { GET_PARTNERS_QUERY } from "@/graphql/mutations/finance.mutations";
 
 export default function PartnersPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("ALL");
+  const { data, loading, error } = useQuery<{ partners: Partner[] }>(GET_PARTNERS_QUERY);
 
-  const filteredPartners = mockPartners.filter((partner) => {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-red-500">
+        <AlertCircle className="h-8 w-8 mb-2" />
+        <p>Failed to load partners</p>
+      </div>
+    );
+  }
+
+  const partners: Partner[] = data?.partners || [];
+
+  const filteredPartners = partners.filter((partner) => {
     const matchesSearch =
       partner.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       partner.cui.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -78,7 +68,7 @@ export default function PartnersPage() {
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockPartners.length}</div>
+            <div className="text-2xl font-bold">{partners.length}</div>
           </CardContent>
         </Card>
         <Card>
@@ -87,7 +77,7 @@ export default function PartnersPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {mockPartners.filter((p) => p.partnerType === PartnerType.CLIENT || p.partnerType === PartnerType.BOTH).length}
+              {partners.filter((p) => p.partnerType === PartnerType.CLIENT || p.partnerType === PartnerType.BOTH).length}
             </div>
           </CardContent>
         </Card>
@@ -97,7 +87,7 @@ export default function PartnersPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {mockPartners.filter((p) => p.partnerType === PartnerType.SUPPLIER || p.partnerType === PartnerType.BOTH).length}
+              {partners.filter((p) => p.partnerType === PartnerType.SUPPLIER || p.partnerType === PartnerType.BOTH).length}
             </div>
           </CardContent>
         </Card>

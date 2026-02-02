@@ -1,49 +1,52 @@
 import { useNavigate, useParams } from "react-router-dom";
+import { useQuery, useMutation } from "@apollo/client/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, Trash2, Phone, Mail, MapPin, Building2, CreditCard } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Phone, Mail, MapPin, Building2, CreditCard, Loader2, AlertCircle } from "lucide-react";
 import PartnerTypeBadge from "@/components/finance/PartnerTypeBadge";
-import { PartnerType } from "@/types/finance.types";
 import type { Partner } from "@/types/finance.types";
-
-// Mock data — will be replaced with API call
-const mockPartners: Record<string, Partner> = {
-  "1": {
-    id: "1", name: "SC Alpha Distribution SRL", cui: "RO12345678", regCom: "J40/1234/2018",
-    address: "Str. Industriei 45", city: "Bucharest", country: "Romania",
-    email: "office@alpha.ro", phone: "+40 21 123 4567", contactPerson: "Ion Popescu",
-    partnerType: PartnerType.CLIENT, bankName: "BCR", bankAccount: "RO49RNCB0090099999999999",
-    notes: "Preferred client for bulk orders. Payment terms: 30 days.", createdAt: "2026-01-10T10:00:00Z", updatedAt: "2026-01-10T10:00:00Z",
-  },
-  "2": {
-    id: "2", name: "SC Beta Logistics SA", cui: "RO87654321", regCom: "J40/5678/2015",
-    address: "Bd. Expozitiei 12", city: "Cluj-Napoca", country: "Romania",
-    email: "contact@beta.ro", phone: "+40 264 567 890", contactPerson: "Maria Ionescu",
-    partnerType: PartnerType.SUPPLIER, bankName: "BRD", bankAccount: "RO49BRDE0090099999999999",
-    notes: null, createdAt: "2026-01-05T10:00:00Z", updatedAt: "2026-01-05T10:00:00Z",
-  },
-  "3": {
-    id: "3", name: "SC Gamma Services SRL", cui: "RO11223344", regCom: "J12/3456/2020",
-    address: "Str. Mihai Viteazul 8", city: "Timisoara", country: "Romania",
-    email: "info@gamma.ro", phone: "+40 256 789 012", contactPerson: "Andrei Vasile",
-    partnerType: PartnerType.BOTH, bankName: "ING", bankAccount: "RO49INGB0090099999999999",
-    notes: null, createdAt: "2025-12-20T10:00:00Z", updatedAt: "2025-12-20T10:00:00Z",
-  },
-  "4": {
-    id: "4", name: "SC Delta Manufacturing SRL", cui: "RO55667788", regCom: "J40/9876/2019",
-    address: "Calea Vitan 200", city: "Bucharest", country: "Romania",
-    email: "sales@delta.ro", phone: "+40 21 987 6543", contactPerson: "Elena Stanescu",
-    partnerType: PartnerType.SUPPLIER, bankName: "Raiffeisen", bankAccount: "RO49RZBR0090099999999999",
-    notes: null, createdAt: "2025-11-15T10:00:00Z", updatedAt: "2025-11-15T10:00:00Z",
-  },
-};
+import { GET_PARTNER_QUERY, GET_PARTNERS_QUERY, DELETE_PARTNER_MUTATION } from "@/graphql/mutations/finance.mutations";
 
 export default function PartnerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // TODO: Replace with useQuery(GET_PARTNER_QUERY, { variables: { id } })
-  const partner = id ? mockPartners[id] : null;
+  const { data, loading, error } = useQuery<{ partner: Partner | null }>(GET_PARTNER_QUERY, {
+    variables: { id },
+    skip: !id,
+  });
+
+  const [deletePartner, { loading: deleting }] = useMutation(DELETE_PARTNER_MUTATION, {
+    refetchQueries: [{ query: GET_PARTNERS_QUERY }],
+    onCompleted: () => {
+      navigate("/finance/partners");
+    },
+  });
+
+  const handleDelete = () => {
+    if (window.confirm(`Are you sure you want to delete this partner?`)) {
+      deletePartner({ variables: { id } });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-red-500">
+        <AlertCircle className="h-8 w-8 mb-2" />
+        <p>Failed to load partner</p>
+      </div>
+    );
+  }
+
+  const partner = data?.partner;
 
   if (!partner) {
     return (
@@ -81,9 +84,9 @@ export default function PartnerDetailPage() {
             <Edit className="h-4 w-4" />
             Edit
           </Button>
-          <Button variant="destructive" className="gap-2">
+          <Button variant="destructive" className="gap-2" onClick={handleDelete} disabled={deleting}>
             <Trash2 className="h-4 w-4" />
-            Delete
+            {deleting ? "Deleting..." : "Delete"}
           </Button>
         </div>
       </div>

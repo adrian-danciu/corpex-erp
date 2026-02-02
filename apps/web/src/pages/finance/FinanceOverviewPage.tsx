@@ -1,3 +1,4 @@
+import { useQuery } from "@apollo/client/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,26 +9,14 @@ import {
   Plus,
   Building2,
   Receipt,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import InvoiceStatusBadge from "@/components/finance/InvoiceStatusBadge";
 import { InvoiceStatus } from "@/types/finance.types";
-
-// Mock data — will be replaced with API calls
-const mockStats = {
-  totalReceivable: 145_320.5,
-  totalPayable: 87_650.0,
-  overdueAmount: 12_480.0,
-  invoicesThisMonth: 23,
-};
-
-const mockRecentInvoices = [
-  { id: "1", series: "CORP", number: 1001, partner: "SC Alpha SRL", issueDate: "2026-01-28", dueDate: "2026-02-28", total: 5_400.0, status: InvoiceStatus.SENT },
-  { id: "2", series: "CORP", number: 1002, partner: "SC Beta SA", issueDate: "2026-01-25", dueDate: "2026-02-25", total: 12_750.0, status: InvoiceStatus.PAID },
-  { id: "3", series: "CORP", number: 1003, partner: "SC Gamma SRL", issueDate: "2026-01-20", dueDate: "2026-01-30", total: 3_200.0, status: InvoiceStatus.OVERDUE },
-  { id: "4", series: "CORP", number: 1004, partner: "SC Delta SRL", issueDate: "2026-01-15", dueDate: "2026-02-15", total: 8_900.0, status: InvoiceStatus.PARTIALLY_PAID },
-  { id: "5", series: "CORP", number: 1005, partner: "SC Epsilon SA", issueDate: "2026-01-10", dueDate: "2026-02-10", total: 1_600.0, status: InvoiceStatus.DRAFT },
-];
+import type { Invoice } from "@/types/finance.types";
+import { GET_INVOICES_QUERY } from "@/graphql/mutations/finance.mutations";
 
 function formatCurrency(amount: number, currency = "RON") {
   return new Intl.NumberFormat("ro-RO", {
@@ -39,6 +28,52 @@ function formatCurrency(amount: number, currency = "RON") {
 
 export default function FinanceOverviewPage() {
   const navigate = useNavigate();
+  const { data, loading, error } = useQuery<{ invoices: Invoice[] }>(GET_INVOICES_QUERY);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-red-500">
+        <AlertCircle className="h-8 w-8 mb-2" />
+        <p>Failed to load financial data</p>
+      </div>
+    );
+  }
+
+  const invoices = data?.invoices || [];
+
+  // Compute stats from real data
+  const clientInvoices = invoices.filter((inv) => inv.isClientInvoice);
+  const supplierInvoices = invoices.filter((inv) => !inv.isClientInvoice);
+
+  const totalReceivable = clientInvoices
+    .filter((inv) => inv.status !== InvoiceStatus.CANCELLED && inv.status !== InvoiceStatus.PAID)
+    .reduce((sum, inv) => sum + (inv.total - inv.paidAmount), 0);
+
+  const totalPayable = supplierInvoices
+    .filter((inv) => inv.status !== InvoiceStatus.CANCELLED && inv.status !== InvoiceStatus.PAID)
+    .reduce((sum, inv) => sum + (inv.total - inv.paidAmount), 0);
+
+  const overdueAmount = invoices
+    .filter((inv) => inv.status === InvoiceStatus.OVERDUE)
+    .reduce((sum, inv) => sum + (inv.total - inv.paidAmount), 0);
+
+  const now = new Date();
+  const invoicesThisMonth = invoices.filter((inv) => {
+    const d = new Date(inv.issueDate);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
+
+  const recentInvoices = [...invoices]
+    .sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime())
+    .slice(0, 5);
 
   return (
     <div className="space-y-6">
@@ -69,7 +104,7 @@ export default function FinanceOverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-700">
-              {formatCurrency(mockStats.totalReceivable)}
+              {formatCurrency(totalReceivable)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">From issued invoices</p>
           </CardContent>
@@ -82,7 +117,7 @@ export default function FinanceOverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-700">
-              {formatCurrency(mockStats.totalPayable)}
+              {formatCurrency(totalPayable)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">To suppliers</p>
           </CardContent>
@@ -95,7 +130,7 @@ export default function FinanceOverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-700">
-              {formatCurrency(mockStats.overdueAmount)}
+              {formatCurrency(overdueAmount)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Past due date</p>
           </CardContent>
@@ -107,8 +142,10 @@ export default function FinanceOverviewPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockStats.invoicesThisMonth}</div>
-            <p className="text-xs text-muted-foreground mt-1">Issued in January 2026</p>
+            <div className="text-2xl font-bold">{invoicesThisMonth}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Issued in {now.toLocaleString("en-US", { month: "long", year: "numeric" })}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -155,40 +192,47 @@ export default function FinanceOverviewPage() {
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b text-left text-sm font-medium text-slate-600">
-                  <th className="pb-3">Invoice</th>
-                  <th className="pb-3">Partner</th>
-                  <th className="pb-3">Issue Date</th>
-                  <th className="pb-3">Due Date</th>
-                  <th className="pb-3 text-right">Total</th>
-                  <th className="pb-3 text-center">Status</th>
-                </tr>
-              </thead>
-              <tbody className="text-sm">
-                {mockRecentInvoices.map((invoice) => (
-                  <tr
-                    key={invoice.id}
-                    className="border-b hover:bg-slate-50 cursor-pointer"
-                    onClick={() => navigate(`/finance/invoices/${invoice.id}`)}
-                  >
-                    <td className="py-3 font-medium text-slate-900">
-                      {invoice.series}-{String(invoice.number).padStart(4, "0")}
-                    </td>
-                    <td className="py-3 text-slate-700">{invoice.partner}</td>
-                    <td className="py-3 text-slate-600">{invoice.issueDate}</td>
-                    <td className="py-3 text-slate-600">{invoice.dueDate}</td>
-                    <td className="py-3 text-right font-medium">{formatCurrency(invoice.total)}</td>
-                    <td className="py-3 text-center">
-                      <InvoiceStatusBadge status={invoice.status} />
-                    </td>
+          {recentInvoices.length === 0 ? (
+            <div className="text-center py-8 text-slate-500">
+              <Receipt className="h-10 w-10 mx-auto mb-3 text-slate-300" />
+              <p className="font-medium">No invoices yet</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b text-left text-sm font-medium text-slate-600">
+                    <th className="pb-3">Invoice</th>
+                    <th className="pb-3">Partner</th>
+                    <th className="pb-3">Issue Date</th>
+                    <th className="pb-3">Due Date</th>
+                    <th className="pb-3 text-right">Total</th>
+                    <th className="pb-3 text-center">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="text-sm">
+                  {recentInvoices.map((invoice) => (
+                    <tr
+                      key={invoice.id}
+                      className="border-b hover:bg-slate-50 cursor-pointer"
+                      onClick={() => navigate(`/finance/invoices/${invoice.id}`)}
+                    >
+                      <td className="py-3 font-medium text-slate-900">
+                        {invoice.series}-{String(invoice.number).padStart(4, "0")}
+                      </td>
+                      <td className="py-3 text-slate-700">{invoice.partner.name}</td>
+                      <td className="py-3 text-slate-600">{invoice.issueDate}</td>
+                      <td className="py-3 text-slate-600">{invoice.dueDate}</td>
+                      <td className="py-3 text-right font-medium">{formatCurrency(invoice.total, invoice.currency)}</td>
+                      <td className="py-3 text-center">
+                        <InvoiceStatusBadge status={invoice.status} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

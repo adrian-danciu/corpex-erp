@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useQuery, useMutation } from "@apollo/client/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,53 +30,25 @@ import {
   XCircle,
   Receipt,
   Building2,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import InvoiceStatusBadge from "@/components/finance/InvoiceStatusBadge";
-import { InvoiceStatus, InvoiceType, PaymentMethod } from "@/types/finance.types";
+import { InvoiceStatus, InvoiceType } from "@/types/finance.types";
 import type { Invoice, InvoiceItem, Payment } from "@/types/finance.types";
-
-// Mock data
-const mockInvoices: Record<string, Invoice> = {
-  "1": {
-    id: "1", series: "CORP", number: 1001, invoiceType: InvoiceType.FISCAL,
-    status: InvoiceStatus.SENT, partnerId: "1",
-    partner: { id: "1", name: "SC Alpha Distribution SRL", cui: "RO12345678", regCom: "J40/1234/2018", address: "Str. Industriei 45", city: "Bucharest", country: "Romania", email: "office@alpha.ro", phone: "+40 21 123 4567", contactPerson: "Ion Popescu", partnerType: "CLIENT" as never, bankName: "BCR", bankAccount: "RO49RNCB0090099999999999", notes: null, createdAt: "", updatedAt: "" },
-    isClientInvoice: true, issueDate: "2026-01-28", dueDate: "2026-02-28", deliveryDate: "2026-01-29",
-    subtotal: 4_537.82, vatTotal: 862.18, total: 5_400.0, paidAmount: 0, currency: "RON",
-    notes: "Payment terms: 30 days from issue date.",
-    createdBy: { id: "u1", firstName: "Admin", lastName: "User", email: "admin@corpex.ro", role: "ADMIN" as never },
-    items: [
-      { id: "i1", invoiceId: "1", description: "Web Development Services - January 2026", quantity: 1, unit: "month", unitPrice: 3_500, vatRate: 19, amount: 3_500, vatAmount: 665 },
-      { id: "i2", invoiceId: "1", description: "Hosting & Maintenance", quantity: 1, unit: "month", unitPrice: 800, vatRate: 19, amount: 800, vatAmount: 152 },
-      { id: "i3", invoiceId: "1", description: "SSL Certificate", quantity: 1, unit: "buc", unitPrice: 237.82, vatRate: 19, amount: 237.82, vatAmount: 45.19 },
-    ],
-    payments: [],
-    createdAt: "2026-01-28T10:00:00Z", updatedAt: "2026-01-28T10:00:00Z",
-  },
-  "4": {
-    id: "4", series: "CORP", number: 1004, invoiceType: InvoiceType.PROFORMA,
-    status: InvoiceStatus.PARTIALLY_PAID, partnerId: "4",
-    partner: { id: "4", name: "SC Delta Manufacturing SRL", cui: "RO55667788", regCom: "J40/9876/2019", address: "Calea Vitan 200", city: "Bucharest", country: "Romania", email: "sales@delta.ro", phone: "+40 21 987 6543", contactPerson: "Elena Stanescu", partnerType: "SUPPLIER" as never, bankName: "Raiffeisen", bankAccount: "RO49RZBR0090099999999999", notes: null, createdAt: "", updatedAt: "" },
-    isClientInvoice: true, issueDate: "2026-01-15", dueDate: "2026-02-15", deliveryDate: null,
-    subtotal: 7_478.99, vatTotal: 1_421.01, total: 8_900.0, paidAmount: 4_000, currency: "RON",
-    notes: null,
-    createdBy: { id: "u1", firstName: "Admin", lastName: "User", email: "admin@corpex.ro", role: "ADMIN" as never },
-    items: [
-      { id: "i4", invoiceId: "4", description: "Raw materials - Steel plates", quantity: 50, unit: "kg", unitPrice: 120, vatRate: 19, amount: 6_000, vatAmount: 1_140 },
-      { id: "i5", invoiceId: "4", description: "Transport fee", quantity: 1, unit: "buc", unitPrice: 1_478.99, vatRate: 19, amount: 1_478.99, vatAmount: 281.01 },
-    ],
-    payments: [
-      { id: "p1", invoiceId: "4", amount: 4_000, paymentDate: "2026-01-20", paymentMethod: PaymentMethod.BANK_TRANSFER, reference: "OP-2026-001234", notes: "Partial payment", createdBy: { id: "u1", firstName: "Admin", lastName: "User", email: "admin@corpex.ro", role: "ADMIN" as never }, createdAt: "2026-01-20T10:00:00Z" },
-    ],
-    createdAt: "2026-01-15T10:00:00Z", updatedAt: "2026-01-20T10:00:00Z",
-  },
-};
+import {
+  GET_INVOICE_QUERY,
+  GET_INVOICES_QUERY,
+  UPDATE_INVOICE_STATUS_MUTATION,
+  CREATE_PAYMENT_MUTATION,
+  DELETE_INVOICE_MUTATION,
+} from "@/graphql/mutations/finance.mutations";
 
 function formatCurrency(amount: number, currency = "RON") {
   return new Intl.NumberFormat("ro-RO", { style: "currency", currency, minimumFractionDigits: 2 }).format(amount);
 }
 
-function PaymentDialog({ invoice, onRecordPayment }: { invoice: Invoice; onRecordPayment: (data: { amount: number; paymentDate: string; paymentMethod: string; reference: string }) => void }) {
+function PaymentDialog({ invoice, onRecordPayment, loading: paymentLoading }: { invoice: Invoice; onRecordPayment: (data: { amount: number; paymentDate: string; paymentMethod: string; reference: string }) => void; loading?: boolean }) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState(String(invoice.total - invoice.paidAmount));
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split("T")[0]);
@@ -130,7 +103,9 @@ function PaymentDialog({ invoice, onRecordPayment }: { invoice: Invoice; onRecor
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={handleSubmit}>Record Payment</Button>
+          <Button onClick={handleSubmit} disabled={paymentLoading}>
+            {paymentLoading ? "Recording..." : "Record Payment"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -141,7 +116,49 @@ export default function InvoiceDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const invoice = id ? mockInvoices[id] : null;
+  const { data, loading, error, refetch } = useQuery<{ invoice: Invoice | null }>(GET_INVOICE_QUERY, {
+    variables: { id },
+    skip: !id,
+  });
+
+  const [createPayment, { loading: paymentLoading }] = useMutation(CREATE_PAYMENT_MUTATION, {
+    onCompleted: () => {
+      refetch();
+    },
+  });
+
+  const [updateStatus] = useMutation(UPDATE_INVOICE_STATUS_MUTATION, {
+    refetchQueries: [{ query: GET_INVOICES_QUERY }],
+    onCompleted: () => {
+      refetch();
+    },
+  });
+
+  const [deleteInvoice, { loading: deleting }] = useMutation(DELETE_INVOICE_MUTATION, {
+    refetchQueries: [{ query: GET_INVOICES_QUERY }],
+    onCompleted: () => {
+      navigate("/finance/invoices");
+    },
+  });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-red-500">
+        <AlertCircle className="h-8 w-8 mb-2" />
+        <p>Failed to load invoice</p>
+      </div>
+    );
+  }
+
+  const invoice = data?.invoice;
 
   if (!invoice) {
     return (
@@ -161,8 +178,33 @@ export default function InvoiceDetailPage() {
   const remaining = invoice.total - invoice.paidAmount;
 
   const handleRecordPayment = (data: { amount: number; paymentDate: string; paymentMethod: string; reference: string }) => {
-    console.log("Recording payment:", data);
-    // TODO: GraphQL mutation
+    createPayment({
+      variables: {
+        createPaymentInput: {
+          invoiceId: invoice.id,
+          amount: data.amount,
+          paymentDate: data.paymentDate,
+          paymentMethod: data.paymentMethod,
+          reference: data.reference || undefined,
+        },
+      },
+    });
+  };
+
+  const handleMarkAsSent = () => {
+    updateStatus({ variables: { id: invoice.id, status: InvoiceStatus.SENT } });
+  };
+
+  const handleCancel = () => {
+    if (window.confirm("Are you sure you want to cancel this invoice?")) {
+      updateStatus({ variables: { id: invoice.id, status: InvoiceStatus.CANCELLED } });
+    }
+  };
+
+  const handleDelete = () => {
+    if (window.confirm("Are you sure you want to delete this invoice?")) {
+      deleteInvoice({ variables: { id: invoice.id } });
+    }
   };
 
   return (
@@ -187,15 +229,15 @@ export default function InvoiceDetailPage() {
         </div>
         <div className="flex gap-2">
           {invoice.status === InvoiceStatus.DRAFT && (
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2" onClick={handleMarkAsSent}>
               <Send className="h-4 w-4" /> Mark as Sent
             </Button>
           )}
           {(invoice.status === InvoiceStatus.SENT || invoice.status === InvoiceStatus.PARTIALLY_PAID || invoice.status === InvoiceStatus.OVERDUE) && (
-            <PaymentDialog invoice={invoice} onRecordPayment={handleRecordPayment} />
+            <PaymentDialog invoice={invoice} onRecordPayment={handleRecordPayment} loading={paymentLoading} />
           )}
           {invoice.status !== InvoiceStatus.CANCELLED && invoice.status !== InvoiceStatus.PAID && (
-            <Button variant="destructive" className="gap-2">
+            <Button variant="destructive" className="gap-2" onClick={handleCancel}>
               <XCircle className="h-4 w-4" /> Cancel
             </Button>
           )}
@@ -362,6 +404,13 @@ export default function InvoiceDetailPage() {
               </CardContent>
             </Card>
           )}
+
+          {/* Delete */}
+          <div className="flex justify-end">
+            <Button variant="outline" className="text-red-600 hover:text-red-700" onClick={handleDelete} disabled={deleting}>
+              {deleting ? "Deleting..." : "Delete Invoice"}
+            </Button>
+          </div>
         </TabsContent>
 
         <TabsContent value="payments" className="mt-4">
@@ -369,7 +418,7 @@ export default function InvoiceDetailPage() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg">Payment History</CardTitle>
               {remaining > 0 && (
-                <PaymentDialog invoice={invoice} onRecordPayment={handleRecordPayment} />
+                <PaymentDialog invoice={invoice} onRecordPayment={handleRecordPayment} loading={paymentLoading} />
               )}
             </CardHeader>
             <CardContent>

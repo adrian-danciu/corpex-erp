@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery, useMutation } from "@apollo/client/react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createInvoiceSchema, type CreateInvoiceFormData } from "@/lib/schemas/invoice.schema";
@@ -16,15 +17,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
-
-// Mock partners for dropdown
-const mockPartners = [
-  { id: "1", name: "SC Alpha Distribution SRL", cui: "RO12345678" },
-  { id: "2", name: "SC Beta Logistics SA", cui: "RO87654321" },
-  { id: "3", name: "SC Gamma Services SRL", cui: "RO11223344" },
-  { id: "4", name: "SC Delta Manufacturing SRL", cui: "RO55667788" },
-];
+import { ArrowLeft, Plus, Trash2, Loader2 } from "lucide-react";
+import type { Partner } from "@/types/finance.types";
+import { GET_PARTNERS_QUERY, CREATE_INVOICE_MUTATION, GET_INVOICES_QUERY } from "@/graphql/mutations/finance.mutations";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("ro-RO", {
@@ -36,8 +31,23 @@ function formatCurrency(amount: number) {
 
 export default function InvoiceCreatePage() {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const { data: partnersData, loading: partnersLoading } = useQuery<{ partners: Partner[] }>(GET_PARTNERS_QUERY);
+  const partners = partnersData?.partners || [];
+
+  const [createInvoice, { loading: isLoading }] = useMutation(CREATE_INVOICE_MUTATION, {
+    refetchQueries: [{ query: GET_INVOICES_QUERY }],
+    onCompleted: () => {
+      setSuccessMessage("Invoice created successfully!");
+      setErrorMessage("");
+      setTimeout(() => navigate("/finance/invoices"), 1500);
+    },
+    onError: (err) => {
+      setErrorMessage(err.message);
+    },
+  });
 
   const today = new Date().toISOString().split("T")[0];
   const defaultDueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
@@ -84,14 +94,10 @@ export default function InvoiceCreatePage() {
   const total = subtotal + vatTotal;
 
   const onSubmit = (data: CreateInvoiceFormData) => {
-    setIsLoading(true);
-    // TODO: Replace with actual GraphQL mutation
-    console.log("Creating invoice:", { ...data, subtotal, vatTotal, total });
-    setTimeout(() => {
-      setIsLoading(false);
-      setSuccessMessage("Invoice created successfully!");
-      setTimeout(() => navigate("/finance/invoices"), 1500);
-    }, 500);
+    setErrorMessage("");
+    createInvoice({
+      variables: { createInvoiceInput: data },
+    });
   };
 
   return (
@@ -110,6 +116,12 @@ export default function InvoiceCreatePage() {
       {successMessage && (
         <div className="rounded-lg bg-green-50 p-4 text-green-800 border border-green-200">
           {successMessage}
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="rounded-lg bg-red-50 p-4 text-red-800 border border-red-200">
+          {errorMessage}
         </div>
       )}
 
@@ -180,12 +192,12 @@ export default function InvoiceCreatePage() {
                 name="partnerId"
                 control={control}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={partnersLoading}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a partner" />
+                      <SelectValue placeholder={partnersLoading ? "Loading partners..." : "Select a partner"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockPartners.map((p) => (
+                      {partners.map((p) => (
                         <SelectItem key={p.id} value={p.id}>
                           {p.name} ({p.cui})
                         </SelectItem>
@@ -370,7 +382,7 @@ export default function InvoiceCreatePage() {
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Creating..." : "Create Invoice"}
+            {isLoading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Creating...</> : "Create Invoice"}
           </Button>
         </div>
       </form>

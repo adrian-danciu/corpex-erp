@@ -1,21 +1,14 @@
 import { useState } from "react";
+import { useQuery } from "@apollo/client/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Receipt, Search } from "lucide-react";
+import { Plus, Receipt, Search, Loader2, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import InvoiceStatusBadge from "@/components/finance/InvoiceStatusBadge";
-import { InvoiceStatus, InvoiceType } from "@/types/finance.types";
-
-// Mock data
-const mockInvoices = [
-  { id: "1", series: "CORP", number: 1001, invoiceType: InvoiceType.FISCAL, partner: "SC Alpha Distribution SRL", issueDate: "2026-01-28", dueDate: "2026-02-28", total: 5_400.0, paidAmount: 0, currency: "RON", status: InvoiceStatus.SENT, isClientInvoice: true },
-  { id: "2", series: "CORP", number: 1002, invoiceType: InvoiceType.FISCAL, partner: "SC Beta Logistics SA", issueDate: "2026-01-25", dueDate: "2026-02-25", total: 12_750.0, paidAmount: 12_750.0, currency: "RON", status: InvoiceStatus.PAID, isClientInvoice: true },
-  { id: "3", series: "CORP", number: 1003, invoiceType: InvoiceType.FISCAL, partner: "SC Gamma Services SRL", issueDate: "2026-01-20", dueDate: "2026-01-30", total: 3_200.0, paidAmount: 0, currency: "RON", status: InvoiceStatus.OVERDUE, isClientInvoice: true },
-  { id: "4", series: "CORP", number: 1004, invoiceType: InvoiceType.PROFORMA, partner: "SC Delta Manufacturing SRL", issueDate: "2026-01-15", dueDate: "2026-02-15", total: 8_900.0, paidAmount: 4_000.0, currency: "RON", status: InvoiceStatus.PARTIALLY_PAID, isClientInvoice: true },
-  { id: "5", series: "CORP", number: 1005, invoiceType: InvoiceType.FISCAL, partner: "SC Epsilon SA", issueDate: "2026-01-10", dueDate: "2026-02-10", total: 1_600.0, paidAmount: 0, currency: "RON", status: InvoiceStatus.DRAFT, isClientInvoice: true },
-  { id: "6", series: "CORP", number: 1006, invoiceType: InvoiceType.FISCAL, partner: "SC Alpha Distribution SRL", issueDate: "2026-01-05", dueDate: "2026-02-05", total: 22_000.0, paidAmount: 22_000.0, currency: "RON", status: InvoiceStatus.PAID, isClientInvoice: false },
-];
+import { InvoiceStatus } from "@/types/finance.types";
+import type { Invoice } from "@/types/finance.types";
+import { GET_INVOICES_QUERY } from "@/graphql/mutations/finance.mutations";
 
 function formatCurrency(amount: number, currency = "RON") {
   return new Intl.NumberFormat("ro-RO", {
@@ -39,10 +32,30 @@ export default function InvoicesPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("ALL");
+  const { data, loading, error } = useQuery<{ invoices: Invoice[] }>(GET_INVOICES_QUERY);
 
-  const filteredInvoices = mockInvoices.filter((invoice) => {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-red-500">
+        <AlertCircle className="h-8 w-8 mb-2" />
+        <p>Failed to load invoices</p>
+      </div>
+    );
+  }
+
+  const invoices = data?.invoices || [];
+
+  const filteredInvoices = invoices.filter((invoice) => {
     const matchesSearch =
-      invoice.partner.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      invoice.partner.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       `${invoice.series}-${invoice.number}`.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesStatus = filterStatus === "ALL" || invoice.status === filterStatus;
@@ -166,7 +179,7 @@ export default function InvoicesPage() {
                         {invoice.series}-{String(invoice.number).padStart(4, "0")}
                       </td>
                       <td className="py-3 text-slate-600 text-xs uppercase">{invoice.invoiceType}</td>
-                      <td className="py-3 text-slate-700">{invoice.partner}</td>
+                      <td className="py-3 text-slate-700">{invoice.partner.name}</td>
                       <td className="py-3 text-slate-600">{invoice.issueDate}</td>
                       <td className="py-3 text-slate-600">{invoice.dueDate}</td>
                       <td className="py-3 text-right font-medium">{formatCurrency(invoice.total, invoice.currency)}</td>
