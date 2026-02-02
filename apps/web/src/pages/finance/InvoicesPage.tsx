@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useDeferredValue } from "react";
 import { useQuery } from "@apollo/client/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,8 +31,33 @@ const statusFilters = [
 export default function InvoicesPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [filterStatus, setFilterStatus] = useState("ALL");
   const { data, loading, error } = useQuery<{ invoices: Invoice[] }>(GET_INVOICES_QUERY);
+
+  // ⚡ Bolt Optimization: Memoize filtering and use deferred search query
+  // This prevents expensive re-filtering on every render and keeps the search input responsive
+  // even with large datasets.
+  const filteredInvoices = useMemo(() => {
+    const invoices = data?.invoices || [];
+    return invoices.filter((invoice) => {
+      const matchesSearch =
+        invoice.partner.name.toLowerCase().includes(deferredSearchQuery.toLowerCase()) ||
+        `${invoice.series}-${invoice.number}`.toLowerCase().includes(deferredSearchQuery.toLowerCase());
+
+      const matchesStatus = filterStatus === "ALL" || invoice.status === filterStatus;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [data?.invoices, deferredSearchQuery, filterStatus]);
+
+  // ⚡ Bolt Optimization: Memoize totals calculation
+  const { totalAmount, totalPaid } = useMemo(() => {
+    return {
+      totalAmount: filteredInvoices.reduce((sum, inv) => sum + inv.total, 0),
+      totalPaid: filteredInvoices.reduce((sum, inv) => sum + inv.paidAmount, 0),
+    };
+  }, [filteredInvoices]);
 
   if (loading) {
     return (
@@ -50,21 +75,6 @@ export default function InvoicesPage() {
       </div>
     );
   }
-
-  const invoices = data?.invoices || [];
-
-  const filteredInvoices = invoices.filter((invoice) => {
-    const matchesSearch =
-      invoice.partner.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      `${invoice.series}-${invoice.number}`.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesStatus = filterStatus === "ALL" || invoice.status === filterStatus;
-
-    return matchesSearch && matchesStatus;
-  });
-
-  const totalAmount = filteredInvoices.reduce((sum, inv) => sum + inv.total, 0);
-  const totalPaid = filteredInvoices.reduce((sum, inv) => sum + inv.paidAmount, 0);
 
   return (
     <div className="space-y-6">
