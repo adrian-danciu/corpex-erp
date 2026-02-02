@@ -35,9 +35,6 @@ export default function InvoicesPage() {
   const [filterStatus, setFilterStatus] = useState("ALL");
   const { data, loading, error } = useQuery<{ invoices: Invoice[] }>(GET_INVOICES_QUERY);
 
-  // ⚡ Bolt Optimization: Memoize filtering and use deferred search query
-  // This prevents expensive re-filtering on every render and keeps the search input responsive
-  // even with large datasets.
   const filteredInvoices = useMemo(() => {
     const invoices = data?.invoices || [];
     return invoices.filter((invoice) => {
@@ -51,7 +48,6 @@ export default function InvoicesPage() {
     });
   }, [data?.invoices, deferredSearchQuery, filterStatus]);
 
-  // ⚡ Bolt Optimization: Memoize totals calculation
   const { totalAmount, totalPaid } = useMemo(() => {
     return {
       totalAmount: filteredInvoices.reduce((sum, inv) => sum + inv.total, 0),
