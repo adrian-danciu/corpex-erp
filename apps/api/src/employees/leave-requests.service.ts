@@ -9,7 +9,6 @@ import { CreateLeaveRequestInput } from './dto/create-leave-request.input';
 import { ApproveLeaveRequestInput } from './dto/approve-leave-request.input';
 import { LeaveRequest } from './entities/leave-request.entity';
 import { LeaveStatus } from '@prisma/client';
-import { PaginationArgs } from '../common/pagination/pagination.args';
 
 @Injectable()
 export class LeaveRequestsService {
@@ -64,10 +63,9 @@ export class LeaveRequestsService {
 
   /**
    * Find all leave requests
-   * @param paginationArgs - Pagination arguments
    * @returns Array of all leave requests
    */
-  async findAll(paginationArgs?: PaginationArgs): Promise<LeaveRequest[]> {
+  async findAll(): Promise<LeaveRequest[]> {
     return this.prisma.leaveRequest.findMany({
       include: {
         employee: true,
@@ -76,8 +74,6 @@ export class LeaveRequestsService {
       orderBy: {
         createdAt: 'desc',
       },
-      skip: paginationArgs?.skip,
-      take: paginationArgs?.take,
     });
   }
 
