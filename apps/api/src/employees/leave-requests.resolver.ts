@@ -7,7 +7,6 @@ import { ApproveLeaveRequestInput } from './dto/approve-leave-request.input';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
-import { PaginationArgs } from '../common/pagination/pagination.args';
 
 @Resolver(() => LeaveRequest)
 export class LeaveRequestsResolver {
@@ -30,10 +29,8 @@ export class LeaveRequestsResolver {
     description: 'Get all leave requests',
   })
   @UseGuards(JwtAuthGuard)
-  async findAllLeaveRequests(
-    @Args() paginationArgs: PaginationArgs,
-  ): Promise<LeaveRequest[]> {
-    return this.leaveRequestsService.findAll(paginationArgs);
+  async findAllLeaveRequests(): Promise<LeaveRequest[]> {
+    return this.leaveRequestsService.findAll();
   }
 
   @Query(() => [LeaveRequest], {
