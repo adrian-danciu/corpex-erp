@@ -8,15 +8,19 @@
 4. API citeste/scrie in Postgres prin Prisma.
 
 ## Starea actuala a backend-ului
-
-- `apps/api/src/app.module.ts` inregistreaza doar `AppController` si `AppService`.
-- Dependintele GraphQL si Prisma sunt prezente, dar nu sunt inca legate in module.
+ 
+ - `apps/api/src/app.module.ts` inregistreaza `AuthModule`, `UsersModule`, `EmployeesModule` si `FinanceModule`.
+ - GraphQL si Prisma sunt conectate complet. `schema.gql` este generat automat.
 
 ## Detalii frontend
-
-- Primitivele UI sunt in `apps/web/src/components/ui` (Radix + Tailwind). (shadcn)
-- Formularele folosesc React Hook Form + Zod.
-- State global este planificat cu Zustand.
+ 
+ - Primitivele UI sunt in `apps/web/src/components/ui` (Radix + Tailwind). (shadcn)
+ - Formularele folosesc React Hook Form + Zod.
+ - State global este gestionat cu Zustand (ex: `auth.store.ts`).
+ - Module Implementate:
+   - **Auth**: Login, Rute Protejate.
+   - **HR**: Angajati, Concedii, Aprobari.
+   - **Finance**: Overview, Parteneri, Facturi.
 
 ## Detalii backend
 

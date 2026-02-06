@@ -9,12 +9,25 @@ import PartnerTypeBadge from "@/components/finance/PartnerTypeBadge";
 import { PartnerType } from "@/types/finance.types";
 import type { Partner } from "@/types/finance.types";
 import { GET_PARTNERS_QUERY } from "@/graphql/mutations/finance.mutations";
+import { Pagination } from "@/components/common/Pagination";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginatedResult } from "@/types/pagination.types";
 
 export default function PartnersPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("ALL");
-  const { data, loading, error } = useQuery<{ partners: Partner[] }>(GET_PARTNERS_QUERY);
+  const { page, pageSize, skip, take, setPage } = usePagination();
+
+  const { data, loading, error } = useQuery<{ partners: PaginatedResult<Partner> }>(
+    GET_PARTNERS_QUERY,
+    {
+      variables: {
+        pagination: { skip, take },
+      },
+      fetchPolicy: "cache-and-network",
+    }
+  );
 
   if (loading) {
     return (
@@ -33,7 +46,8 @@ export default function PartnersPage() {
     );
   }
 
-  const partners: Partner[] = data?.partners || [];
+  const partners = data?.partners.items || [];
+  const totalItems = data?.partners.meta.total || 0;
 
   const filteredPartners = partners.filter((partner) => {
     const matchesSearch =
@@ -148,7 +162,7 @@ export default function PartnersPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[1000px]">
                 <thead>
                   <tr className="border-b text-left text-sm font-medium text-slate-600">
                     <th className="pb-3">Company</th>
@@ -213,6 +227,13 @@ export default function PartnersPage() {
           )}
         </CardContent>
       </Card>
+
+      <Pagination
+        currentPage={page}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageChange={setPage}
+      />
     </div>
   );
 }

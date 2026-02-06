@@ -34,4 +34,4 @@ Tooling / dev:
 - TypeScript + ts-node + tsconfig-paths: build/runtime support.
 
 ## Notes
-- The API code currently does not register GraphQL or Prisma modules in `src/app.module.ts`. Dependencies are present and ready, but wiring is pending.
+- The API code registers GraphQL and Prisma modules in `src/app.module.ts`, along with feature modules (`Auth`, `Users`, `Employees`, `Finance`).

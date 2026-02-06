@@ -6,9 +6,23 @@ import { Button } from "@/components/ui/button";
 import { Plus, UserCheck, Briefcase, Calendar, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+import { Pagination } from "@/components/common/Pagination";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginatedResult } from "@/types/pagination.types";
+
 export default function EmployeesPage() {
   const navigate = useNavigate();
-  const { data, loading, error } = useQuery<{ employees: Employee[] }>(GET_EMPLOYEES_QUERY);
+  const { page, pageSize, skip, take, setPage } = usePagination();
+
+  const { data, loading, error } = useQuery<{ employees: PaginatedResult<Employee> }>(
+    GET_EMPLOYEES_QUERY,
+    {
+      variables: {
+        pagination: { skip, take },
+      },
+      fetchPolicy: "cache-and-network",
+    }
+  );
 
   if (loading) {
     return (
@@ -26,7 +40,8 @@ export default function EmployeesPage() {
     );
   }
 
-  const employees: Employee[] = data?.employees || [];
+  const employees = data?.employees.items || [];
+  const totalItems = data?.employees.meta.total || 0;
 
   return (
     <div className="space-y-6">
@@ -97,7 +112,7 @@ export default function EmployeesPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[1000px]">
                 <thead>
                   <tr className="border-b text-left text-sm font-medium text-slate-600">
                     <th className="pb-3">Name</th>
@@ -153,6 +168,14 @@ export default function EmployeesPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={page}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageChange={setPage}
+      />
     </div>
   );
 }

@@ -5,24 +5,31 @@ import { gql } from "@apollo/client";
 // ==========================================
 
 export const GET_PARTNERS_QUERY = gql`
-  query GetPartners {
-    partners {
-      id
-      name
-      cui
-      regCom
-      address
-      city
-      country
-      email
-      phone
-      contactPerson
-      partnerType
-      bankName
-      bankAccount
-      notes
-      createdAt
-      updatedAt
+  query GetPartners($pagination: PaginationInput) {
+    partners(pagination: $pagination) {
+      items {
+        id
+        name
+        cui
+        regCom
+        address
+        city
+        country
+        email
+        phone
+        contactPerson
+        partnerType
+        bankName
+        bankAccount
+        notes
+        createdAt
+        updatedAt
+      }
+      meta {
+        total
+        skip
+        take
+      }
     }
   }
 `;
@@ -98,28 +105,35 @@ export const DELETE_PARTNER_MUTATION = gql`
 // ==========================================
 
 export const GET_INVOICES_QUERY = gql`
-  query GetInvoices {
-    invoices {
-      id
-      series
-      number
-      invoiceType
-      status
-      partnerId
-      partner {
+  query GetInvoices($pagination: PaginationInput) {
+    invoices(pagination: $pagination) {
+      items {
         id
-        name
-        cui
+        series
+        number
+        invoiceType
+        status
+        partnerId
+        partner {
+          id
+          name
+          cui
+        }
+        isClientInvoice
+        issueDate
+        dueDate
+        subtotal
+        vatTotal
+        total
+        paidAmount
+        currency
+        createdAt
       }
-      isClientInvoice
-      issueDate
-      dueDate
-      subtotal
-      vatTotal
-      total
-      paidAmount
-      currency
-      createdAt
+      meta {
+        total
+        skip
+        take
+      }
     }
   }
 `;

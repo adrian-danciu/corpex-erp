@@ -7,10 +7,12 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreatePartnerInput } from './dto/create-partner.input';
 import { UpdatePartnerInput } from './dto/update-partner.input';
 import { Partner } from './entities/partner.entity';
+import { PaginationInput } from '../common/dto/pagination.input';
+import { IPaginatedType } from '../common/dto/pagination-result.dto';
 
 @Injectable()
 export class PartnersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(input: CreatePartnerInput): Promise<Partner> {
     const existing = await this.prisma.partner.findUnique({
@@ -42,10 +44,25 @@ export class PartnersService {
     });
   }
 
-  async findAll(): Promise<Partner[]> {
-    return this.prisma.partner.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
+  async findAll(pagination: PaginationInput): Promise<IPaginatedType<Partner>> {
+    const { skip, take } = pagination;
+    const [items, total] = await Promise.all([
+      this.prisma.partner.findMany({
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.partner.count(),
+    ]);
+
+    return {
+      items,
+      meta: {
+        total,
+        skip,
+        take,
+      },
+    };
   }
 
   async findOne(id: string): Promise<Partner | null> {

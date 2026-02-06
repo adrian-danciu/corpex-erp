@@ -5,15 +5,21 @@ import { Partner } from './entities/partner.entity';
 import { CreatePartnerInput } from './dto/create-partner.input';
 import { UpdatePartnerInput } from './dto/update-partner.input';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PaginationInput } from '../common/dto/pagination.input';
+import { PaginatedPartner } from './dto/paginated-partner.dto';
 
 @Resolver(() => Partner)
 export class PartnersResolver {
-  constructor(private readonly partnersService: PartnersService) {}
+  constructor(private readonly partnersService: PartnersService) { }
 
-  @Query(() => [Partner], { name: 'partners', description: 'Get all partners' })
+  @Query(() => PaginatedPartner, { name: 'partners', description: 'Get all partners (paginated)' })
   @UseGuards(JwtAuthGuard)
-  async findAllPartners(): Promise<Partner[]> {
-    return this.partnersService.findAll();
+  async findAllPartners(
+    @Args('pagination', { nullable: true, type: () => PaginationInput })
+    pagination?: PaginationInput,
+  ): Promise<PaginatedPartner> {
+    const paginationInput = pagination || { skip: 0, take: 10 };
+    return this.partnersService.findAll(paginationInput);
   }
 
   @Query(() => Partner, {

@@ -1,5 +1,5 @@
 import { ApolloProvider } from "@apollo/client/react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import "./App.css";
 import { apolloClient } from "./lib/apollo-client";
 import LoginPage from "./pages/LoginPage";
@@ -162,6 +162,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
     </ApolloProvider>

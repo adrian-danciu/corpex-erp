@@ -288,6 +288,32 @@ type Mutation {
   updateProfilePicture(updateProfilePictureInput: UpdateProfilePictureInput!): User!
 }
 
+type PaginatedEmployee {
+  items: [Employee!]!
+  meta: PaginationMeta!
+}
+
+type PaginatedInvoice {
+  items: [Invoice!]!
+  meta: PaginationMeta!
+}
+
+type PaginatedPartner {
+  items: [Partner!]!
+  meta: PaginationMeta!
+}
+
+input PaginationInput {
+  skip: Int! = 0
+  take: Int! = 10
+}
+
+type PaginationMeta {
+  skip: Int!
+  take: Int!
+  total: Int!
+}
+
 type Partner {
   address: String!
   bankAccount: String
@@ -342,8 +368,8 @@ type Query {
   """Get an employee by user ID"""
   employeeByUserId(userId: String!): Employee
 
-  """Get all employees"""
-  employees: [Employee!]!
+  """Get all employees (paginated)"""
+  employees(pagination: PaginationInput): PaginatedEmployee!
 
   """Get employees by department"""
   employeesByDepartment(department: String!): [Employee!]!
@@ -351,8 +377,8 @@ type Query {
   """Get an invoice by ID"""
   invoice(id: String!): Invoice
 
-  """Get all invoices"""
-  invoices: [Invoice!]!
+  """Get all invoices (paginated)"""
+  invoices(pagination: PaginationInput): PaginatedInvoice!
 
   """Get a leave request by ID"""
   leaveRequest(id: String!): LeaveRequest
@@ -373,8 +399,8 @@ type Query {
   """Get a partner by ID"""
   partner(id: String!): Partner
 
-  """Get all partners"""
-  partners: [Partner!]!
+  """Get all partners (paginated)"""
+  partners(pagination: PaginationInput): PaginatedPartner!
 
   """Get pending leave requests for current user subordinates"""
   pendingLeaveRequestsForManager: [LeaveRequest!]!

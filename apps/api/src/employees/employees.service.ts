@@ -7,10 +7,12 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateEmployeeInput } from './dto/create-employee.input';
 import { UpdateEmployeeInput } from './dto/update-employee.input';
 import { Employee } from './entities/employee.entity';
+import { PaginationInput } from '../common/dto/pagination.input';
+import { IPaginatedType } from '../common/dto/pagination-result.dto';
 
 @Injectable()
 export class EmployeesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   /**
    * Create a new employee record
@@ -72,23 +74,40 @@ export class EmployeesService {
   }
 
   /**
-   * Find all employees
-   * @returns Array of all employees
+   * Find all employees with pagination
+   * @param pagination - Pagination input
+   * @returns Paginated employees
    */
-  async findAll(): Promise<Employee[]> {
-    return this.prisma.employee.findMany({
-      include: {
-        user: true,
-        manager: {
-          include: {
-            user: true,
+  async findAll(pagination: PaginationInput): Promise<IPaginatedType<Employee>> {
+    const { skip, take } = pagination;
+
+    const [items, total] = await Promise.all([
+      this.prisma.employee.findMany({
+        skip,
+        take,
+        include: {
+          user: true,
+          manager: {
+            include: {
+              user: true,
+            },
           },
         },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      this.prisma.employee.count(),
+    ]);
+
+    return {
+      items,
+      meta: {
+        total,
+        skip,
+        take,
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    };
   }
 
   /**

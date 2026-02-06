@@ -17,6 +17,7 @@ import InvoiceStatusBadge from "@/components/finance/InvoiceStatusBadge";
 import { InvoiceStatus } from "@/types/finance.types";
 import type { Invoice } from "@/types/finance.types";
 import { GET_INVOICES_QUERY } from "@/graphql/mutations/finance.mutations";
+import { PaginatedResult } from "@/types/pagination.types";
 
 function formatCurrency(amount: number, currency = "RON") {
   return new Intl.NumberFormat("ro-RO", {
@@ -28,7 +29,14 @@ function formatCurrency(amount: number, currency = "RON") {
 
 export default function FinanceOverviewPage() {
   const navigate = useNavigate();
-  const { data, loading, error } = useQuery<{ invoices: Invoice[] }>(GET_INVOICES_QUERY);
+  const { data, loading, error } = useQuery<{ invoices: PaginatedResult<Invoice> }>(
+    GET_INVOICES_QUERY,
+    {
+      variables: {
+        pagination: { take: 50 }, // Fetch more items for overview stats
+      },
+    }
+  );
 
   if (loading) {
     return (
@@ -47,7 +55,7 @@ export default function FinanceOverviewPage() {
     );
   }
 
-  const invoices = data?.invoices || [];
+  const invoices = data?.invoices.items || [];
 
   // Compute stats from real data
   const clientInvoices = invoices.filter((inv) => inv.isClientInvoice);
@@ -199,7 +207,7 @@ export default function FinanceOverviewPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[1000px]">
                 <thead>
                   <tr className="border-b text-left text-sm font-medium text-slate-600">
                     <th className="pb-3">Invoice</th>

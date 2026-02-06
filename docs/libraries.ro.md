@@ -34,4 +34,4 @@ Tooling / dev:
 - TypeScript + ts-node + tsconfig-paths: build/runtime support.
 
 ## Note
-- Codul API nu inregistreaza inca modulele GraphQL sau Prisma in `src/app.module.ts`. Dependintele sunt prezente, wiring-ul e in asteptare.
+- Codul API inregistreaza modulele GraphQL si Prisma in `src/app.module.ts`, impreuna cu modulele de functionalitate (`Auth`, `Users`, `Employees`, `Finance`).

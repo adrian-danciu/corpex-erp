@@ -11,14 +11,23 @@ corpex-erp/
 ```
 
 ## apps/web (frontend)
-- `src/`: React UI code.
-- `src/components/ui/`: UI primitives (Radix + Tailwind + class-variance-authority).
-- `public/`: static assets.
-- `vite.config.ts`: Vite build config.
+ - `src/`: React UI code.
+   - `components/`: Shared components and UI primitives.
+   - `pages/`: Page components organized by module (`hr`, `finance`).
+   - `stores/`: Global state stores (Zustand).
+   - `features/`: Feature-specific logic (not currently used, logic is in pages).
+ - `src/components/ui/`: UI primitives (Radix + Tailwind + class-variance-authority).
+ - `public/`: static assets.
+ - `vite.config.ts`: Vite build config.
 
 ## apps/api (backend)
-- `src/`: NestJS application (currently minimal `AppModule`).
-- `prisma/schema.prisma`: Prisma schema (User + Role enums).
+ - `src/`: NestJS application.
+   - `auth/`: Authentication module.
+   - `users/`: User management.
+   - `employees/`: HR module (Employee management, leave requests).
+   - `finance/`: Finance module (Partners, Invoices, Payments).
+ - `src/schema.gql`: Auto-generated GraphQL schema.
+ - `prisma/schema.prisma`: Prisma schema (User, Employee, Partner, Invoice, Payment, etc.).
 - `prisma.config.ts`: Prisma config with `DATABASE_URL`.
 - `test-db.ts`: direct Prisma + Postgres connection test.
 - `test-neon-direct.ts`: direct Neon connection test.
@@ -28,4 +37,4 @@ corpex-erp/
 - `apps/api` hosts a GraphQL endpoint (NestJS + Apollo Server).
 - `apps/api` uses Prisma + Postgres to persist data.
 
-Note: The backend code currently only wires `AppController` and `AppService`. GraphQL and Prisma are present as dependencies, but are not yet connected in `src/app.module.ts`.
+Note: The backend code wires `Auth`, `Users`, `Employees`, and `Finance` modules in `src/app.module.ts`. GraphQL and Prisma are connected.

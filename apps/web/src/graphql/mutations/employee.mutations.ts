@@ -91,42 +91,49 @@ export const DELETE_EMPLOYEE_MUTATION = gql`
 `;
 
 export const GET_EMPLOYEES_QUERY = gql`
-  query GetEmployees {
-    employees {
-      id
-      userId
-      user {
+  query GetEmployees($pagination: PaginationInput) {
+    employees(pagination: $pagination) {
+      items {
         id
-        firstName
-        lastName
-        email
-        role
-      }
-      personalId
-      dateOfBirth
-      phoneNumber
-      address
-      city
-      country
-      position
-      department
-      contractType
-      employmentDate
-      contractEndDate
-      salary
-      annualLeaveDays
-      remainingLeave
-      managerId
-      manager {
-        id
+        userId
         user {
           id
           firstName
           lastName
+          email
+          role
         }
+        personalId
+        dateOfBirth
+        phoneNumber
+        address
+        city
+        country
+        position
+        department
+        contractType
+        employmentDate
+        contractEndDate
+        salary
+        annualLeaveDays
+        remainingLeave
+        managerId
+        manager {
+          id
+          user {
+            id
+            firstName
+            lastName
+          }
+        }
+        createdAt
+        updatedAt
       }
-      createdAt
-      updatedAt
+      meta {
+        total
+        skip
+        take
+      }
     }
   }
 `;

@@ -7,10 +7,12 @@ import { UpdateEmployeeInput } from './dto/update-employee.input';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
+import { PaginationInput } from '../common/dto/pagination.input';
+import { PaginatedEmployee } from './dto/paginated-employee.dto';
 
 @Resolver(() => Employee)
 export class EmployeesResolver {
-  constructor(private readonly employeesService: EmployeesService) {}
+  constructor(private readonly employeesService: EmployeesService) { }
 
   @Mutation(() => Employee, { description: 'Create a new employee record' })
   @UseGuards(JwtAuthGuard)
@@ -20,13 +22,17 @@ export class EmployeesResolver {
     return this.employeesService.create(createEmployeeInput);
   }
 
-  @Query(() => [Employee], {
+  @Query(() => PaginatedEmployee, {
     name: 'employees',
-    description: 'Get all employees',
+    description: 'Get all employees (paginated)',
   })
   @UseGuards(JwtAuthGuard)
-  async findAllEmployees(): Promise<Employee[]> {
-    return this.employeesService.findAll();
+  async findAllEmployees(
+    @Args('pagination', { nullable: true, type: () => PaginationInput })
+    pagination?: PaginationInput,
+  ): Promise<PaginatedEmployee> {
+    const paginationInput = pagination || { skip: 0, take: 10 };
+    return this.employeesService.findAll(paginationInput);
   }
 
   @Query(() => Employee, {

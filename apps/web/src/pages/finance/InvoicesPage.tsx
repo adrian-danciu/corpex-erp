@@ -9,6 +9,9 @@ import InvoiceStatusBadge from "@/components/finance/InvoiceStatusBadge";
 import { InvoiceStatus } from "@/types/finance.types";
 import type { Invoice } from "@/types/finance.types";
 import { GET_INVOICES_QUERY } from "@/graphql/mutations/finance.mutations";
+import { Pagination } from "@/components/common/Pagination";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginatedResult } from "@/types/pagination.types";
 
 function formatCurrency(amount: number, currency = "RON") {
   return new Intl.NumberFormat("ro-RO", {
@@ -32,10 +35,20 @@ export default function InvoicesPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("ALL");
-  const { data, loading, error } = useQuery<{ invoices: Invoice[] }>(GET_INVOICES_QUERY);
+  const { page, pageSize, skip, take, setPage } = usePagination();
+
+  const { data, loading, error } = useQuery<{ invoices: PaginatedResult<Invoice> }>(
+    GET_INVOICES_QUERY,
+    {
+      variables: {
+        pagination: { skip, take },
+      },
+      fetchPolicy: "cache-and-network",
+    }
+  );
 
   const filteredInvoices = useMemo(() => {
-    const invoices = data?.invoices || [];
+    const invoices = data?.invoices.items || [];
     return invoices.filter((invoice) => {
       const matchesSearch =
         invoice.partner.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -45,7 +58,9 @@ export default function InvoicesPage() {
 
       return matchesSearch && matchesStatus;
     });
-  }, [data?.invoices, searchQuery, filterStatus]);
+  }, [data?.invoices.items, searchQuery, filterStatus]);
+
+  const totalItems = data?.invoices.meta.total || 0;
 
   const totalAmount = filteredInvoices.reduce((sum, inv) => sum + inv.total, 0);
   const totalPaid = filteredInvoices.reduce((sum, inv) => sum + inv.paidAmount, 0);
@@ -155,7 +170,7 @@ export default function InvoicesPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[1200px]">
                 <thead>
                   <tr className="border-b text-left text-sm font-medium text-slate-600">
                     <th className="pb-3">Invoice #</th>
@@ -208,6 +223,13 @@ export default function InvoicesPage() {
           )}
         </CardContent>
       </Card>
+
+      <Pagination
+        currentPage={page}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageChange={setPage}
+      />
     </div>
   );
 }

@@ -7,15 +7,21 @@ import { UpdateInvoiceStatusInput } from './dto/update-invoice-status.input';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
+import { PaginationInput } from '../common/dto/pagination.input';
+import { PaginatedInvoice } from './dto/paginated-invoice.dto';
 
 @Resolver(() => Invoice)
 export class InvoicesResolver {
-  constructor(private readonly invoicesService: InvoicesService) {}
+  constructor(private readonly invoicesService: InvoicesService) { }
 
-  @Query(() => [Invoice], { name: 'invoices', description: 'Get all invoices' })
+  @Query(() => PaginatedInvoice, { name: 'invoices', description: 'Get all invoices (paginated)' })
   @UseGuards(JwtAuthGuard)
-  async findAllInvoices(): Promise<Invoice[]> {
-    return this.invoicesService.findAll();
+  async findAllInvoices(
+    @Args('pagination', { nullable: true, type: () => PaginationInput })
+    pagination?: PaginationInput,
+  ): Promise<PaginatedInvoice> {
+    const paginationInput = pagination || { skip: 0, take: 10 };
+    return this.invoicesService.findAll(paginationInput);
   }
 
   @Query(() => Invoice, {

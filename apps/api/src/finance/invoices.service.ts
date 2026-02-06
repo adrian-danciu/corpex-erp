@@ -3,6 +3,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateInvoiceInput } from './dto/create-invoice.input';
 import { UpdateInvoiceStatusInput } from './dto/update-invoice-status.input';
 import { Invoice } from './entities/invoice.entity';
+import { PaginationInput } from '../common/dto/pagination.input';
+import { IPaginatedType } from '../common/dto/pagination-result.dto';
 
 const invoiceInclude = {
   partner: true,
@@ -14,7 +16,7 @@ const invoiceInclude = {
 
 @Injectable()
 export class InvoicesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(input: CreateInvoiceInput, userId: string): Promise<Invoice> {
     // Calculate totals from items
@@ -60,11 +62,26 @@ export class InvoicesService {
     });
   }
 
-  async findAll(): Promise<Invoice[]> {
-    return this.prisma.invoice.findMany({
-      include: invoiceInclude,
-      orderBy: { createdAt: 'desc' },
-    });
+  async findAll(pagination: PaginationInput): Promise<IPaginatedType<Invoice>> {
+    const { skip, take } = pagination;
+    const [items, total] = await Promise.all([
+      this.prisma.invoice.findMany({
+        skip,
+        take,
+        include: invoiceInclude,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.invoice.count(),
+    ]);
+
+    return {
+      items,
+      meta: {
+        total,
+        skip,
+        take,
+      },
+    };
   }
 
   async findOne(id: string): Promise<Invoice | null> {

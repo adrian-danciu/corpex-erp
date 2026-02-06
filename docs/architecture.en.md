@@ -8,15 +8,19 @@
 4. API reads/writes to Postgres using Prisma.
 
 ## Current backend state
-
-- `apps/api/src/app.module.ts` only registers `AppController` and `AppService`.
-- GraphQL and Prisma dependencies are present but not yet wired into modules.
+ 
+ - `apps/api/src/app.module.ts` registers `AuthModule`, `UsersModule`, `EmployeesModule`, and `FinanceModule`.
+ - GraphQL and Prisma are fully wired. `schema.gql` is auto-generated.
 
 ## Frontend details
-
-- UI primitives live in `apps/web/src/components/ui` (Radix + Tailwind). (shadcn as an ui library)
-- Forms are built with React Hook Form + Zod.
-- Global state is intended to be handled with Zustand.
+ 
+ - UI primitives live in `apps/web/src/components/ui` (Radix + Tailwind). (shadcn as an ui library)
+ - Forms are built with React Hook Form + Zod.
+ - Global state is handled with Zustand (e.g., `auth.store.ts`).
+ - Implemented Modules:
+   - **Auth**: Login, Protected Routes.
+   - **HR**: Employees, Leave Requests, Approvals.
+   - **Finance**: Overview, Partners, Invoices.
 
 ## Backend details
 
