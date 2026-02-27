@@ -27,8 +27,10 @@ export enum LeaveStatus {
 
 export interface Employee {
   id: string;
-  userId: string;
-  user: User;
+  userId?: string | null;
+  user?: User | null;
+  firstName: string;
+  lastName: string;
   personalId: string; // CNP
   dateOfBirth: string;
   phoneNumber: string;
@@ -69,7 +71,9 @@ export interface LeaveRequest {
 }
 
 export interface CreateEmployeeInput {
-  userId: string;
+  userId?: string;
+  firstName: string;
+  lastName: string;
   personalId: string;
   dateOfBirth: string;
   phoneNumber: string;

@@ -10,6 +10,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { EmployeesModule } from './employees/employees.module';
 import { FinanceModule } from './finance/finance.module';
+import { ReportingModule } from './reporting/reporting.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { FinanceModule } from './finance/finance.module';
     UsersModule,
     EmployeesModule,
     FinanceModule,
+    ReportingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

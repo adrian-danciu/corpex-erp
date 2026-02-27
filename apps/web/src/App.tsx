@@ -4,9 +4,11 @@ import "./App.css";
 import { apolloClient } from "./lib/apollo-client";
 import LoginPage from "./pages/LoginPage";
 import UserCreatePage from "./pages/UserCreatePage";
+import UsersAdminPage from "./pages/UsersAdminPage";
 import DashboardPage from "./pages/DashboardPage";
 import ProfilePage from "./pages/ProfilePage";
 import EmployeesPage from "./pages/hr/EmployeesPage";
+import EmployeeCreatePage from "./pages/hr/EmployeeCreatePage";
 import LeaveRequestsPage from "./pages/hr/LeaveRequestsPage";
 import ApprovalsPage from "./pages/hr/ApprovalsPage";
 import FinanceOverviewPage from "./pages/finance/FinanceOverviewPage";
@@ -19,6 +21,7 @@ import InvoiceDetailPage from "./pages/finance/InvoiceDetailPage";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Layout from "./components/layout/Layout";
 import DashboardLayout from "./components/layout/DashboardLayout";
+import ReportsPage from "./pages/ReportsPage";
 
 function App() {
   return (
@@ -52,7 +55,7 @@ function App() {
           <Route
             path="/it/user-create"
             element={
-              <ProtectedRoute requiredRole={["ADMIN", "MANAGER"]}>
+              <ProtectedRoute requiredRole={["ADMIN"]}>
                 <DashboardLayout>
                   <UserCreatePage />
                 </DashboardLayout>
@@ -67,6 +70,16 @@ function App() {
               <ProtectedRoute requiredRole={["ADMIN", "HR", "MANAGER"]}>
                 <DashboardLayout>
                   <EmployeesPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hr/employees/new"
+            element={
+              <ProtectedRoute requiredRole={["ADMIN", "HR", "MANAGER"]}>
+                <DashboardLayout>
+                  <EmployeeCreatePage />
                 </DashboardLayout>
               </ProtectedRoute>
             }
@@ -158,6 +171,26 @@ function App() {
               <ProtectedRoute requiredRole={["ADMIN", "FINANCE", "MANAGER"]}>
                 <DashboardLayout>
                   <InvoiceDetailPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute requiredRole={["ADMIN", "MANAGER"]}>
+                <DashboardLayout>
+                  <UsersAdminPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute requiredRole={["ADMIN", "MANAGER"]}>
+                <DashboardLayout>
+                  <ReportsPage />
                 </DashboardLayout>
               </ProtectedRoute>
             }

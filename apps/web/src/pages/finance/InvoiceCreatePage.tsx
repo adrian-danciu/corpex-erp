@@ -19,6 +19,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Plus, Trash2, Loader2 } from "lucide-react";
 import type { Partner } from "@/types/finance.types";
+import { PaginatedResult } from "@/types/pagination.types";
 import { GET_PARTNERS_QUERY, CREATE_INVOICE_MUTATION, GET_INVOICES_QUERY } from "@/graphql/mutations/finance.mutations";
 
 function formatCurrency(amount: number) {
@@ -34,8 +35,15 @@ export default function InvoiceCreatePage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const { data: partnersData, loading: partnersLoading } = useQuery<{ partners: Partner[] }>(GET_PARTNERS_QUERY);
-  const partners = partnersData?.partners || [];
+  const { data: partnersData, loading: partnersLoading } = useQuery<{
+    partners: PaginatedResult<Partner>;
+  }>(GET_PARTNERS_QUERY, {
+    variables: {
+      pagination: { skip: 0, take: 100 },
+    },
+  });
+
+  const partners = partnersData?.partners?.items ?? [];
 
   const [createInvoice, { loading: isLoading }] = useMutation(CREATE_INVOICE_MUTATION, {
     refetchQueries: [{ query: GET_INVOICES_QUERY }],
@@ -95,8 +103,18 @@ export default function InvoiceCreatePage() {
 
   const onSubmit = (data: CreateInvoiceFormData) => {
     setErrorMessage("");
+
+    const { deliveryDate, ...rest } = data;
+
     createInvoice({
-      variables: { createInvoiceInput: data },
+      variables: {
+        createInvoiceInput: {
+          ...rest,
+          // Send null when delivery date is empty so backend/Prisma
+          // don't receive an invalid Date object
+          deliveryDate: deliveryDate ? deliveryDate : null,
+        },
+      },
     });
   };
 

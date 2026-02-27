@@ -16,7 +16,7 @@ const invoiceInclude = {
 
 @Injectable()
 export class InvoicesService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async create(input: CreateInvoiceInput, userId: string): Promise<Invoice> {
     // Calculate totals from items

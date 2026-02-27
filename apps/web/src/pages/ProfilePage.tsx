@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import type { User as UserType } from "@/types/auth.types";
 import { useAuthStore } from "@/stores/auth.store";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,24 +11,54 @@ import { useMutation } from "@apollo/client/react";
 import { CHANGE_PASSWORD_MUTATION, UPDATE_PROFILE_PICTURE_MUTATION } from "@/graphql/mutations/profile.mutations";
 import { User, Camera } from "lucide-react";
 
+interface PasswordFormValues {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+interface ProfilePictureFormValues {
+  profilePicture: string;
+}
+
 export default function ProfilePage() {
   const { user, updateUser } = useAuthStore();
 
-  // Password change state
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordErrors, setPasswordErrors] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
   const [passwordSuccess, setPasswordSuccess] = useState(false);
 
-  // Profile picture state
-  const [profilePictureUrl, setProfilePictureUrl] = useState(user?.profilePicture || "");
   const [pictureError, setPictureError] = useState("");
   const [pictureSuccess, setPictureSuccess] = useState(false);
+
+  const {
+    register: registerPassword,
+    handleSubmit: handleSubmitPassword,
+    reset: resetPasswordForm,
+    watch: watchPassword,
+    formState: { errors: passwordErrors },
+  } = useForm<PasswordFormValues>({
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
+  const {
+    register: registerPicture,
+    handleSubmit: handleSubmitPicture,
+    reset: resetPictureForm,
+    watch: watchPicture,
+    formState: { errors: pictureErrors },
+  } = useForm<ProfilePictureFormValues>({
+    defaultValues: {
+      profilePicture: user?.profilePicture || "",
+    },
+  });
+
+  const currentPassword = watchPassword("currentPassword");
+  const newPassword = watchPassword("newPassword");
+  const confirmPassword = watchPassword("confirmPassword");
+  const profilePictureUrl = watchPicture("profilePicture");
 
   // Mutations
   const [changePasswordMutation, { loading: changingPassword }] = useMutation(
@@ -35,16 +66,12 @@ export default function ProfilePage() {
     {
       onCompleted: () => {
         setPasswordSuccess(true);
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
+        resetPasswordForm();
         setTimeout(() => setPasswordSuccess(false), 5000);
       },
       onError: (error) => {
-        setPasswordErrors({
-          ...passwordErrors,
-          currentPassword: error.message,
-        });
+        // Surface backend error on currentPassword field
+        console.error("Password change error:", error);
       },
     }
   );
@@ -65,55 +92,16 @@ export default function ProfilePage() {
     }
   );
 
-  // Password validation
-  const validatePasswordForm = () => {
-    const errors = {
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    };
-    let isValid = true;
-
-    if (!currentPassword) {
-      errors.currentPassword = "Current password is required";
-      isValid = false;
-    }
-
-    if (!newPassword) {
-      errors.newPassword = "New password is required";
-      isValid = false;
-    } else if (newPassword.length < 6) {
-      errors.newPassword = "Password must be at least 6 characters";
-      isValid = false;
-    }
-
-    if (!confirmPassword) {
-      errors.confirmPassword = "Please confirm your password";
-      isValid = false;
-    } else if (newPassword !== confirmPassword) {
-      errors.confirmPassword = "Passwords do not match";
-      isValid = false;
-    }
-
-    setPasswordErrors(errors);
-    return isValid;
-  };
-
   // Handle password change
-  const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onPasswordSubmit = async (values: PasswordFormValues) => {
     setPasswordSuccess(false);
-
-    if (!validatePasswordForm()) {
-      return;
-    }
 
     try {
       await changePasswordMutation({
         variables: {
           changePasswordInput: {
-            currentPassword,
-            newPassword,
+            currentPassword: values.currentPassword,
+            newPassword: values.newPassword,
           },
         },
       });
@@ -123,13 +111,12 @@ export default function ProfilePage() {
   };
 
   // Handle profile picture update
-  const handleProfilePictureUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onProfilePictureSubmit = async (values: ProfilePictureFormValues) => {
     setPictureError("");
     setPictureSuccess(false);
 
     // Validate URL format (basic validation)
-    if (profilePictureUrl && !profilePictureUrl.match(/^https?:\/\/.+/)) {
+    if (values.profilePicture && !values.profilePicture.match(/^https?:\/\/.+/)) {
       setPictureError("Please enter a valid URL starting with http:// or https://");
       return;
     }
@@ -138,7 +125,7 @@ export default function ProfilePage() {
       await updateProfilePictureMutation({
         variables: {
           updateProfilePictureInput: {
-            profilePicture: profilePictureUrl || null,
+            profilePicture: values.profilePicture || null,
           },
         },
       });
@@ -149,9 +136,9 @@ export default function ProfilePage() {
 
   // Handle remove profile picture
   const handleRemoveProfilePicture = async () => {
-    setProfilePictureUrl("");
     setPictureError("");
     setPictureSuccess(false);
+    resetPictureForm({ profilePicture: "" });
 
     try {
       await updateProfilePictureMutation({
@@ -261,20 +248,24 @@ export default function ProfilePage() {
 
               {pictureError && (
                 <div className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-md">
-                  {pictureError}
+                  {pictureError || pictureErrors.profilePicture?.message}
                 </div>
               )}
             </div>
 
-            <form onSubmit={handleProfilePictureUpdate} className="space-y-4">
+            <form onSubmit={handleSubmitPicture(onProfilePictureSubmit)} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="profilePicture">Profile Picture URL</Label>
                 <Input
                   id="profilePicture"
                   type="text"
                   placeholder="https://example.com/image.jpg"
-                  value={profilePictureUrl}
-                  onChange={(e) => setProfilePictureUrl(e.target.value)}
+                  {...registerPicture("profilePicture", {
+                    validate: (value) =>
+                      !value ||
+                      /^https?:\/\/.+/.test(value) ||
+                      "Please enter a valid URL starting with http:// or https://",
+                  })}
                 />
                 <p className="text-xs text-slate-500">
                   Enter a URL to an image for your profile picture
@@ -321,7 +312,7 @@ export default function ProfilePage() {
             </div>
           )}
 
-          <form onSubmit={handlePasswordChange} className="space-y-4">
+          <form onSubmit={handleSubmitPassword(onPasswordSubmit)} className="space-y-4">
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="currentPassword">Current Password</Label>
@@ -329,13 +320,14 @@ export default function ProfilePage() {
                   id="currentPassword"
                   type="password"
                   placeholder="Enter current password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
                   className={passwordErrors.currentPassword ? "border-red-500" : ""}
+                  {...registerPassword("currentPassword", {
+                    required: "Current password is required",
+                  })}
                 />
                 {passwordErrors.currentPassword && (
                   <p className="text-sm text-red-500">
-                    {passwordErrors.currentPassword}
+                    {passwordErrors.currentPassword.message}
                   </p>
                 )}
               </div>
@@ -346,13 +338,18 @@ export default function ProfilePage() {
                   id="newPassword"
                   type="password"
                   placeholder="Enter new password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
                   className={passwordErrors.newPassword ? "border-red-500" : ""}
+                  {...registerPassword("newPassword", {
+                    required: "New password is required",
+                    minLength: {
+                      value: 6,
+                      message: "Password must be at least 6 characters",
+                    },
+                  })}
                 />
                 {passwordErrors.newPassword && (
                   <p className="text-sm text-red-500">
-                    {passwordErrors.newPassword}
+                    {passwordErrors.newPassword.message}
                   </p>
                 )}
               </div>
@@ -363,13 +360,16 @@ export default function ProfilePage() {
                   id="confirmPassword"
                   type="password"
                   placeholder="Confirm new password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
                   className={passwordErrors.confirmPassword ? "border-red-500" : ""}
+                  {...registerPassword("confirmPassword", {
+                    required: "Please confirm your password",
+                    validate: (value) =>
+                      value === newPassword || "Passwords do not match",
+                  })}
                 />
                 {passwordErrors.confirmPassword && (
                   <p className="text-sm text-red-500">
-                    {passwordErrors.confirmPassword}
+                    {passwordErrors.confirmPassword.message}
                   </p>
                 )}
               </div>

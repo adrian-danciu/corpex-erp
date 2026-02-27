@@ -12,9 +12,12 @@ import { PaginatedInvoice } from './dto/paginated-invoice.dto';
 
 @Resolver(() => Invoice)
 export class InvoicesResolver {
-  constructor(private readonly invoicesService: InvoicesService) { }
+  constructor(private readonly invoicesService: InvoicesService) {}
 
-  @Query(() => PaginatedInvoice, { name: 'invoices', description: 'Get all invoices (paginated)' })
+  @Query(() => PaginatedInvoice, {
+    name: 'invoices',
+    description: 'Get all invoices (paginated)',
+  })
   @UseGuards(JwtAuthGuard)
   async findAllInvoices(
     @Args('pagination', { nullable: true, type: () => PaginationInput })

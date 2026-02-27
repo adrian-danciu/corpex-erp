@@ -130,9 +130,11 @@ export default function EmployeesPage() {
                       <td className="py-4">
                         <div>
                           <p className="font-medium text-slate-900">
-                            {employee.user.firstName} {employee.user.lastName}
+                            {employee.firstName} {employee.lastName}
                           </p>
-                          <p className="text-xs text-slate-500">{employee.user.email}</p>
+                          <p className="text-xs text-slate-500">
+                            {employee.user?.email ?? "No account"}
+                          </p>
                         </div>
                       </td>
                       <td className="py-4 text-slate-700">{employee.position}</td>

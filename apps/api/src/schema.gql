@@ -38,12 +38,14 @@ input CreateEmployeeInput {
   dateOfBirth: DateTime!
   department: String!
   employmentDate: DateTime!
+  firstName: String!
+  lastName: String!
   managerId: String
   personalId: String!
   phoneNumber: String!
   position: String!
   salary: Float
-  userId: String!
+  userId: String
 }
 
 input CreateInvoiceInput {
@@ -108,6 +110,17 @@ input CreateUserInput {
   role: Role!
 }
 
+type DashboardMetrics {
+  approvedLeaveThisMonth: Int!
+  overdueInvoices: Int!
+  pendingLeaveRequests: Int!
+  totalEmployees: Int!
+  totalInvoicedAmount: Float!
+  totalInvoices: Int!
+  totalPaidAmount: Float!
+  totalUsers: Int!
+}
+
 """
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
@@ -124,7 +137,9 @@ type Employee {
   dateOfBirth: DateTime!
   department: String!
   employmentDate: DateTime!
+  firstName: String!
   id: ID!
+  lastName: String!
   manager: Employee
   managerId: String
   personalId: String!
@@ -134,8 +149,19 @@ type Employee {
   salary: Float
   subordinates: [Employee!]
   updatedAt: DateTime!
-  user: User!
-  userId: String!
+  user: User
+  userId: String
+}
+
+type FinanceAgingBucket {
+  amount: Float!
+  invoiceCount: Int!
+  label: String!
+}
+
+type HrLeaveSummary {
+  count: Int!
+  status: String!
 }
 
 type Invoice {
@@ -231,6 +257,11 @@ enum LeaveType {
   UNPAID
 }
 
+input LinkEmployeeUserInput {
+  employeeId: String!
+  userId: String!
+}
+
 input LoginInput {
   email: String!
   password: String!
@@ -269,6 +300,9 @@ type Mutation {
 
   """Delete a partner"""
   deletePartner(id: String!): Partner!
+
+  """Link an existing employee to an existing user account"""
+  linkEmployeeToUser(linkEmployeeUserInput: LinkEmployeeUserInput!): Employee!
   login(loginInput: LoginInput!): AuthResponse!
   refreshToken(refreshToken: String!): String!
 
@@ -362,6 +396,9 @@ enum PaymentMethod {
 }
 
 type Query {
+  """High-level KPIs for the main dashboard"""
+  dashboardMetrics: DashboardMetrics!
+
   """Get an employee by ID"""
   employee(id: String!): Employee
 
@@ -373,6 +410,12 @@ type Query {
 
   """Get employees by department"""
   employeesByDepartment(department: String!): [Employee!]!
+
+  """Aging analysis for outstanding invoice amounts"""
+  financeAgingSummary: [FinanceAgingBucket!]!
+
+  """Aggregated leave requests by status"""
+  hrLeaveSummary: [HrLeaveSummary!]!
 
   """Get an invoice by ID"""
   invoice(id: String!): Invoice
@@ -431,7 +474,9 @@ input UpdateEmployeeInput {
   dateOfBirth: DateTime
   department: String
   employmentDate: DateTime
+  firstName: String
   id: String!
+  lastName: String
   managerId: String
   personalId: String
   phoneNumber: String

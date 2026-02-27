@@ -12,7 +12,7 @@ import { IPaginatedType } from '../common/dto/pagination-result.dto';
 
 @Injectable()
 export class EmployeesService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   /**
    * Create a new employee record
@@ -31,19 +31,23 @@ export class EmployeesService {
       );
     }
 
-    // Check if user already has an employee record
-    const existingUserEmployee = await this.prisma.employee.findUnique({
-      where: { userId: createEmployeeInput.userId },
-    });
+    // If userId is provided, ensure the user does not already have an employee record
+    if (createEmployeeInput.userId) {
+      const existingUserEmployee = await this.prisma.employee.findUnique({
+        where: { userId: createEmployeeInput.userId },
+      });
 
-    if (existingUserEmployee) {
-      throw new ConflictException(`User already has an employee record`);
+      if (existingUserEmployee) {
+        throw new ConflictException(`User already has an employee record`);
+      }
     }
 
     // Create the employee
     const employee = await this.prisma.employee.create({
       data: {
-        userId: createEmployeeInput.userId,
+        userId: createEmployeeInput.userId ?? null,
+        firstName: createEmployeeInput.firstName,
+        lastName: createEmployeeInput.lastName,
         personalId: createEmployeeInput.personalId,
         dateOfBirth: createEmployeeInput.dateOfBirth,
         phoneNumber: createEmployeeInput.phoneNumber,
@@ -78,7 +82,9 @@ export class EmployeesService {
    * @param pagination - Pagination input
    * @returns Paginated employees
    */
-  async findAll(pagination: PaginationInput): Promise<IPaginatedType<Employee>> {
+  async findAll(
+    pagination: PaginationInput,
+  ): Promise<IPaginatedType<Employee>> {
     const { skip, take } = pagination;
 
     const [items, total] = await Promise.all([
@@ -251,6 +257,56 @@ export class EmployeesService {
       },
       orderBy: {
         createdAt: 'desc',
+      },
+    });
+  }
+
+  /**
+   * Link an existing employee to an existing user account
+   * @param employeeId - Employee ID
+   * @param userId - User ID
+   * @returns Updated employee with linked user
+   */
+  async linkToUser(employeeId: string, userId: string): Promise<Employee> {
+    const employee = await this.prisma.employee.findUnique({
+      where: { id: employeeId },
+    });
+
+    if (!employee) {
+      throw new NotFoundException(`Employee with ID ${employeeId} not found`);
+    }
+
+    if (employee.userId) {
+      throw new ConflictException('Employee is already linked to a user');
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    const existingEmployeeForUser = await this.prisma.employee.findUnique({
+      where: { userId },
+    });
+    if (existingEmployeeForUser) {
+      throw new ConflictException('User is already linked to another employee');
+    }
+
+    return this.prisma.employee.update({
+      where: { id: employeeId },
+      data: { userId },
+      include: {
+        user: true,
+        manager: {
+          include: {
+            user: true,
+          },
+        },
+        subordinates: {
+          include: {
+            user: true,
+          },
+        },
       },
     });
   }

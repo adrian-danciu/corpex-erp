@@ -3,8 +3,14 @@ import { ContractType } from '@prisma/client';
 
 @InputType()
 export class CreateEmployeeInput {
+  @Field({ nullable: true })
+  userId?: string;
+
   @Field()
-  userId: string;
+  firstName: string;
+
+  @Field()
+  lastName: string;
 
   @Field()
   personalId: string; // CNP

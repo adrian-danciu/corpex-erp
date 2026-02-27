@@ -76,6 +76,10 @@ export class UsersService {
    * @returns User or null
    */
   async findByEmail(email: string): Promise<PrismaUser | null> {
+    if (!email) {
+      return null;
+    }
+
     return this.prisma.user.findUnique({
       where: { email },
     });

@@ -20,11 +20,17 @@ export class Employee {
   @Field(() => ID)
   id: string;
 
-  @Field()
-  userId: string;
+  @Field(() => String, { nullable: true })
+  userId?: string | null;
 
-  @Field(() => User)
-  user: User;
+  @Field()
+  firstName: string;
+
+  @Field()
+  lastName: string;
+
+  @Field(() => User, { nullable: true })
+  user?: User | null;
 
   @Field()
   personalId: string; // CNP

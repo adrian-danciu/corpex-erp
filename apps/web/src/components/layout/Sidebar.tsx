@@ -48,7 +48,7 @@ const menuItems: MenuItem[] = [
     roles: [],
   },
   {
-    title: "Users",
+    title: "IT / Users",
     href: "/users",
     icon: Users,
     roles: ["ADMIN", "MANAGER"],

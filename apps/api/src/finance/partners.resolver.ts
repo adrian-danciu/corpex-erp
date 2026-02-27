@@ -10,9 +10,12 @@ import { PaginatedPartner } from './dto/paginated-partner.dto';
 
 @Resolver(() => Partner)
 export class PartnersResolver {
-  constructor(private readonly partnersService: PartnersService) { }
+  constructor(private readonly partnersService: PartnersService) {}
 
-  @Query(() => PaginatedPartner, { name: 'partners', description: 'Get all partners (paginated)' })
+  @Query(() => PaginatedPartner, {
+    name: 'partners',
+    description: 'Get all partners (paginated)',
+  })
   @UseGuards(JwtAuthGuard)
   async findAllPartners(
     @Args('pagination', { nullable: true, type: () => PaginationInput })

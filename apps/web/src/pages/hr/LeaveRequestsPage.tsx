@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
+import { useForm, Controller } from "react-hook-form";
 import {
   GET_MY_LEAVE_REQUESTS_QUERY,
   CREATE_LEAVE_REQUEST_MUTATION,
@@ -22,15 +23,35 @@ import {
 import { Calendar, Plus, X, CheckCircle, XCircle, Clock } from "lucide-react";
 import { format } from "date-fns";
 
+interface LeaveRequestFormValues {
+  leaveType: LeaveType | "";
+  startDate: string;
+  endDate: string;
+  days: number;
+  reason: string;
+}
+
 export default function LeaveRequestsPage() {
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    leaveType: "" as LeaveType,
-    startDate: "",
-    endDate: "",
-    days: 0,
-    reason: "",
+  const {
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<LeaveRequestFormValues>({
+    defaultValues: {
+      leaveType: "",
+      startDate: "",
+      endDate: "",
+      days: 0,
+      reason: "",
+    },
   });
+
+  const watchStartDate = watch("startDate");
+  const watchEndDate = watch("endDate");
 
   const { data: leaveRequestsData, loading, error, refetch } = useQuery<{ myLeaveRequests: LeaveRequest[] }>(GET_MY_LEAVE_REQUESTS_QUERY);
   const { data: profileData } = useQuery<{ myEmployeeProfile: { remainingLeave: number; annualLeaveDays: number } | null }>(GET_MY_EMPLOYEE_PROFILE_QUERY);
@@ -38,13 +59,7 @@ export default function LeaveRequestsPage() {
   const [createLeaveRequest, { loading: creating }] = useMutation(CREATE_LEAVE_REQUEST_MUTATION, {
     onCompleted: () => {
       setShowForm(false);
-      setFormData({
-        leaveType: "" as LeaveType,
-        startDate: "",
-        endDate: "",
-        days: 0,
-        reason: "",
-      });
+      reset();
       refetch();
     },
   });
@@ -55,11 +70,16 @@ export default function LeaveRequestsPage() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = (values: LeaveRequestFormValues) => {
     createLeaveRequest({
       variables: {
-        createLeaveRequestInput: formData,
+        createLeaveRequestInput: {
+          leaveType: values.leaveType,
+          startDate: values.startDate,
+          endDate: values.endDate,
+          days: values.days,
+          reason: values.reason || undefined,
+        },
       },
     });
   };
@@ -83,11 +103,23 @@ export default function LeaveRequestsPage() {
   };
 
   const handleDateChange = (field: "startDate" | "endDate", value: string) => {
-    const newFormData = { ...formData, [field]: value };
-    if (newFormData.startDate && newFormData.endDate) {
-      newFormData.days = calculateDays(newFormData.startDate, newFormData.endDate);
+    const otherField = field === "startDate" ? "endDate" : "startDate";
+    const currentOther = field === "startDate" ? watchEndDate : watchStartDate;
+
+    setValue(field, value, { shouldDirty: true });
+
+    if (field === "startDate" && currentOther && value > currentOther) {
+      // Ensure end date is not before start date
+      setValue("endDate", value, { shouldDirty: true });
     }
-    setFormData(newFormData);
+
+    const start = field === "startDate" ? value : watchStartDate;
+    const end = field === "endDate" ? value : watchEndDate;
+
+    if (start && end) {
+      const days = calculateDays(start, end);
+      setValue("days", days, { shouldDirty: true });
+    }
   };
 
   if (loading) {
@@ -188,28 +220,37 @@ export default function LeaveRequestsPage() {
             <CardDescription>Submit a new leave request for approval</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="leaveType">Leave Type *</Label>
-                  <Select
-                    value={formData.leaveType}
-                    onValueChange={(value) => setFormData({ ...formData, leaveType: value as LeaveType })}
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select leave type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={LeaveType.ANNUAL}>Annual Leave</SelectItem>
-                      <SelectItem value={LeaveType.MEDICAL}>Medical Leave</SelectItem>
-                      <SelectItem value={LeaveType.UNPAID}>Unpaid Leave</SelectItem>
-                      <SelectItem value={LeaveType.MATERNITY}>Maternity Leave</SelectItem>
-                      <SelectItem value={LeaveType.PATERNITY}>Paternity Leave</SelectItem>
-                      <SelectItem value={LeaveType.STUDY}>Study Leave</SelectItem>
-                      <SelectItem value={LeaveType.SPECIAL}>Special Leave</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Controller
+                    name="leaveType"
+                    control={control}
+                    rules={{ required: "Leave type is required" }}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={(value) => field.onChange(value as LeaveType)}
+                      >
+                        <SelectTrigger className={errors.leaveType ? "border-red-500" : ""}>
+                          <SelectValue placeholder="Select leave type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={LeaveType.ANNUAL}>Annual Leave</SelectItem>
+                          <SelectItem value={LeaveType.MEDICAL}>Medical Leave</SelectItem>
+                          <SelectItem value={LeaveType.UNPAID}>Unpaid Leave</SelectItem>
+                          <SelectItem value={LeaveType.MATERNITY}>Maternity Leave</SelectItem>
+                          <SelectItem value={LeaveType.PATERNITY}>Paternity Leave</SelectItem>
+                          <SelectItem value={LeaveType.STUDY}>Study Leave</SelectItem>
+                          <SelectItem value={LeaveType.SPECIAL}>Special Leave</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.leaveType && (
+                    <p className="text-sm text-red-500">{errors.leaveType.message}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -217,7 +258,7 @@ export default function LeaveRequestsPage() {
                   <Input
                     id="days"
                     type="number"
-                    value={formData.days}
+                    value={watch("days")}
                     readOnly
                     className="bg-slate-50"
                   />
@@ -228,10 +269,13 @@ export default function LeaveRequestsPage() {
                   <Input
                     id="startDate"
                     type="date"
-                    value={formData.startDate}
+                    value={watchStartDate}
                     onChange={(e) => handleDateChange("startDate", e.target.value)}
-                    required
+                    className={errors.startDate ? "border-red-500" : ""}
                   />
+                  {errors.startDate && (
+                    <p className="text-sm text-red-500">{errors.startDate.message}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -239,21 +283,29 @@ export default function LeaveRequestsPage() {
                   <Input
                     id="endDate"
                     type="date"
-                    value={formData.endDate}
+                    value={watchEndDate}
                     onChange={(e) => handleDateChange("endDate", e.target.value)}
-                    min={formData.startDate}
-                    required
+                    min={watchStartDate}
+                    className={errors.endDate ? "border-red-500" : ""}
                   />
+                  {errors.endDate && (
+                    <p className="text-sm text-red-500">{errors.endDate.message}</p>
+                  )}
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="reason">Reason (Optional)</Label>
-                <Input
-                  id="reason"
-                  value={formData.reason}
-                  onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                  placeholder="Enter reason for leave"
+                <Controller
+                  name="reason"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      id="reason"
+                      placeholder="Enter reason for leave"
+                      {...field}
+                    />
+                  )}
                 />
               </div>
 

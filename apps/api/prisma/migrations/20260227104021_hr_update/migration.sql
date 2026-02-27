@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Employee" ADD COLUMN     "firstName" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "lastName" TEXT NOT NULL DEFAULT '',
+ALTER COLUMN "userId" DROP NOT NULL;

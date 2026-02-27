@@ -113,10 +113,10 @@ export class LeaveRequestsService {
       throw new NotFoundException('Manager employee record not found');
     }
 
-    // Get all subordinate user IDs
-    const subordinateUserIds = managerEmployee.subordinates.map(
-      (sub) => sub.userId,
-    );
+    // Get all subordinate user IDs (filter out nulls in case some employees are not linked to users yet)
+    const subordinateUserIds = managerEmployee.subordinates
+      .map((sub) => sub.userId)
+      .filter((id): id is string => !!id);
 
     // Find pending leave requests from subordinates
     return this.prisma.leaveRequest.findMany({

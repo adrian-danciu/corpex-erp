@@ -4,6 +4,7 @@ import { EmployeesService } from './employees.service';
 import { Employee } from './entities/employee.entity';
 import { CreateEmployeeInput } from './dto/create-employee.input';
 import { UpdateEmployeeInput } from './dto/update-employee.input';
+import { LinkEmployeeUserInput } from './dto/link-employee-user.input';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
@@ -12,7 +13,7 @@ import { PaginatedEmployee } from './dto/paginated-employee.dto';
 
 @Resolver(() => Employee)
 export class EmployeesResolver {
-  constructor(private readonly employeesService: EmployeesService) { }
+  constructor(private readonly employeesService: EmployeesService) {}
 
   @Mutation(() => Employee, { description: 'Create a new employee record' })
   @UseGuards(JwtAuthGuard)
@@ -105,5 +106,16 @@ export class EmployeesResolver {
   @UseGuards(JwtAuthGuard)
   async removeEmployee(@Args('id') id: string): Promise<Employee> {
     return this.employeesService.remove(id);
+  }
+
+  @Mutation(() => Employee, {
+    description: 'Link an existing employee to an existing user account',
+  })
+  @UseGuards(JwtAuthGuard)
+  async linkEmployeeToUser(
+    @Args('linkEmployeeUserInput') linkEmployeeUserInput: LinkEmployeeUserInput,
+  ): Promise<Employee> {
+    const { employeeId, userId } = linkEmployeeUserInput;
+    return this.employeesService.linkToUser(employeeId, userId);
   }
 }

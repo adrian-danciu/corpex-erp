@@ -12,7 +12,7 @@ import { IPaginatedType } from '../common/dto/pagination-result.dto';
 
 @Injectable()
 export class PartnersService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async create(input: CreatePartnerInput): Promise<Partner> {
     const existing = await this.prisma.partner.findUnique({

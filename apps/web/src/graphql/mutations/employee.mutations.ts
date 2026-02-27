@@ -5,6 +5,8 @@ export const CREATE_EMPLOYEE_MUTATION = gql`
     createEmployee(createEmployeeInput: $createEmployeeInput) {
       id
       userId
+      firstName
+      lastName
       user {
         id
         firstName
@@ -46,6 +48,8 @@ export const UPDATE_EMPLOYEE_MUTATION = gql`
     updateEmployee(updateEmployeeInput: $updateEmployeeInput) {
       id
       userId
+      firstName
+      lastName
       user {
         id
         firstName
@@ -96,6 +100,8 @@ export const GET_EMPLOYEES_QUERY = gql`
       items {
         id
         userId
+        firstName
+        lastName
         user {
           id
           firstName
@@ -143,6 +149,8 @@ export const GET_EMPLOYEE_QUERY = gql`
     employee(id: $id) {
       id
       userId
+      firstName
+      lastName
       user {
         id
         firstName
@@ -194,6 +202,8 @@ export const GET_MY_EMPLOYEE_PROFILE_QUERY = gql`
     myEmployeeProfile {
       id
       userId
+      firstName
+      lastName
       user {
         id
         firstName
@@ -235,6 +245,8 @@ export const GET_EMPLOYEES_BY_DEPARTMENT_QUERY = gql`
     employeesByDepartment(department: $department) {
       id
       userId
+      firstName
+      lastName
       user {
         id
         firstName
@@ -256,6 +268,8 @@ export const GET_MY_SUBORDINATES_QUERY = gql`
     mySubordinates {
       id
       userId
+      firstName
+      lastName
       user {
         id
         firstName

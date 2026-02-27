@@ -18,11 +18,24 @@ import {
   type CreateUserFormData,
   UserRole
 } from "@/lib/schemas";
+import type { User as UserType } from "@/types/auth.types";
 import { generateEmail } from "@/lib/utils/email-generator";
 import { generatePassword } from "@/lib/utils/password-generator";
 import { CREATE_USER_MUTATION } from "@/graphql/mutations/user.mutations";
 
-export default function UserCreateForm() {
+interface UserCreateFormProps {
+  initialFirstName?: string;
+  initialLastName?: string;
+  initialRole?: UserRole;
+  onUserCreated?: (user: UserType) => void;
+}
+
+export default function UserCreateForm({
+  initialFirstName,
+  initialLastName,
+  initialRole,
+  onUserCreated,
+}: UserCreateFormProps) {
   const [generatedEmail, setGeneratedEmail] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -40,9 +53,9 @@ export default function UserCreateForm() {
   } = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
-      role: undefined,
+      firstName: initialFirstName ?? "",
+      lastName: initialLastName ?? "",
+      role: initialRole,
     },
   });
 
@@ -85,6 +98,10 @@ export default function UserCreateForm() {
       });
 
       console.log("User created successfully:", result.data);
+
+      if (result.data?.createUser && onUserCreated) {
+        onUserCreated(result.data.createUser);
+      }
 
       // Show success message
       setSuccessMessage(
