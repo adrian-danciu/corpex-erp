@@ -47,7 +47,6 @@ export default function ProfilePage() {
     register: registerPicture,
     handleSubmit: handleSubmitPicture,
     reset: resetPictureForm,
-    watch: watchPicture,
     formState: { errors: pictureErrors },
   } = useForm<ProfilePictureFormValues>({
     defaultValues: {
@@ -55,10 +54,7 @@ export default function ProfilePage() {
     },
   });
 
-  const currentPassword = watchPassword("currentPassword");
   const newPassword = watchPassword("newPassword");
-  const confirmPassword = watchPassword("confirmPassword");
-  const profilePictureUrl = watchPicture("profilePicture");
 
   // Mutations
   const [changePasswordMutation, { loading: changingPassword }] = useMutation(

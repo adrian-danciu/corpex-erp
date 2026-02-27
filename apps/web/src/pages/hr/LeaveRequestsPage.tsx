@@ -103,7 +103,6 @@ export default function LeaveRequestsPage() {
   };
 
   const handleDateChange = (field: "startDate" | "endDate", value: string) => {
-    const otherField = field === "startDate" ? "endDate" : "startDate";
     const currentOther = field === "startDate" ? watchEndDate : watchStartDate;
 
     setValue(field, value, { shouldDirty: true });

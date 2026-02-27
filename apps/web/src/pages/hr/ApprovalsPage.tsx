@@ -224,7 +224,9 @@ export default function ApprovalsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="font-medium text-slate-900">
-                        {employee.user.firstName} {employee.user.lastName}
+                        {employee.user
+                          ? `${employee.user.firstName} ${employee.user.lastName}`
+                          : `${employee.firstName} ${employee.lastName}`}
                       </p>
                       <p className="text-sm text-slate-600">{employee.position}</p>
                       <p className="text-xs text-slate-500 mt-1">{employee.department}</p>

@@ -16,7 +16,8 @@ import {
 import {
   createUserSchema,
   type CreateUserFormData,
-  UserRole
+  UserRole,
+  type UserRoleType,
 } from "@/lib/schemas";
 import type { User as UserType } from "@/types/auth.types";
 import { generateEmail } from "@/lib/utils/email-generator";
@@ -26,7 +27,7 @@ import { CREATE_USER_MUTATION } from "@/graphql/mutations/user.mutations";
 interface UserCreateFormProps {
   initialFirstName?: string;
   initialLastName?: string;
-  initialRole?: UserRole;
+  initialRole?: UserRoleType;
   onUserCreated?: (user: UserType) => void;
 }
 
@@ -41,7 +42,9 @@ export default function UserCreateForm({
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   // Apollo mutation hook
-  const [createUser, { loading: mutationLoading }] = useMutation(CREATE_USER_MUTATION);
+  const [createUser, { loading: mutationLoading }] = useMutation<{
+    createUser: UserType;
+  }>(CREATE_USER_MUTATION);
 
   const {
     register,
