@@ -18,6 +18,11 @@ import PartnerDetailPage from "./pages/finance/PartnerDetailPage";
 import InvoicesPage from "./pages/finance/InvoicesPage";
 import InvoiceCreatePage from "./pages/finance/InvoiceCreatePage";
 import InvoiceDetailPage from "./pages/finance/InvoiceDetailPage";
+import StockOverviewPage from "./pages/stock/StockOverviewPage";
+import ProductsPage from "./pages/stock/ProductsPage";
+import ProductCreatePage from "./pages/stock/ProductCreatePage";
+import WarehousesPage from "./pages/stock/WarehousesPage";
+import StockMovementsPage from "./pages/stock/StockMovementsPage";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Layout from "./components/layout/Layout";
 import DashboardLayout from "./components/layout/DashboardLayout";
@@ -181,6 +186,56 @@ function App() {
               <ProtectedRoute requiredRole={["ADMIN", "MANAGER"]}>
                 <DashboardLayout>
                   <UsersAdminPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/stock"
+            element={
+              <ProtectedRoute requiredRole={["ADMIN", "MANAGER"]}>
+                <DashboardLayout>
+                  <StockOverviewPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/stock/products"
+            element={
+              <ProtectedRoute requiredRole={["ADMIN", "MANAGER"]}>
+                <DashboardLayout>
+                  <ProductsPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/stock/products/new"
+            element={
+              <ProtectedRoute requiredRole={["ADMIN", "MANAGER"]}>
+                <DashboardLayout>
+                  <ProductCreatePage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/stock/warehouses"
+            element={
+              <ProtectedRoute requiredRole={["ADMIN", "MANAGER"]}>
+                <DashboardLayout>
+                  <WarehousesPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/stock/movements"
+            element={
+              <ProtectedRoute requiredRole={["ADMIN", "MANAGER"]}>
+                <DashboardLayout>
+                  <StockMovementsPage />
                 </DashboardLayout>
               </ProtectedRoute>
             }

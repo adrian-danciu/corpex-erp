@@ -102,12 +102,39 @@ input CreatePaymentInput {
   reference: String
 }
 
+input CreateProductInput {
+  category: String
+  description: String
+  minimumStock: Float = 0
+  name: String!
+  sku: String!
+  unit: String = "pcs"
+}
+
+input CreateStockMovementInput {
+  notes: String
+  productId: String!
+  quantity: Float!
+  reference: String
+  type: StockMovementType!
+  unitCost: Float
+  warehouseId: String!
+}
+
 input CreateUserInput {
   email: String!
   firstName: String!
   lastName: String!
   password: String!
   role: Role!
+}
+
+input CreateWarehouseInput {
+  address: String
+  city: String
+  code: String!
+  country: String = "Romania"
+  name: String!
 }
 
 type DashboardMetrics {
@@ -292,8 +319,17 @@ type Mutation {
   """Record a payment for an invoice"""
   createPayment(createPaymentInput: CreatePaymentInput!): Payment!
 
+  """Create a new product"""
+  createProduct(createProductInput: CreateProductInput!): Product!
+
+  """Register an incoming/outgoing stock movement"""
+  createStockMovement(createStockMovementInput: CreateStockMovementInput!): StockMovement!
+
   """Create a new user account"""
   createUser(createUserInput: CreateUserInput!): User!
+
+  """Create a new warehouse"""
+  createWarehouse(createWarehouseInput: CreateWarehouseInput!): Warehouse!
 
   """Delete an invoice"""
   deleteInvoice(id: String!): Invoice!
@@ -334,6 +370,16 @@ type PaginatedInvoice {
 
 type PaginatedPartner {
   items: [Partner!]!
+  meta: PaginationMeta!
+}
+
+type PaginatedProduct {
+  items: [Product!]!
+  meta: PaginationMeta!
+}
+
+type PaginatedWarehouse {
+  items: [Warehouse!]!
   meta: PaginationMeta!
 }
 
@@ -395,6 +441,32 @@ enum PaymentMethod {
   OTHER
 }
 
+type Product {
+  category: String
+  createdAt: DateTime!
+  currentStock: Float!
+  description: String
+  id: ID!
+  isActive: Boolean!
+  minimumStock: Float!
+  name: String!
+  sku: String!
+  unit: String!
+  updatedAt: DateTime!
+  warehouses: [ProductStock!]
+}
+
+type ProductStock {
+  createdAt: DateTime!
+  id: ID!
+  product: Product!
+  productId: String!
+  quantity: Float!
+  updatedAt: DateTime!
+  warehouse: Warehouse!
+  warehouseId: String!
+}
+
 type Query {
   """High-level KPIs for the main dashboard"""
   dashboardMetrics: DashboardMetrics!
@@ -428,6 +500,9 @@ type Query {
 
   """Get all leave requests"""
   leaveRequests: [LeaveRequest!]!
+
+  """Get products below minimum stock"""
+  lowStockProducts: [Product!]!
   me: User!
 
   """Get current user employee profile"""
@@ -448,11 +523,23 @@ type Query {
   """Get pending leave requests for current user subordinates"""
   pendingLeaveRequestsForManager: [LeaveRequest!]!
 
+  """Get all products (paginated)"""
+  products(pagination: PaginationInput, search: String): PaginatedProduct!
+
+  """Get stock movements by optional filters"""
+  stockMovements(filter: StockMovementFilterInput, pagination: PaginationInput): [StockMovement!]!
+
+  """Inventory overview KPIs"""
+  stockOverview: StockOverview!
+
   """Get a user by ID"""
   user(id: String!): User
 
   """Get all users"""
   users: [User!]!
+
+  """Get all warehouses (paginated)"""
+  warehouses(pagination: PaginationInput): PaginatedWarehouse!
 }
 
 """User role in the system"""
@@ -462,6 +549,43 @@ enum Role {
   HR
   MANAGER
   USER
+}
+
+type StockMovement {
+  createdAt: DateTime!
+  createdBy: User!
+  createdById: String!
+  id: ID!
+  notes: String
+  performedAt: DateTime!
+  product: Product!
+  productId: String!
+  quantity: Float!
+  reference: String
+  type: StockMovementType!
+  unitCost: Float
+  warehouse: Warehouse!
+  warehouseId: String!
+}
+
+input StockMovementFilterInput {
+  productId: String
+  type: StockMovementType
+  warehouseId: String
+}
+
+"""Type of stock movement"""
+enum StockMovementType {
+  ADJUSTMENT
+  IN
+  OUT
+}
+
+type StockOverview {
+  lowStockProducts: Int!
+  totalProducts: Int!
+  totalStockUnits: Float!
+  totalWarehouses: Int!
 }
 
 input UpdateEmployeeInput {
@@ -520,5 +644,17 @@ type User {
   lastName: String!
   profilePicture: String
   role: Role!
+  updatedAt: DateTime!
+}
+
+type Warehouse {
+  address: String
+  city: String
+  code: String!
+  country: String!
+  createdAt: DateTime!
+  id: ID!
+  isActive: Boolean!
+  name: String!
   updatedAt: DateTime!
 }

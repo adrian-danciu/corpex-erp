@@ -22,6 +22,7 @@ model User {
   approvedLeaveRequests LeaveRequest[] @relation("ApproverLeaveRequests")
   leaveRequests         LeaveRequest[] @relation("EmployeeLeaveRequests")
   payments              Payment[]      @relation("UserPayments")
+  stockMovements        StockMovement[] @relation("UserStockMovements")
 }
 
 model Employee {
@@ -147,6 +148,66 @@ model Payment {
   invoice       Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 }
 
+model Warehouse {
+  id        String         @id @default(uuid())
+  name      String
+  code      String         @unique
+  address   String?
+  city      String?
+  country   String         @default("Romania")
+  isActive  Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  products  ProductStock[]
+  movements StockMovement[]
+}
+
+model Product {
+  id           String         @id @default(uuid())
+  sku          String         @unique
+  name         String
+  description  String?
+  unit         String         @default("pcs")
+  category     String?
+  minimumStock Float          @default(0)
+  currentStock Float          @default(0)
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  warehouses   ProductStock[]
+  movements    StockMovement[]
+}
+
+model ProductStock {
+  id          String    @id @default(uuid())
+  productId   String
+  warehouseId String
+  quantity    Float     @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, warehouseId])
+}
+
+model StockMovement {
+  id          String            @id @default(uuid())
+  productId   String
+  warehouseId String
+  type        StockMovementType
+  quantity    Float
+  unitCost    Float?
+  reference   String?
+  notes       String?
+  performedAt DateTime          @default(now())
+  createdById String
+  createdAt   DateTime          @default(now())
+  product     Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  warehouse   Warehouse         @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  createdBy   User              @relation("UserStockMovements", fields: [createdById], references: [id])
+}
+
 enum Role {
   USER
   MANAGER
@@ -205,4 +266,10 @@ enum PaymentMethod {
   CASH
   CARD
   OTHER
+}
+
+enum StockMovementType {
+  IN
+  OUT
+  ADJUSTMENT
 }

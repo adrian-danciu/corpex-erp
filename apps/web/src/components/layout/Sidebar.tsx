@@ -20,6 +20,7 @@ import {
   Briefcase,
   Building2,
   Receipt,
+  Boxes,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -78,10 +79,36 @@ const menuItems: MenuItem[] = [
     roles: [],
   },
   {
-    title: "Inventory",
-    href: "/inventory",
+    title: "Stock & Warehouse",
+    href: "/stock",
     icon: Package,
-    roles: [],
+    roles: ["ADMIN", "MANAGER"],
+    children: [
+      {
+        title: "Overview",
+        href: "/stock",
+        icon: Boxes,
+        roles: ["ADMIN", "MANAGER"],
+      },
+      {
+        title: "Products",
+        href: "/stock/products",
+        icon: Package,
+        roles: ["ADMIN", "MANAGER"],
+      },
+      {
+        title: "Warehouses",
+        href: "/stock/warehouses",
+        icon: Building2,
+        roles: ["ADMIN", "MANAGER"],
+      },
+      {
+        title: "Movements",
+        href: "/stock/movements",
+        icon: Briefcase,
+        roles: ["ADMIN", "MANAGER"],
+      },
+    ],
   },
   {
     title: "Documents",
