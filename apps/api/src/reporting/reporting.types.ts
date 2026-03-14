@@ -47,3 +47,81 @@ export class FinanceAgingBucket {
   @Field(() => Int)
   invoiceCount: number;
 }
+
+@ObjectType()
+export class EmployeeReportRow {
+  @Field()
+  id: string;
+
+  @Field()
+  firstName: string;
+
+  @Field()
+  lastName: string;
+
+  @Field()
+  position: string;
+
+  @Field()
+  department: string;
+
+  @Field()
+  contractType: string;
+
+  @Field()
+  status: string;
+
+  @Field(() => Date)
+  hireDate: Date;
+}
+
+@ObjectType()
+export class StockReportRow {
+  @Field()
+  productId: string;
+
+  @Field()
+  productName: string;
+
+  @Field()
+  sku: string;
+
+  @Field()
+  warehouseName: string;
+
+  @Field(() => Int)
+  quantity: number;
+
+  @Field(() => Float)
+  unitPrice: number;
+
+  @Field(() => Float)
+  totalValue: number;
+}
+
+@ObjectType()
+export class FleetReportRow {
+  @Field()
+  id: string;
+
+  @Field()
+  plateNumber: string;
+
+  @Field()
+  brand: string;
+
+  @Field()
+  model: string;
+
+  @Field(() => Int)
+  year: number;
+
+  @Field()
+  status: string;
+
+  @Field(() => Date, { nullable: true })
+  nearestDocumentExpiry?: Date | null;
+
+  @Field({ nullable: true })
+  nearestDocumentType?: string | null;
+}

@@ -1,13 +1,14 @@
 import { useForm, Controller } from "react-hook-form";
-import { useMutation } from "@apollo/client/react";
+import { useMutation, useQuery } from "@apollo/client/react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CREATE_EMPLOYEE_MUTATION } from "@/graphql/mutations/employee.mutations";
-import { ContractType, type CreateEmployeeInput } from "@/types/hr.types";
+import { CREATE_EMPLOYEE_MUTATION, GET_EMPLOYEES_QUERY } from "@/graphql/mutations/employee.mutations";
+import { ContractType, type CreateEmployeeInput, type Employee } from "@/types/hr.types";
+import { PaginatedResult } from "@/types/pagination.types";
 
 export default function EmployeeCreatePage() {
   const navigate = useNavigate();
@@ -36,6 +37,11 @@ export default function EmployeeCreatePage() {
       managerId: undefined,
     },
   });
+
+  const { data: employeesData } = useQuery<{ employees: PaginatedResult<Employee> }>(GET_EMPLOYEES_QUERY, {
+    variables: { pagination: { skip: 0, take: 500 } },
+  });
+  const allEmployees = employeesData?.employees.items ?? [];
 
   const [createEmployee, { loading, error }] = useMutation(CREATE_EMPLOYEE_MUTATION, {
     onCompleted: () => {
@@ -264,8 +270,29 @@ export default function EmployeeCreatePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="managerId">Manager Employee ID (optional)</Label>
-                <Input id="managerId" {...register("managerId")} />
+                <Label>Manager (optional)</Label>
+                <Controller
+                  name="managerId"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value ?? "NONE"}
+                      onValueChange={(v) => field.onChange(v === "NONE" ? undefined : v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="No manager" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="NONE">— No manager —</SelectItem>
+                        {allEmployees.map((e) => (
+                          <SelectItem key={e.id} value={e.id}>
+                            {e.firstName} {e.lastName} ({e.position})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
             </div>
 

@@ -9,6 +9,7 @@ import DashboardPage from "./pages/DashboardPage";
 import ProfilePage from "./pages/ProfilePage";
 import EmployeesPage from "./pages/hr/EmployeesPage";
 import EmployeeCreatePage from "./pages/hr/EmployeeCreatePage";
+import EmployeeDetailPage from "./pages/hr/EmployeeDetailPage";
 import LeaveRequestsPage from "./pages/hr/LeaveRequestsPage";
 import ApprovalsPage from "./pages/hr/ApprovalsPage";
 import FinanceOverviewPage from "./pages/finance/FinanceOverviewPage";
@@ -88,6 +89,16 @@ function App() {
               <ProtectedRoute requiredRole={["ADMIN", "HR", "MANAGER"]}>
                 <DashboardLayout>
                   <EmployeeCreatePage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hr/employees/:id"
+            element={
+              <ProtectedRoute requiredRole={["ADMIN", "HR", "MANAGER"]}>
+                <DashboardLayout>
+                  <EmployeeDetailPage />
                 </DashboardLayout>
               </ProtectedRoute>
             }

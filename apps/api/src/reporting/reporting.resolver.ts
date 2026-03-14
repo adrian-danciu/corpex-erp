@@ -5,8 +5,11 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { ReportingService } from './reporting.service';
 import {
   DashboardMetrics,
+  EmployeeReportRow,
   FinanceAgingBucket,
+  FleetReportRow,
   HrLeaveSummary,
+  StockReportRow,
 } from './reporting.types';
 
 @Resolver()
@@ -41,5 +44,26 @@ export class ReportingResolver {
   @Roles('ADMIN', 'MANAGER', 'FINANCE')
   async getFinanceAgingSummary(): Promise<FinanceAgingBucket[]> {
     return this.reportingService.getFinanceAgingSummary();
+  }
+
+  @Query(() => [EmployeeReportRow], { name: 'employeeReport' })
+  @UseGuards(JwtAuthGuard)
+  @Roles('ADMIN', 'MANAGER', 'HR')
+  async getEmployeeReport(): Promise<EmployeeReportRow[]> {
+    return this.reportingService.getEmployeeReport();
+  }
+
+  @Query(() => [StockReportRow], { name: 'stockReport' })
+  @UseGuards(JwtAuthGuard)
+  @Roles('ADMIN', 'MANAGER')
+  async getStockReport(): Promise<StockReportRow[]> {
+    return this.reportingService.getStockReport();
+  }
+
+  @Query(() => [FleetReportRow], { name: 'fleetReport' })
+  @UseGuards(JwtAuthGuard)
+  @Roles('ADMIN', 'MANAGER')
+  async getFleetReport(): Promise<FleetReportRow[]> {
+    return this.reportingService.getFleetReport();
   }
 }

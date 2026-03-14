@@ -2,8 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   DashboardMetrics,
+  EmployeeReportRow,
   FinanceAgingBucket,
+  FleetReportRow,
   HrLeaveSummary,
+  StockReportRow,
 } from './reporting.types';
 import { InvoiceStatus, LeaveStatus } from '@prisma/client';
 
@@ -138,6 +141,91 @@ export class ReportingService {
       label,
       amount: value.amount,
       invoiceCount: value.invoiceCount,
+    }));
+  }
+
+  async getEmployeeReport(): Promise<EmployeeReportRow[]> {
+    const employees = await this.prisma.employee.findMany({
+      orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        position: true,
+        department: true,
+        contractType: true,
+        status: true,
+        hireDate: true,
+      },
+    });
+
+    return employees.map((e) => ({
+      id: e.id,
+      firstName: e.firstName,
+      lastName: e.lastName,
+      position: e.position,
+      department: e.department,
+      contractType: e.contractType,
+      status: e.status,
+      hireDate: e.hireDate,
+    }));
+  }
+
+  async getStockReport(): Promise<StockReportRow[]> {
+    const movements = await this.prisma.stockMovement.findMany({
+      include: {
+        product: { select: { id: true, name: true, sku: true, unitPrice: true } },
+        warehouse: { select: { name: true } },
+      },
+    });
+
+    const stockMap = new Map<string, StockReportRow>();
+
+    for (const m of movements) {
+      const key = `${m.productId}-${m.warehouseId}`;
+      const existing = stockMap.get(key);
+      const delta = m.type === 'IN' ? m.quantity : -m.quantity;
+
+      if (existing) {
+        existing.quantity += delta;
+        existing.totalValue = existing.quantity * existing.unitPrice;
+      } else {
+        stockMap.set(key, {
+          productId: m.product.id,
+          productName: m.product.name,
+          sku: m.product.sku,
+          warehouseName: m.warehouse.name,
+          quantity: delta,
+          unitPrice: m.product.unitPrice,
+          totalValue: delta * m.product.unitPrice,
+        });
+      }
+    }
+
+    return Array.from(stockMap.values()).filter((r) => r.quantity > 0);
+  }
+
+  async getFleetReport(): Promise<FleetReportRow[]> {
+    const vehicles = await this.prisma.vehicle.findMany({
+      orderBy: { plateNumber: 'asc' },
+      include: {
+        documents: {
+          orderBy: { expiryDate: 'asc' },
+          take: 1,
+          select: { expiryDate: true, type: true },
+        },
+      },
+    });
+
+    return vehicles.map((v) => ({
+      id: v.id,
+      plateNumber: v.plateNumber,
+      brand: v.brand,
+      model: v.model,
+      year: v.year,
+      status: v.status,
+      nearestDocumentExpiry: v.documents[0]?.expiryDate ?? null,
+      nearestDocumentType: v.documents[0]?.type ?? null,
     }));
   }
 }
