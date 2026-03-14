@@ -154,8 +154,9 @@ export class ReportingService {
         position: true,
         department: true,
         contractType: true,
-        status: true,
-        hireDate: true,
+        employmentDate: true,
+        remainingLeave: true,
+        annualLeaveDays: true,
       },
     });
 
@@ -166,15 +167,16 @@ export class ReportingService {
       position: e.position,
       department: e.department,
       contractType: e.contractType,
-      status: e.status,
-      hireDate: e.hireDate,
+      employmentDate: e.employmentDate,
+      remainingLeave: e.remainingLeave,
+      annualLeaveDays: e.annualLeaveDays,
     }));
   }
 
   async getStockReport(): Promise<StockReportRow[]> {
     const movements = await this.prisma.stockMovement.findMany({
       include: {
-        product: { select: { id: true, name: true, sku: true, unitPrice: true } },
+        product: { select: { id: true, name: true, sku: true } },
         warehouse: { select: { name: true } },
       },
     });
@@ -188,7 +190,6 @@ export class ReportingService {
 
       if (existing) {
         existing.quantity += delta;
-        existing.totalValue = existing.quantity * existing.unitPrice;
       } else {
         stockMap.set(key, {
           productId: m.product.id,
@@ -196,8 +197,6 @@ export class ReportingService {
           sku: m.product.sku,
           warehouseName: m.warehouse.name,
           quantity: delta,
-          unitPrice: m.product.unitPrice,
-          totalValue: delta * m.product.unitPrice,
         });
       }
     }

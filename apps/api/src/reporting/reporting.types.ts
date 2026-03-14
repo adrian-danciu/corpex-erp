@@ -68,11 +68,14 @@ export class EmployeeReportRow {
   @Field()
   contractType: string;
 
-  @Field()
-  status: string;
-
   @Field(() => Date)
-  hireDate: Date;
+  employmentDate: Date;
+
+  @Field(() => Int)
+  remainingLeave: number;
+
+  @Field(() => Int)
+  annualLeaveDays: number;
 }
 
 @ObjectType()
@@ -89,14 +92,8 @@ export class StockReportRow {
   @Field()
   warehouseName: string;
 
-  @Field(() => Int)
+  @Field(() => Float)
   quantity: number;
-
-  @Field(() => Float)
-  unitPrice: number;
-
-  @Field(() => Float)
-  totalValue: number;
 }
 
 @ObjectType()

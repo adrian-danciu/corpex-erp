@@ -1,4 +1,5 @@
-import { gql, useQuery } from "@apollo/client";
+import { gql } from "@apollo/client";
+import { useQuery } from "@apollo/client/react";
 import { AlertCircle, Download, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,8 +34,9 @@ const EMPLOYEE_REPORT_QUERY = gql`
       position
       department
       contractType
-      status
-      hireDate
+      employmentDate
+      remainingLeave
+      annualLeaveDays
     }
   }
 `;
@@ -47,8 +49,6 @@ const STOCK_REPORT_QUERY = gql`
       sku
       warehouseName
       quantity
-      unitPrice
-      totalValue
     }
   }
 `;
@@ -77,8 +77,9 @@ type EmployeeRow = {
   position: string;
   department: string;
   contractType: string;
-  status: string;
-  hireDate: string;
+  employmentDate: string;
+  remainingLeave: number;
+  annualLeaveDays: number;
 };
 type StockRow = {
   productId: string;
@@ -86,8 +87,6 @@ type StockRow = {
   sku: string;
   warehouseName: string;
   quantity: number;
-  unitPrice: number;
-  totalValue: number;
 };
 type FleetRow = {
   id: string;
@@ -272,10 +271,11 @@ export default function ReportsPage() {
             onClick={() =>
               exportCsv(
                 "employee-report.csv",
-                ["ID", "First Name", "Last Name", "Position", "Department", "Contract Type", "Status", "Hire Date"],
+                ["ID", "First Name", "Last Name", "Position", "Department", "Contract Type", "Employment Date", "Remaining Leave", "Annual Leave"],
                 employeeRows.map((r) => [
                   r.id, r.firstName, r.lastName, r.position, r.department,
-                  r.contractType, r.status, new Date(r.hireDate).toLocaleDateString("ro-RO"),
+                  r.contractType, new Date(r.employmentDate).toLocaleDateString("ro-RO"),
+                  String(r.remainingLeave), String(r.annualLeaveDays),
                 ])
               )
             }
@@ -305,8 +305,8 @@ export default function ReportsPage() {
                     <th className="py-2">Position</th>
                     <th className="py-2">Department</th>
                     <th className="py-2">Contract</th>
-                    <th className="py-2">Status</th>
-                    <th className="py-2">Hire Date</th>
+                    <th className="py-2">Employment Date</th>
+                    <th className="py-2 text-right">Leave Remaining</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -315,9 +315,9 @@ export default function ReportsPage() {
                       <td className="py-2 font-medium">{row.firstName} {row.lastName}</td>
                       <td className="py-2">{row.position}</td>
                       <td className="py-2">{row.department}</td>
-                      <td className="py-2">{row.contractType}</td>
-                      <td className="py-2">{row.status}</td>
-                      <td className="py-2">{new Date(row.hireDate).toLocaleDateString("ro-RO")}</td>
+                      <td className="py-2">{row.contractType.replace("_", " ")}</td>
+                      <td className="py-2">{new Date(row.employmentDate).toLocaleDateString("ro-RO")}</td>
+                      <td className="py-2 text-right">{row.remainingLeave} / {row.annualLeaveDays}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -343,10 +343,9 @@ export default function ReportsPage() {
             onClick={() =>
               exportCsv(
                 "stock-report.csv",
-                ["Product ID", "Product Name", "SKU", "Warehouse", "Quantity", "Unit Price (RON)", "Total Value (RON)"],
+                ["Product ID", "Product Name", "SKU", "Warehouse", "Quantity"],
                 stockRows.map((r) => [
-                  r.productId, r.productName, r.sku, r.warehouseName,
-                  String(r.quantity), r.unitPrice.toFixed(2), r.totalValue.toFixed(2),
+                  r.productId, r.productName, r.sku, r.warehouseName, String(r.quantity),
                 ])
               )
             }
@@ -376,8 +375,6 @@ export default function ReportsPage() {
                     <th className="py-2">SKU</th>
                     <th className="py-2">Warehouse</th>
                     <th className="py-2 text-right">Qty</th>
-                    <th className="py-2 text-right">Unit Price</th>
-                    <th className="py-2 text-right">Total Value</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -386,13 +383,7 @@ export default function ReportsPage() {
                       <td className="py-2 font-medium">{row.productName}</td>
                       <td className="py-2 text-muted-foreground">{row.sku}</td>
                       <td className="py-2">{row.warehouseName}</td>
-                      <td className="py-2 text-right">{row.quantity}</td>
-                      <td className="py-2 text-right">
-                        {row.unitPrice.toLocaleString("ro-RO", { style: "currency", currency: "RON" })}
-                      </td>
-                      <td className="py-2 text-right font-medium">
-                        {row.totalValue.toLocaleString("ro-RO", { style: "currency", currency: "RON" })}
-                      </td>
+                      <td className="py-2 text-right font-medium">{row.quantity}</td>
                     </tr>
                   ))}
                 </tbody>
