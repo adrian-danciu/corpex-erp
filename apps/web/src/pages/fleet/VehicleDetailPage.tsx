@@ -488,7 +488,7 @@ export default function VehicleDetailPage() {
               ))}
               <div className="space-y-2">
                 <Label>Year</Label>
-                <Input type="number" {...editVehicleForm.register("year")} />
+                <Input type="number" {...editVehicleForm.register("year", { valueAsNumber: true })} />
               </div>
               <div className="space-y-2">
                 <Label>Fuel Type</Label>
@@ -689,7 +689,7 @@ export default function VehicleDetailPage() {
               <Label>Odometer (km) *</Label>
               <Input
                 type="number"
-                {...mileageForm.register("odometer")}
+                {...mileageForm.register("odometer", { valueAsNumber: true })}
                 placeholder="e.g. 125000"
               />
               {mileageForm.formState.errors.odometer && (
@@ -753,7 +753,7 @@ export default function VehicleDetailPage() {
             </div>
             <div className="space-y-2">
               <Label>Monthly Rate (RON) *</Label>
-              <Input type="number" step="0.01" {...addLeaseForm.register("monthlyRate")} />
+              <Input type="number" step="0.01" {...addLeaseForm.register("monthlyRate", { valueAsNumber: true })} />
             </div>
             <div className="space-y-2">
               <Label>Notes</Label>
@@ -810,7 +810,7 @@ export default function VehicleDetailPage() {
             </div>
             <div className="space-y-2">
               <Label>Monthly Rate (RON)</Label>
-              <Input type="number" step="0.01" {...editLeaseForm.register("monthlyRate")} />
+              <Input type="number" step="0.01" {...editLeaseForm.register("monthlyRate", { valueAsNumber: true })} />
             </div>
             <div className="space-y-2">
               <Label>Notes</Label>
@@ -871,7 +871,7 @@ export default function VehicleDetailPage() {
             </div>
             <div className="space-y-2">
               <Label>Amount (RON) *</Label>
-              <Input type="number" step="0.01" {...expenseForm.register("amount")} />
+              <Input type="number" step="0.01" {...expenseForm.register("amount", { valueAsNumber: true })} />
               {expenseForm.formState.errors.amount && (
                 <p className="text-xs text-red-600">
                   {expenseForm.formState.errors.amount.message}

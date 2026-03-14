@@ -109,7 +109,7 @@ export default function VehicleCreatePage() {
                 <Input
                   id="year"
                   type="number"
-                  {...register("year")}
+                  {...register("year", { valueAsNumber: true })}
                   placeholder={String(new Date().getFullYear())}
                 />
                 {errors.year && (

@@ -31,7 +31,7 @@ export const createVehicleSchema = z.object({
   chassisNumber: z.string().min(1, "Chassis number is required").max(50),
   brand: z.string().min(1, "Brand is required").max(100),
   model: z.string().min(1, "Model is required").max(100),
-  year: z.coerce.number().int().min(1900).max(new Date().getFullYear() + 1),
+  year: z.number().int().min(1900).max(new Date().getFullYear() + 1),
   fuelType: z.enum([
     FuelTypeEnum.DIESEL,
     FuelTypeEnum.PETROL,
@@ -78,7 +78,7 @@ export type UpdateVehicleDocumentFormData = z.infer<typeof updateVehicleDocument
 
 export const createMileageLogSchema = z.object({
   date: z.string().min(1, "Date is required"),
-  odometer: z.coerce.number().int().min(0, "Odometer must be a positive number"),
+  odometer: z.number().int().min(0, "Odometer must be a positive number"),
   notes: z.string().max(500).optional().or(z.literal("")),
 });
 
@@ -88,7 +88,7 @@ export const createVehicleLeaseSchema = z.object({
   provider: z.string().min(1, "Provider is required").max(200),
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().min(1, "End date is required"),
-  monthlyRate: z.coerce.number().positive("Monthly rate must be positive"),
+  monthlyRate: z.number().positive("Monthly rate must be positive"),
   notes: z.string().max(500).optional().or(z.literal("")),
 });
 
@@ -103,7 +103,7 @@ export const createVehicleExpenseSchema = z.object({
     ExpenseTypeEnum.REPAIR,
     ExpenseTypeEnum.OTHER,
   ]),
-  amount: z.coerce.number().positive("Amount must be positive"),
+  amount: z.number().positive("Amount must be positive"),
   date: z.string().min(1, "Date is required"),
   description: z.string().max(500).optional().or(z.literal("")),
 });
