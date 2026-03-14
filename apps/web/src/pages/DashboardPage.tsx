@@ -6,8 +6,9 @@ import { useAuthStore } from "@/stores/auth.store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
+  PieChart, Pie, Cell,
 } from "recharts";
+import type { PieLabelRenderProps } from "recharts";
 
 const DASHBOARD_METRICS_QUERY = gql`
   query DashboardMetrics {
@@ -187,13 +188,13 @@ export default function DashboardPage() {
                       innerRadius={50}
                       outerRadius={80}
                       dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }: PieLabelRenderProps) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
                       labelLine={false}
                     >
                       <Cell fill="#22c55e" />
                       <Cell fill="#f59e0b" />
                     </Pie>
-                    <Tooltip formatter={(v: number) => formatRON(v)} />
+                    <Tooltip formatter={(v) => formatRON(Number(v))} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="flex justify-center gap-4 mt-2 text-xs text-slate-600">
@@ -221,7 +222,7 @@ export default function DashboardPage() {
                         outerRadius={75}
                         dataKey="count"
                         nameKey="status"
-                        label={({ status, count }) => `${status.charAt(0) + status.slice(1).toLowerCase()} (${count})`}
+                        label={({ name, value }: PieLabelRenderProps) => `${String(name).charAt(0) + String(name).slice(1).toLowerCase()} (${value})`}
                         labelLine={false}
                       >
                         {leaveRows.map((row) => (
@@ -249,7 +250,7 @@ export default function DashboardPage() {
                       <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                       <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                      <Tooltip formatter={(v: number) => formatRON(v)} />
+                      <Tooltip formatter={(v) => formatRON(Number(v))} />
                       <Bar dataKey="amount" fill="#ef4444" radius={[4, 4, 0, 0]} name="Outstanding" />
                     </BarChart>
                   </ResponsiveContainer>
