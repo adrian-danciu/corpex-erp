@@ -1,4 +1,5 @@
-import { gql, useQuery } from "@apollo/client";
+import { gql } from "@apollo/client";
+import { useQuery } from "@apollo/client/react";
 import { AlertCircle, Briefcase, Loader2, Users as UsersIcon, FileText, AlertTriangle } from "lucide-react";
 import { FleetExpiryWidget } from "@/components/dashboard/FleetExpiryWidget";
 import { useAuthStore } from "@/stores/auth.store";
