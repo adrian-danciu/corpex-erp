@@ -77,6 +77,13 @@ input CreateLeaveRequestInput {
   startDate: DateTime!
 }
 
+input CreateMileageLogInput {
+  date: DateTime!
+  notes: String
+  odometer: Int!
+  vehicleId: String!
+}
+
 input CreatePartnerInput {
   address: String!
   bankAccount: String
@@ -129,6 +136,40 @@ input CreateUserInput {
   role: Role!
 }
 
+input CreateVehicleDocumentInput {
+  expiryDate: DateTime!
+  issuedDate: DateTime
+  provider: String
+  type: DocumentType!
+  vehicleId: String!
+}
+
+input CreateVehicleExpenseInput {
+  amount: Float!
+  date: DateTime!
+  description: String
+  type: ExpenseType!
+  vehicleId: String!
+}
+
+input CreateVehicleInput {
+  brand: String!
+  chassisNumber: String!
+  fuelType: FuelType!
+  model: String!
+  plateNumber: String!
+  year: Int!
+}
+
+input CreateVehicleLeaseInput {
+  endDate: DateTime!
+  monthlyRate: Float!
+  notes: String
+  provider: String!
+  startDate: DateTime!
+  vehicleId: String!
+}
+
 input CreateWarehouseInput {
   address: String
   city: String
@@ -152,6 +193,13 @@ type DashboardMetrics {
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
 scalar DateTime
+
+enum DocumentType {
+  CASCO
+  ITP
+  RCA
+  ROVINIETA
+}
 
 type Employee {
   address: String!
@@ -180,10 +228,28 @@ type Employee {
   userId: String
 }
 
+enum ExpenseType {
+  FUEL
+  OTHER
+  REPAIR
+}
+
+type ExpiringDocumentSummary {
+  count: Int!
+  type: DocumentType!
+}
+
 type FinanceAgingBucket {
   amount: Float!
   invoiceCount: Int!
   label: String!
+}
+
+enum FuelType {
+  DIESEL
+  ELECTRIC
+  HYBRID
+  PETROL
 }
 
 type HrLeaveSummary {
@@ -294,6 +360,15 @@ input LoginInput {
   password: String!
 }
 
+type MileageLog {
+  createdAt: DateTime!
+  date: DateTime!
+  id: ID!
+  notes: String
+  odometer: Int!
+  vehicleId: String!
+}
+
 type Mutation {
   """Approve or reject a leave request"""
   approveOrRejectLeaveRequest(approveLeaveRequestInput: ApproveLeaveRequestInput!): LeaveRequest!
@@ -312,6 +387,7 @@ type Mutation {
 
   """Create a new leave request"""
   createLeaveRequest(createLeaveRequestInput: CreateLeaveRequestInput!): LeaveRequest!
+  createMileageLog(createMileageLogInput: CreateMileageLogInput!): MileageLog!
 
   """Create a new partner"""
   createPartner(createPartnerInput: CreatePartnerInput!): Partner!
@@ -327,15 +403,24 @@ type Mutation {
 
   """Create a new user account"""
   createUser(createUserInput: CreateUserInput!): User!
+  createVehicle(createVehicleInput: CreateVehicleInput!): Vehicle!
+  createVehicleDocument(createVehicleDocumentInput: CreateVehicleDocumentInput!): VehicleDocument!
+  createVehicleExpense(createVehicleExpenseInput: CreateVehicleExpenseInput!): VehicleExpense!
+  createVehicleLease(createVehicleLeaseInput: CreateVehicleLeaseInput!): VehicleLease!
 
   """Create a new warehouse"""
   createWarehouse(createWarehouseInput: CreateWarehouseInput!): Warehouse!
 
   """Delete an invoice"""
   deleteInvoice(id: String!): Invoice!
+  deleteMileageLog(id: String!): MileageLog!
 
   """Delete a partner"""
   deletePartner(id: String!): Partner!
+  deleteVehicle(id: String!): Vehicle!
+  deleteVehicleDocument(id: String!): VehicleDocument!
+  deleteVehicleExpense(id: String!): VehicleExpense!
+  deleteVehicleLease(id: String!): VehicleLease!
 
   """Link an existing employee to an existing user account"""
   linkEmployeeToUser(linkEmployeeUserInput: LinkEmployeeUserInput!): Employee!
@@ -356,6 +441,9 @@ type Mutation {
 
   """Update user profile picture"""
   updateProfilePicture(updateProfilePictureInput: UpdateProfilePictureInput!): User!
+  updateVehicle(updateVehicleInput: UpdateVehicleInput!): Vehicle!
+  updateVehicleDocument(updateVehicleDocumentInput: UpdateVehicleDocumentInput!): VehicleDocument!
+  updateVehicleLease(updateVehicleLeaseInput: UpdateVehicleLeaseInput!): VehicleLease!
 }
 
 type PaginatedEmployee {
@@ -375,6 +463,11 @@ type PaginatedPartner {
 
 type PaginatedProduct {
   items: [Product!]!
+  meta: PaginationMeta!
+}
+
+type PaginatedVehicle {
+  items: [Vehicle!]!
   meta: PaginationMeta!
 }
 
@@ -482,6 +575,7 @@ type Query {
 
   """Get employees by department"""
   employeesByDepartment(department: String!): [Employee!]!
+  expiringDocuments(daysAhead: Int!): [ExpiringDocumentSummary!]!
 
   """Aging analysis for outstanding invoice amounts"""
   financeAgingSummary: [FinanceAgingBucket!]!
@@ -504,6 +598,7 @@ type Query {
   """Get products below minimum stock"""
   lowStockProducts: [Product!]!
   me: User!
+  mileageLogs(vehicleId: String!): [MileageLog!]!
 
   """Get current user employee profile"""
   myEmployeeProfile: Employee
@@ -537,6 +632,11 @@ type Query {
 
   """Get all users"""
   users: [User!]!
+  vehicle(id: String!): Vehicle
+  vehicleDocuments(vehicleId: String!): [VehicleDocument!]!
+  vehicleExpenses(vehicleId: String!): [VehicleExpense!]!
+  vehicleLeases(vehicleId: String!): [VehicleLease!]!
+  vehicles(pagination: PaginationInput): PaginatedVehicle!
 
   """Get all warehouses (paginated)"""
   warehouses(pagination: PaginationInput): PaginatedWarehouse!
@@ -636,6 +736,33 @@ input UpdateProfilePictureInput {
   profilePicture: String
 }
 
+input UpdateVehicleDocumentInput {
+  expiryDate: DateTime
+  id: String!
+  issuedDate: DateTime
+  provider: String
+}
+
+input UpdateVehicleInput {
+  brand: String
+  chassisNumber: String
+  fuelType: FuelType
+  id: String!
+  model: String
+  plateNumber: String
+  status: VehicleStatus
+  year: Int
+}
+
+input UpdateVehicleLeaseInput {
+  endDate: DateTime
+  id: String!
+  monthlyRate: Float
+  notes: String
+  provider: String
+  startDate: DateTime
+}
+
 type User {
   createdAt: DateTime!
   email: String!
@@ -645,6 +772,62 @@ type User {
   profilePicture: String
   role: Role!
   updatedAt: DateTime!
+}
+
+type Vehicle {
+  brand: String!
+  chassisNumber: String!
+  createdAt: DateTime!
+  documents: [VehicleDocument!]
+  expenses: [VehicleExpense!]
+  fuelType: FuelType!
+  id: ID!
+  leases: [VehicleLease!]
+  mileageLogs: [MileageLog!]
+  model: String!
+  plateNumber: String!
+  status: VehicleStatus!
+  updatedAt: DateTime!
+  year: Int!
+}
+
+type VehicleDocument {
+  createdAt: DateTime!
+  expiryDate: DateTime!
+  id: ID!
+  issuedDate: DateTime
+  provider: String
+  type: DocumentType!
+  updatedAt: DateTime!
+  vehicleId: String!
+}
+
+type VehicleExpense {
+  amount: Float!
+  createdAt: DateTime!
+  date: DateTime!
+  description: String
+  id: ID!
+  type: ExpenseType!
+  vehicleId: String!
+}
+
+type VehicleLease {
+  createdAt: DateTime!
+  endDate: DateTime!
+  id: ID!
+  monthlyRate: Float!
+  notes: String
+  provider: String!
+  startDate: DateTime!
+  updatedAt: DateTime!
+  vehicleId: String!
+}
+
+enum VehicleStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
 }
 
 type Warehouse {

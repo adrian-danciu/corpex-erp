@@ -6,7 +6,14 @@
       "Bash(bun run start)",
       "Bash(ls:*)",
       "Bash(npx prisma migrate dev:*)",
-      "Bash(bun prisma migrate:*)"
+      "Bash(bun prisma migrate:*)",
+      "Bash(claude mcp:*)",
+      "Bash(python3:*)",
+      "Bash(node:*)",
+      "mcp__github__get_file_contents",
+      "mcp__github__search_repositories",
+      "Bash(cd:*)",
+      "Bash(sed:*)"
     ]
   }
 }
