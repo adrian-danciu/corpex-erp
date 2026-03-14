@@ -273,3 +273,92 @@ enum StockMovementType {
   OUT
   ADJUSTMENT
 }
+
+model Vehicle {
+  id            String           @id @default(uuid())
+  plateNumber   String           @unique
+  chassisNumber String           @unique
+  brand         String
+  model         String
+  year          Int
+  fuelType      FuelType
+  status        VehicleStatus    @default(ACTIVE)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  documents     VehicleDocument[]
+  mileageLogs   MileageLog[]
+  leases        VehicleLease[]
+  expenses      VehicleExpense[]
+}
+
+model VehicleDocument {
+  id         String       @id @default(uuid())
+  vehicleId  String
+  vehicle    Vehicle      @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  type       DocumentType
+  expiryDate DateTime
+  issuedDate DateTime?
+  provider   String?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+}
+
+model MileageLog {
+  id        String   @id @default(uuid())
+  vehicleId String
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  date      DateTime
+  odometer  Int
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
+model VehicleLease {
+  id          String   @id @default(uuid())
+  vehicleId   String
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  provider    String
+  startDate   DateTime
+  endDate     DateTime
+  monthlyRate Float
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model VehicleExpense {
+  id          String      @id @default(uuid())
+  vehicleId   String
+  vehicle     Vehicle     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  type        ExpenseType
+  amount      Float
+  date        DateTime
+  description String?
+  createdAt   DateTime    @default(now())
+}
+
+enum FuelType {
+  DIESEL
+  PETROL
+  ELECTRIC
+  HYBRID
+}
+
+enum VehicleStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+}
+
+enum DocumentType {
+  ITP
+  RCA
+  CASCO
+  ROVINIETA
+}
+
+enum ExpenseType {
+  FUEL
+  REPAIR
+  OTHER
+}

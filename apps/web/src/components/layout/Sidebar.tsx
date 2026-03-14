@@ -21,6 +21,7 @@ import {
   Building2,
   Receipt,
   Boxes,
+  Car,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -141,6 +142,12 @@ const menuItems: MenuItem[] = [
     href: "/reports",
     icon: BarChart3,
     roles: ["ADMIN", "MANAGER"],
+  },
+  {
+    title: "Fleet",
+    href: "/fleet",
+    icon: Car,
+    roles: [],
   },
   {
     title: "Profile",

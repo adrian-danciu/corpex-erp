@@ -1,6 +1,7 @@
 import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
 import { AlertCircle, Briefcase, Loader2, Users as UsersIcon } from "lucide-react";
+import { FleetExpiryWidget } from "@/components/dashboard/FleetExpiryWidget";
 import { useAuthStore } from "@/stores/auth.store";
 
 const DASHBOARD_METRICS_QUERY = gql`
@@ -140,6 +141,7 @@ export default function DashboardPage() {
             </div>
             <p className="text-xs text-muted-foreground">Payments registered in the system</p>
           </div>
+          <FleetExpiryWidget />
         </div>
       )}
     </div>

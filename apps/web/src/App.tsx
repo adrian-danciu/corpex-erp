@@ -27,6 +27,9 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Layout from "./components/layout/Layout";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import ReportsPage from "./pages/ReportsPage";
+import VehiclesPage from "./pages/fleet/VehiclesPage";
+import VehicleCreatePage from "./pages/fleet/VehicleCreatePage";
+import VehicleDetailPage from "./pages/fleet/VehicleDetailPage";
 
 function App() {
   return (
@@ -246,6 +249,36 @@ function App() {
               <ProtectedRoute requiredRole={["ADMIN", "MANAGER"]}>
                 <DashboardLayout>
                   <ReportsPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/fleet"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <VehiclesPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/fleet/create"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <VehicleCreatePage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/fleet/:id"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <VehicleDetailPage />
                 </DashboardLayout>
               </ProtectedRoute>
             }

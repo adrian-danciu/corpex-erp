@@ -12,6 +12,7 @@ import { EmployeesModule } from './employees/employees.module';
 import { FinanceModule } from './finance/finance.module';
 import { ReportingModule } from './reporting/reporting.module';
 import { StockModule } from './stock/stock.module';
+import { FleetModule } from './fleet/fleet.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { StockModule } from './stock/stock.module';
     FinanceModule,
     ReportingModule,
     StockModule,
+    FleetModule,
   ],
   controllers: [AppController],
   providers: [AppService],
