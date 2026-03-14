@@ -119,6 +119,6 @@ export class FleetReportRow {
   @Field(() => Date, { nullable: true })
   nearestDocumentExpiry?: Date | null;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   nearestDocumentType?: string | null;
 }
