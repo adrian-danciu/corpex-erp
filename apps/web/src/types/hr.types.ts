@@ -1,4 +1,6 @@
 import type { User } from "./auth.types";
+import { Department } from "./auth.types";
+export { Department };
 
 export enum ContractType {
   FULL_TIME = "FULL_TIME",
@@ -38,7 +40,7 @@ export interface Employee {
   city: string;
   country: string;
   position: string;
-  department: string;
+  department: Department;
   contractType: ContractType;
   employmentDate: string;
   contractEndDate?: string | null;
@@ -81,7 +83,7 @@ export interface CreateEmployeeInput {
   city: string;
   country?: string;
   position: string;
-  department: string;
+  department: Department;
   contractType: ContractType;
   employmentDate: string;
   contractEndDate?: string;
@@ -96,7 +98,7 @@ export interface UpdateEmployeeInput {
   address?: string;
   city?: string;
   position?: string;
-  department?: string;
+  department?: Department;
   salary?: number;
   annualLeaveDays?: number;
   remainingLeave?: number;

@@ -6,13 +6,18 @@ import {
   Int,
   registerEnumType,
 } from '@nestjs/graphql';
-import { ContractType } from '@prisma/client';
+import { ContractType, Department } from '@prisma/client';
 import { User } from '../../users/entities/user.entity';
 
 // Register the ContractType enum for GraphQL
 registerEnumType(ContractType, {
   name: 'ContractType',
   description: 'Type of employment contract',
+});
+
+registerEnumType(Department, {
+  name: 'Department',
+  description: 'Employee department',
 });
 
 @ObjectType()
@@ -53,8 +58,8 @@ export class Employee {
   @Field()
   position: string;
 
-  @Field()
-  department: string;
+  @Field(() => Department)
+  department: Department;
 
   @Field(() => ContractType)
   contractType: ContractType;

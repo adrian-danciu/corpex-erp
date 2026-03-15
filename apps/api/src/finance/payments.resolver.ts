@@ -4,6 +4,8 @@ import { PaymentsService } from './payments.service';
 import { Payment } from './entities/payment.entity';
 import { CreatePaymentInput } from './dto/create-payment.input';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { DepartmentGuard } from '../auth/guards/department.guard';
+import { RequireModule } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
 
@@ -12,7 +14,8 @@ export class PaymentsResolver {
   constructor(private readonly paymentsService: PaymentsService) {}
 
   @Mutation(() => Payment, { description: 'Record a payment for an invoice' })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('finance', 'write')
   async createPayment(
     @Args('createPaymentInput') input: CreatePaymentInput,
     @CurrentUser() user: User,

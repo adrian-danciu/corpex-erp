@@ -8,6 +8,7 @@ import {
   UPDATE_EMPLOYEE_MUTATION,
   DELETE_EMPLOYEE_MUTATION,
 } from "@/graphql/mutations/employee.mutations";
+import { Department } from "@/types/hr.types";
 import type { Employee, UpdateEmployeeInput } from "@/types/hr.types";
 import { PaginatedResult } from "@/types/pagination.types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -292,7 +293,24 @@ export default function EmployeeDetailPage() {
                     </div>
                     <div className="space-y-2">
                       <Label>Department</Label>
-                      <Input {...register("department")} />
+                      <Controller
+                        name="department"
+                        control={control}
+                        render={({ field }) => (
+                          <Select value={field.value ?? ""} onValueChange={(v) => field.onChange(v as Department)}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select department" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Object.values(Department).map((dept) => (
+                                <SelectItem key={dept} value={dept}>
+                                  {dept.charAt(0) + dept.slice(1).toLowerCase()}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Phone Number</Label>

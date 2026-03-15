@@ -3,6 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { User } from "@/types/auth.types";
+import type { Department } from "@/types/auth.types";
+
+function decodeJwtPayload(token: string): { department?: Department | null; position?: string | null } {
+  try {
+    const payload = token.split(".")[1];
+    return JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+  } catch {
+    return {};
+  }
+}
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -32,7 +42,9 @@ export default function LoginForm() {
   }>(LOGIN_MUTATION, {
     onCompleted: (data) => {
       const { accessToken, refreshToken, user } = data.login;
-      login(accessToken, refreshToken, user);
+      const { department, position } = decodeJwtPayload(accessToken);
+      const enrichedUser: User = { ...user, department: department ?? null, position: position ?? null };
+      login(accessToken, refreshToken, enrichedUser);
       navigate("/dashboard");
     },
     onError: (error) => {

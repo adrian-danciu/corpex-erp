@@ -6,19 +6,23 @@ import { ExpiringDocumentSummary } from './entities/expiring-document-summary.ty
 import { CreateVehicleDocumentInput } from './dto/create-vehicle-document.input';
 import { UpdateVehicleDocumentInput } from './dto/update-vehicle-document.input';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { DepartmentGuard } from '../auth/guards/department.guard';
+import { RequireModule } from '../auth/decorators/roles.decorator';
 
 @Resolver(() => VehicleDocument)
 export class VehicleDocumentsResolver {
   constructor(private readonly vehicleDocumentsService: VehicleDocumentsService) {}
 
   @Query(() => [VehicleDocument], { name: 'vehicleDocuments' })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('fleet', 'read')
   async findByVehicle(@Args('vehicleId') vehicleId: string): Promise<VehicleDocument[]> {
     return this.vehicleDocumentsService.findByVehicle(vehicleId);
   }
 
   @Query(() => [ExpiringDocumentSummary], { name: 'expiringDocuments' })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('fleet', 'read')
   async findExpiring(
     @Args('daysAhead', { type: () => Int }) daysAhead: number,
   ): Promise<ExpiringDocumentSummary[]> {
@@ -26,7 +30,8 @@ export class VehicleDocumentsResolver {
   }
 
   @Mutation(() => VehicleDocument)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('fleet', 'write')
   async createVehicleDocument(
     @Args('createVehicleDocumentInput') input: CreateVehicleDocumentInput,
   ): Promise<VehicleDocument> {
@@ -34,7 +39,8 @@ export class VehicleDocumentsResolver {
   }
 
   @Mutation(() => VehicleDocument)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('fleet', 'write')
   async updateVehicleDocument(
     @Args('updateVehicleDocumentInput') input: UpdateVehicleDocumentInput,
   ): Promise<VehicleDocument> {
@@ -42,7 +48,8 @@ export class VehicleDocumentsResolver {
   }
 
   @Mutation(() => VehicleDocument)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('fleet', 'write')
   async deleteVehicleDocument(@Args('id') id: string): Promise<VehicleDocument> {
     return this.vehicleDocumentsService.remove(id);
   }

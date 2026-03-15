@@ -1,7 +1,8 @@
 import { UseGuards } from '@nestjs/common';
 import { Query, Resolver } from '@nestjs/graphql';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { DepartmentGuard } from '../auth/guards/department.guard';
+import { RequireModule } from '../auth/decorators/roles.decorator';
 import { ReportingService } from './reporting.service';
 import {
   DashboardMetrics,
@@ -20,8 +21,8 @@ export class ReportingResolver {
     name: 'dashboardMetrics',
     description: 'High-level KPIs for the main dashboard',
   })
-  @UseGuards(JwtAuthGuard)
-  @Roles('ADMIN', 'MANAGER', 'FINANCE', 'HR')
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('dashboard', 'read')
   async getDashboardMetrics(): Promise<DashboardMetrics> {
     return this.reportingService.getDashboardMetrics();
   }
@@ -30,8 +31,8 @@ export class ReportingResolver {
     name: 'hrLeaveSummary',
     description: 'Aggregated leave requests by status',
   })
-  @UseGuards(JwtAuthGuard)
-  @Roles('ADMIN', 'MANAGER', 'HR')
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('hr', 'read')
   async getHrLeaveSummary(): Promise<HrLeaveSummary[]> {
     return this.reportingService.getHrLeaveSummary();
   }
@@ -40,29 +41,29 @@ export class ReportingResolver {
     name: 'financeAgingSummary',
     description: 'Aging analysis for outstanding invoice amounts',
   })
-  @UseGuards(JwtAuthGuard)
-  @Roles('ADMIN', 'MANAGER', 'FINANCE')
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('finance', 'read')
   async getFinanceAgingSummary(): Promise<FinanceAgingBucket[]> {
     return this.reportingService.getFinanceAgingSummary();
   }
 
   @Query(() => [EmployeeReportRow], { name: 'employeeReport' })
-  @UseGuards(JwtAuthGuard)
-  @Roles('ADMIN', 'MANAGER', 'HR')
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('hr', 'read')
   async getEmployeeReport(): Promise<EmployeeReportRow[]> {
     return this.reportingService.getEmployeeReport();
   }
 
   @Query(() => [StockReportRow], { name: 'stockReport' })
-  @UseGuards(JwtAuthGuard)
-  @Roles('ADMIN', 'MANAGER')
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('stock', 'read')
   async getStockReport(): Promise<StockReportRow[]> {
     return this.reportingService.getStockReport();
   }
 
   @Query(() => [FleetReportRow], { name: 'fleetReport' })
-  @UseGuards(JwtAuthGuard)
-  @Roles('ADMIN', 'MANAGER')
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('fleet', 'read')
   async getFleetReport(): Promise<FleetReportRow[]> {
     return this.reportingService.getFleetReport();
   }

@@ -29,7 +29,7 @@ async function main() {
       lastName: 'Admin',
       email: 'finance@corpex.ro',
       password: hashedPassword,
-      role: Role.FINANCE,
+      role: Role.USER,
     },
   });
 

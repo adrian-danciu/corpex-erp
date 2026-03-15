@@ -5,6 +5,8 @@ import { Invoice } from './entities/invoice.entity';
 import { CreateInvoiceInput } from './dto/create-invoice.input';
 import { UpdateInvoiceStatusInput } from './dto/update-invoice-status.input';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { DepartmentGuard } from '../auth/guards/department.guard';
+import { RequireModule } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
 import { PaginationInput } from '../common/dto/pagination.input';
@@ -18,7 +20,8 @@ export class InvoicesResolver {
     name: 'invoices',
     description: 'Get all invoices (paginated)',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('finance', 'read')
   async findAllInvoices(
     @Args('pagination', { nullable: true, type: () => PaginationInput })
     pagination?: PaginationInput,
@@ -32,13 +35,15 @@ export class InvoicesResolver {
     description: 'Get an invoice by ID',
     nullable: true,
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('finance', 'read')
   async findOneInvoice(@Args('id') id: string): Promise<Invoice | null> {
     return this.invoicesService.findOne(id);
   }
 
   @Mutation(() => Invoice, { description: 'Create a new invoice' })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('finance', 'write')
   async createInvoice(
     @Args('createInvoiceInput') input: CreateInvoiceInput,
     @CurrentUser() user: User,
@@ -47,7 +52,8 @@ export class InvoicesResolver {
   }
 
   @Mutation(() => Invoice, { description: 'Update invoice status' })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('finance', 'write')
   async updateInvoiceStatus(
     @Args('updateInvoiceStatusInput') input: UpdateInvoiceStatusInput,
   ): Promise<Invoice> {
@@ -55,7 +61,8 @@ export class InvoicesResolver {
   }
 
   @Mutation(() => Invoice, { description: 'Delete an invoice' })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('finance', 'write')
   async deleteInvoice(@Args('id') id: string): Promise<Invoice> {
     return this.invoicesService.remove(id);
   }

@@ -1,23 +1,35 @@
 import { Navigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth.store";
+import { canAccess } from "@/lib/permissions";
+import type { ModulePermissions } from "@/lib/permissions";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRole?: string[];
+  requiredModule?: keyof ModulePermissions;
+  requiredAccess?: "read" | "write";
 }
 
-export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
+export default function ProtectedRoute({
+  children,
+  requiredRole,
+  requiredModule,
+  requiredAccess = "read",
+}: ProtectedRouteProps) {
   const { isAuthenticated, user } = useAuthStore();
 
-  // Not authenticated - redirect to login
   if (!isAuthenticated || !user) {
     return <Navigate to="/" replace />;
   }
 
-  // Check role if required
   if (requiredRole && requiredRole.length > 0) {
     if (!requiredRole.includes(user.role)) {
-      // User doesn't have required role - redirect to dashboard
+      return <Navigate to="/dashboard" replace />;
+    }
+  }
+
+  if (requiredModule) {
+    if (!canAccess(user, requiredModule, requiredAccess)) {
       return <Navigate to="/dashboard" replace />;
     }
   }

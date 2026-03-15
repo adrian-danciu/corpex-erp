@@ -6,6 +6,9 @@ import { CreateEmployeeInput } from './dto/create-employee.input';
 import { UpdateEmployeeInput } from './dto/update-employee.input';
 import { LinkEmployeeUserInput } from './dto/link-employee-user.input';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { DepartmentGuard } from '../auth/guards/department.guard';
+import { RequireModule } from '../auth/decorators/roles.decorator';
+import { Department } from '@prisma/client';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
 import { PaginationInput } from '../common/dto/pagination.input';
@@ -16,7 +19,8 @@ export class EmployeesResolver {
   constructor(private readonly employeesService: EmployeesService) {}
 
   @Mutation(() => Employee, { description: 'Create a new employee record' })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('hr', 'write')
   async createEmployee(
     @Args('createEmployeeInput') createEmployeeInput: CreateEmployeeInput,
   ): Promise<Employee> {
@@ -27,7 +31,8 @@ export class EmployeesResolver {
     name: 'employees',
     description: 'Get all employees (paginated)',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('hr', 'read')
   async findAllEmployees(
     @Args('pagination', { nullable: true, type: () => PaginationInput })
     pagination?: PaginationInput,
@@ -41,7 +46,8 @@ export class EmployeesResolver {
     description: 'Get an employee by ID',
     nullable: true,
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('hr', 'read')
   async findOneEmployee(@Args('id') id: string): Promise<Employee | null> {
     return this.employeesService.findOne(id);
   }
@@ -74,9 +80,10 @@ export class EmployeesResolver {
     name: 'employeesByDepartment',
     description: 'Get employees by department',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('hr', 'read')
   async findEmployeesByDepartment(
-    @Args('department') department: string,
+    @Args('department', { type: () => Department }) department: Department,
   ): Promise<Employee[]> {
     return this.employeesService.findByDepartment(department);
   }
@@ -95,7 +102,8 @@ export class EmployeesResolver {
   }
 
   @Mutation(() => Employee, { description: 'Update an employee record' })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('hr', 'write')
   async updateEmployee(
     @Args('updateEmployeeInput') updateEmployeeInput: UpdateEmployeeInput,
   ): Promise<Employee> {
@@ -103,7 +111,8 @@ export class EmployeesResolver {
   }
 
   @Mutation(() => Employee, { description: 'Delete an employee record' })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('hr', 'write')
   async removeEmployee(@Args('id') id: string): Promise<Employee> {
     return this.employeesService.remove(id);
   }
@@ -111,7 +120,8 @@ export class EmployeesResolver {
   @Mutation(() => Employee, {
     description: 'Link an existing employee to an existing user account',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('hr', 'write')
   async linkEmployeeToUser(
     @Args('linkEmployeeUserInput') linkEmployeeUserInput: LinkEmployeeUserInput,
   ): Promise<Employee> {

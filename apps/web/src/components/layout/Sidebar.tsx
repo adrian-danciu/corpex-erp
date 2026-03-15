@@ -27,6 +27,7 @@ import type { LucideIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth.store";
+import { canAccess, getPermissions } from "@/lib/permissions";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -37,130 +38,41 @@ interface MenuItem {
   title: string;
   href: string;
   icon: LucideIcon;
-  roles: string[];
   children?: MenuItem[];
 }
 
-// Menu items with role-based access control
 const menuItems: MenuItem[] = [
-  {
-    title: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-    roles: [],
-  },
-  {
-    title: "IT / Users",
-    href: "/users",
-    icon: Users,
-    roles: ["ADMIN", "MANAGER"],
-  },
-  {
-    title: "Employees",
-    href: "/hr/employees",
-    icon: UserCheck,
-    roles: ["ADMIN", "HR", "MANAGER"],
-  },
-  {
-    title: "Leave Requests",
-    href: "/hr/leave-requests",
-    icon: Calendar,
-    roles: [],
-  },
-  {
-    title: "Approvals",
-    href: "/hr/approvals",
-    icon: Briefcase,
-    roles: ["ADMIN", "MANAGER"],
-  },
-  {
-    title: "Projects",
-    href: "/projects",
-    icon: FolderKanban,
-    roles: [],
-  },
+  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { title: "IT / Users", href: "/users", icon: Users },
+  { title: "Employees", href: "/hr/employees", icon: UserCheck },
+  { title: "Leave Requests", href: "/hr/leave-requests", icon: Calendar },
+  { title: "Approvals", href: "/hr/approvals", icon: Briefcase },
+  { title: "Projects", href: "/projects", icon: FolderKanban },
   {
     title: "Stock & Warehouse",
     href: "/stock",
     icon: Package,
-    roles: ["ADMIN", "MANAGER"],
     children: [
-      {
-        title: "Overview",
-        href: "/stock",
-        icon: Boxes,
-        roles: ["ADMIN", "MANAGER"],
-      },
-      {
-        title: "Products",
-        href: "/stock/products",
-        icon: Package,
-        roles: ["ADMIN", "MANAGER"],
-      },
-      {
-        title: "Warehouses",
-        href: "/stock/warehouses",
-        icon: Building2,
-        roles: ["ADMIN", "MANAGER"],
-      },
-      {
-        title: "Movements",
-        href: "/stock/movements",
-        icon: Briefcase,
-        roles: ["ADMIN", "MANAGER"],
-      },
+      { title: "Overview", href: "/stock", icon: Boxes },
+      { title: "Products", href: "/stock/products", icon: Package },
+      { title: "Warehouses", href: "/stock/warehouses", icon: Building2 },
+      { title: "Movements", href: "/stock/movements", icon: Briefcase },
     ],
   },
-  {
-    title: "Documents",
-    href: "/documents",
-    icon: FileText,
-    roles: [],
-  },
+  { title: "Documents", href: "/documents", icon: FileText },
   {
     title: "Finance",
     href: "/finance",
     icon: DollarSign,
-    roles: ["ADMIN", "FINANCE", "MANAGER"],
     children: [
-      {
-        title: "Partners",
-        href: "/finance/partners",
-        icon: Building2,
-        roles: ["ADMIN", "FINANCE", "MANAGER"],
-      },
-      {
-        title: "Invoices",
-        href: "/finance/invoices",
-        icon: Receipt,
-        roles: ["ADMIN", "FINANCE", "MANAGER"],
-      },
+      { title: "Partners", href: "/finance/partners", icon: Building2 },
+      { title: "Invoices", href: "/finance/invoices", icon: Receipt },
     ],
   },
-  {
-    title: "Reports",
-    href: "/reports",
-    icon: BarChart3,
-    roles: ["ADMIN", "MANAGER"],
-  },
-  {
-    title: "Fleet",
-    href: "/fleet",
-    icon: Car,
-    roles: [],
-  },
-  {
-    title: "Profile",
-    href: "/profile",
-    icon: UserCircle,
-    roles: [],
-  },
-  {
-    title: "Settings",
-    href: "/settings",
-    icon: Settings,
-    roles: ["ADMIN"],
-  },
+  { title: "Reports", href: "/reports", icon: BarChart3 },
+  { title: "Fleet", href: "/fleet", icon: Car },
+  { title: "Profile", href: "/profile", icon: UserCircle },
+  { title: "Settings", href: "/settings", icon: Settings },
 ];
 
 export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
@@ -168,9 +80,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
 
-  // Track which parent menus are expanded
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(() => {
-    // Auto-expand parent if we're on a child route
     const initial: Record<string, boolean> = {};
     menuItems.forEach((item) => {
       if (item.children && location.pathname.startsWith(item.href)) {
@@ -189,15 +99,47 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
     navigate("/");
   };
 
-  // Get user initials for avatar
   const initials = user
     ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()
     : "";
 
-  // Filter menu items based on user role
-  const isVisible = (item: MenuItem) => {
-    if (item.roles.length === 0) return true;
-    return user && item.roles.includes(user.role);
+  const isVisible = (item: MenuItem): boolean => {
+    if (!user) return false;
+    if (user.role === "ADMIN") return true;
+
+    switch (item.href) {
+      case "/dashboard":
+      case "/profile":
+      case "/hr/leave-requests":
+      case "/hr/org-chart":
+        return true;
+      case "/hr/employees":
+      case "/hr/employees/new":
+        return canAccess(user, "hr");
+      case "/hr/approvals":
+        return canAccess(user, "leaveApprovals", true);
+      case "/finance":
+      case "/finance/partners":
+      case "/finance/invoices":
+        return canAccess(user, "finance");
+      case "/stock":
+      case "/stock/products":
+      case "/stock/warehouses":
+      case "/stock/movements":
+        return canAccess(user, "stock");
+      case "/fleet":
+        return canAccess(user, "fleet");
+      case "/reports": {
+        const perms = getPermissions(user);
+        return perms ? perms.reports !== "none" : false;
+      }
+      case "/users":
+      case "/it/user-create":
+      case "/settings":
+        return false;
+      default:
+        return false;
+    }
   };
 
   const visibleMenuItems = menuItems.filter(isVisible);
@@ -281,7 +223,6 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
       )}
     >
       <div className="flex h-full flex-col">
-        {/* Logo/Brand at the top */}
         <div className="flex h-16 items-center justify-between border-b px-4">
           {!isCollapsed && (
             <div className="text-xl font-bold text-slate-900">Corpex ERP</div>
@@ -300,16 +241,13 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
           </Button>
         </div>
 
-        {/* Navigation Links */}
         <nav className="flex-1 space-y-1 p-2 overflow-y-auto">
           {visibleMenuItems.map((item) => renderMenuItem(item))}
         </nav>
 
-        {/* User info and logout at bottom */}
         <Separator />
         <div className="p-3">
           {isCollapsed ? (
-            // Collapsed view - just avatar and logout icon
             <div className="flex flex-col items-center gap-2">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
                 {initials}
@@ -325,7 +263,6 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
               </Button>
             </div>
           ) : (
-            // Expanded view - full user info and logout button
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground flex-shrink-0">
@@ -336,7 +273,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
                     {user?.firstName} {user?.lastName}
                   </p>
                   <p className="text-xs text-slate-500 capitalize truncate">
-                    {user?.role.toLowerCase()}
+                    {user?.department ?? user?.role.toLowerCase()}
                   </p>
                 </div>
               </div>

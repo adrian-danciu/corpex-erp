@@ -12,6 +12,7 @@ import EmployeeCreatePage from "./pages/hr/EmployeeCreatePage";
 import EmployeeDetailPage from "./pages/hr/EmployeeDetailPage";
 import LeaveRequestsPage from "./pages/hr/LeaveRequestsPage";
 import ApprovalsPage from "./pages/hr/ApprovalsPage";
+import OrgChartPage from "./pages/hr/OrgChartPage";
 import FinanceOverviewPage from "./pages/finance/FinanceOverviewPage";
 import PartnersPage from "./pages/finance/PartnersPage";
 import PartnerCreatePage from "./pages/finance/PartnerCreatePage";
@@ -37,17 +38,15 @@ function App() {
     <ApolloProvider client={apolloClient}>
       <BrowserRouter>
         <Routes>
-          {/* Public routes with basic layout */}
+          {/* Public routes */}
           <Route path="/" element={<Layout><LoginPage /></Layout>} />
 
-          {/* Protected routes with dashboard layout */}
+          {/* Protected routes */}
           <Route
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <DashboardLayout>
-                  <DashboardPage />
-                </DashboardLayout>
+                <DashboardLayout><DashboardPage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
@@ -55,51 +54,59 @@ function App() {
             path="/profile"
             element={
               <ProtectedRoute>
-                <DashboardLayout>
-                  <ProfilePage />
-                </DashboardLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/it/user-create"
-            element={
-              <ProtectedRoute requiredRole={["ADMIN"]}>
-                <DashboardLayout>
-                  <UserCreatePage />
-                </DashboardLayout>
+                <DashboardLayout><ProfilePage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
 
-          {/* HR Module Routes */}
+          {/* Admin-only */}
+          <Route
+            path="/it/user-create"
+            element={
+              <ProtectedRoute requiredRole={["ADMIN"]}>
+                <DashboardLayout><UserCreatePage /></DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute requiredRole={["ADMIN"]}>
+                <DashboardLayout><UsersAdminPage /></DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* HR Module */}
           <Route
             path="/hr/employees"
             element={
-              <ProtectedRoute requiredRole={["ADMIN", "HR", "MANAGER"]}>
-                <DashboardLayout>
-                  <EmployeesPage />
-                </DashboardLayout>
+              <ProtectedRoute requiredModule="hr" requiredAccess="read">
+                <DashboardLayout><EmployeesPage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
           <Route
             path="/hr/employees/new"
             element={
-              <ProtectedRoute requiredRole={["ADMIN", "HR", "MANAGER"]}>
-                <DashboardLayout>
-                  <EmployeeCreatePage />
-                </DashboardLayout>
+              <ProtectedRoute requiredModule="hr" requiredAccess="write">
+                <DashboardLayout><EmployeeCreatePage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
           <Route
             path="/hr/employees/:id"
             element={
-              <ProtectedRoute requiredRole={["ADMIN", "HR", "MANAGER"]}>
-                <DashboardLayout>
-                  <EmployeeDetailPage />
-                </DashboardLayout>
+              <ProtectedRoute requiredModule="hr" requiredAccess="read">
+                <DashboardLayout><EmployeeDetailPage /></DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hr/org-chart"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout><OrgChartPage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
@@ -107,193 +114,155 @@ function App() {
             path="/hr/leave-requests"
             element={
               <ProtectedRoute>
-                <DashboardLayout>
-                  <LeaveRequestsPage />
-                </DashboardLayout>
+                <DashboardLayout><LeaveRequestsPage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
           <Route
             path="/hr/approvals"
             element={
-              <ProtectedRoute requiredRole={["ADMIN", "MANAGER"]}>
-                <DashboardLayout>
-                  <ApprovalsPage />
-                </DashboardLayout>
+              <ProtectedRoute requiredModule="leaveApprovals">
+                <DashboardLayout><ApprovalsPage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
-          {/* Finance Module Routes */}
+
+          {/* Finance Module */}
           <Route
             path="/finance"
             element={
-              <ProtectedRoute requiredRole={["ADMIN", "FINANCE", "MANAGER"]}>
-                <DashboardLayout>
-                  <FinanceOverviewPage />
-                </DashboardLayout>
+              <ProtectedRoute requiredModule="finance" requiredAccess="read">
+                <DashboardLayout><FinanceOverviewPage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
           <Route
             path="/finance/partners"
             element={
-              <ProtectedRoute requiredRole={["ADMIN", "FINANCE", "MANAGER"]}>
-                <DashboardLayout>
-                  <PartnersPage />
-                </DashboardLayout>
+              <ProtectedRoute requiredModule="finance" requiredAccess="read">
+                <DashboardLayout><PartnersPage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
           <Route
             path="/finance/partners/new"
             element={
-              <ProtectedRoute requiredRole={["ADMIN", "FINANCE", "MANAGER"]}>
-                <DashboardLayout>
-                  <PartnerCreatePage />
-                </DashboardLayout>
+              <ProtectedRoute requiredModule="finance" requiredAccess="write">
+                <DashboardLayout><PartnerCreatePage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
           <Route
             path="/finance/partners/:id"
             element={
-              <ProtectedRoute requiredRole={["ADMIN", "FINANCE", "MANAGER"]}>
-                <DashboardLayout>
-                  <PartnerDetailPage />
-                </DashboardLayout>
+              <ProtectedRoute requiredModule="finance" requiredAccess="read">
+                <DashboardLayout><PartnerDetailPage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
           <Route
             path="/finance/invoices"
             element={
-              <ProtectedRoute requiredRole={["ADMIN", "FINANCE", "MANAGER"]}>
-                <DashboardLayout>
-                  <InvoicesPage />
-                </DashboardLayout>
+              <ProtectedRoute requiredModule="finance" requiredAccess="read">
+                <DashboardLayout><InvoicesPage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
           <Route
             path="/finance/invoices/new"
             element={
-              <ProtectedRoute requiredRole={["ADMIN", "FINANCE", "MANAGER"]}>
-                <DashboardLayout>
-                  <InvoiceCreatePage />
-                </DashboardLayout>
+              <ProtectedRoute requiredModule="finance" requiredAccess="write">
+                <DashboardLayout><InvoiceCreatePage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
           <Route
             path="/finance/invoices/:id"
             element={
-              <ProtectedRoute requiredRole={["ADMIN", "FINANCE", "MANAGER"]}>
-                <DashboardLayout>
-                  <InvoiceDetailPage />
-                </DashboardLayout>
+              <ProtectedRoute requiredModule="finance" requiredAccess="read">
+                <DashboardLayout><InvoiceDetailPage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/users"
-            element={
-              <ProtectedRoute requiredRole={["ADMIN", "MANAGER"]}>
-                <DashboardLayout>
-                  <UsersAdminPage />
-                </DashboardLayout>
-              </ProtectedRoute>
-            }
-          />
+
+          {/* Stock Module */}
           <Route
             path="/stock"
             element={
-              <ProtectedRoute requiredRole={["ADMIN", "MANAGER"]}>
-                <DashboardLayout>
-                  <StockOverviewPage />
-                </DashboardLayout>
+              <ProtectedRoute requiredModule="stock" requiredAccess="read">
+                <DashboardLayout><StockOverviewPage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
           <Route
             path="/stock/products"
             element={
-              <ProtectedRoute requiredRole={["ADMIN", "MANAGER"]}>
-                <DashboardLayout>
-                  <ProductsPage />
-                </DashboardLayout>
+              <ProtectedRoute requiredModule="stock" requiredAccess="read">
+                <DashboardLayout><ProductsPage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
           <Route
             path="/stock/products/new"
             element={
-              <ProtectedRoute requiredRole={["ADMIN", "MANAGER"]}>
-                <DashboardLayout>
-                  <ProductCreatePage />
-                </DashboardLayout>
+              <ProtectedRoute requiredModule="stock" requiredAccess="write">
+                <DashboardLayout><ProductCreatePage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
           <Route
             path="/stock/warehouses"
             element={
-              <ProtectedRoute requiredRole={["ADMIN", "MANAGER"]}>
-                <DashboardLayout>
-                  <WarehousesPage />
-                </DashboardLayout>
+              <ProtectedRoute requiredModule="stock" requiredAccess="read">
+                <DashboardLayout><WarehousesPage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
           <Route
             path="/stock/movements"
             element={
-              <ProtectedRoute requiredRole={["ADMIN", "MANAGER"]}>
-                <DashboardLayout>
-                  <StockMovementsPage />
-                </DashboardLayout>
+              <ProtectedRoute requiredModule="stock" requiredAccess="read">
+                <DashboardLayout><StockMovementsPage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
+
+          {/* Reports */}
           <Route
             path="/reports"
             element={
-              <ProtectedRoute requiredRole={["ADMIN", "MANAGER"]}>
-                <DashboardLayout>
-                  <ReportsPage />
-                </DashboardLayout>
+              <ProtectedRoute requiredModule="reports">
+                <DashboardLayout><ReportsPage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
+
+          {/* Fleet Module */}
           <Route
             path="/fleet"
             element={
-              <ProtectedRoute>
-                <DashboardLayout>
-                  <VehiclesPage />
-                </DashboardLayout>
+              <ProtectedRoute requiredModule="fleet" requiredAccess="read">
+                <DashboardLayout><VehiclesPage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
           <Route
             path="/fleet/create"
             element={
-              <ProtectedRoute>
-                <DashboardLayout>
-                  <VehicleCreatePage />
-                </DashboardLayout>
+              <ProtectedRoute requiredModule="fleet" requiredAccess="write">
+                <DashboardLayout><VehicleCreatePage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
           <Route
             path="/fleet/:id"
             element={
-              <ProtectedRoute>
-                <DashboardLayout>
-                  <VehicleDetailPage />
-                </DashboardLayout>
+              <ProtectedRoute requiredModule="fleet" requiredAccess="read">
+                <DashboardLayout><VehicleDetailPage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
+
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>

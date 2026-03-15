@@ -3,7 +3,7 @@ import { GET_EMPLOYEES_QUERY } from "@/graphql/mutations/employee.mutations";
 import type { Employee } from "@/types/hr.types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, UserCheck, Briefcase, Calendar, Phone } from "lucide-react";
+import { Plus, UserCheck, Briefcase, Calendar, Phone, Network } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { Pagination } from "@/components/common/Pagination";
@@ -51,10 +51,16 @@ export default function EmployeesPage() {
           <h1 className="text-3xl font-bold text-slate-900">Employees</h1>
           <p className="text-slate-600 mt-1">Manage employee records and information</p>
         </div>
-        <Button onClick={() => navigate("/hr/employees/new")} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Employee
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate("/hr/org-chart")} className="gap-2">
+            <Network className="h-4 w-4" />
+            Org Chart
+          </Button>
+          <Button onClick={() => navigate("/hr/employees/new")} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Employee
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}

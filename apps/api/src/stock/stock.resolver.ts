@@ -1,8 +1,9 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { RequireModule } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { DepartmentGuard } from '../auth/guards/department.guard';
 import { PaginationInput } from '../common/dto/pagination.input';
 import { User } from '../users/entities/user.entity';
 import { CreateProductInput } from './dto/create-product.input';
@@ -18,7 +19,7 @@ import { Warehouse } from './entities/warehouse.entity';
 import { StockService } from './stock.service';
 
 @Resolver()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, DepartmentGuard)
 export class StockResolver {
   constructor(private readonly stockService: StockService) {}
 
@@ -26,7 +27,7 @@ export class StockResolver {
     name: 'warehouses',
     description: 'Get all warehouses (paginated)',
   })
-  @Roles('ADMIN', 'MANAGER')
+  @RequireModule('stock', 'read')
   async getWarehouses(
     @Args('pagination', { nullable: true, type: () => PaginationInput })
     pagination?: PaginationInput,
@@ -39,7 +40,7 @@ export class StockResolver {
     name: 'products',
     description: 'Get all products (paginated)',
   })
-  @Roles('ADMIN', 'MANAGER')
+  @RequireModule('stock', 'read')
   async getProducts(
     @Args('pagination', { nullable: true, type: () => PaginationInput })
     pagination?: PaginationInput,
@@ -53,7 +54,7 @@ export class StockResolver {
     name: 'lowStockProducts',
     description: 'Get products below minimum stock',
   })
-  @Roles('ADMIN', 'MANAGER')
+  @RequireModule('stock', 'read')
   async getLowStockProducts(): Promise<Product[]> {
     return this.stockService.findLowStockProducts();
   }
@@ -62,7 +63,7 @@ export class StockResolver {
     name: 'stockMovements',
     description: 'Get stock movements by optional filters',
   })
-  @Roles('ADMIN', 'MANAGER')
+  @RequireModule('stock', 'read')
   async getStockMovements(
     @Args('pagination', { nullable: true, type: () => PaginationInput })
     pagination?: PaginationInput,
@@ -77,13 +78,13 @@ export class StockResolver {
     name: 'stockOverview',
     description: 'Inventory overview KPIs',
   })
-  @Roles('ADMIN', 'MANAGER')
+  @RequireModule('stock', 'read')
   async getStockOverview(): Promise<StockOverview> {
     return this.stockService.getOverview();
   }
 
   @Mutation(() => Warehouse, { description: 'Create a new warehouse' })
-  @Roles('ADMIN', 'MANAGER')
+  @RequireModule('stock', 'write')
   async createWarehouse(
     @Args('createWarehouseInput') input: CreateWarehouseInput,
   ): Promise<Warehouse> {
@@ -91,7 +92,7 @@ export class StockResolver {
   }
 
   @Mutation(() => Product, { description: 'Create a new product' })
-  @Roles('ADMIN', 'MANAGER')
+  @RequireModule('stock', 'write')
   async createProduct(
     @Args('createProductInput') input: CreateProductInput,
   ): Promise<Product> {
@@ -101,7 +102,7 @@ export class StockResolver {
   @Mutation(() => StockMovement, {
     description: 'Register an incoming/outgoing stock movement',
   })
-  @Roles('ADMIN', 'MANAGER')
+  @RequireModule('stock', 'write')
   async createStockMovement(
     @Args('createStockMovementInput') input: CreateStockMovementInput,
     @CurrentUser() user: User,

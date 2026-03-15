@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CREATE_EMPLOYEE_MUTATION, GET_EMPLOYEES_QUERY } from "@/graphql/mutations/employee.mutations";
-import { ContractType, type CreateEmployeeInput, type Employee } from "@/types/hr.types";
+import { ContractType, Department, type CreateEmployeeInput, type Employee } from "@/types/hr.types";
 import { PaginatedResult } from "@/types/pagination.types";
 
 export default function EmployeeCreatePage() {
@@ -28,7 +28,7 @@ export default function EmployeeCreatePage() {
       city: "",
       country: "Romania",
       position: "",
-      department: "",
+      department: Department.HR,
       contractType: ContractType.FULL_TIME,
       employmentDate: "",
       contractEndDate: "",
@@ -201,11 +201,25 @@ export default function EmployeeCreatePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="department">Department *</Label>
-                <Input
-                  id="department"
-                  {...register("department", { required: "Department is required" })}
-                  className={errors.department ? "border-red-500" : ""}
+                <Label>Department *</Label>
+                <Controller
+                  name="department"
+                  control={control}
+                  rules={{ required: "Department is required" }}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={(v) => field.onChange(v as Department)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.values(Department).map((dept) => (
+                          <SelectItem key={dept} value={dept}>
+                            {dept.charAt(0) + dept.slice(1).toLowerCase()}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 />
                 {errors.department && (
                   <p className="text-sm text-red-500">{errors.department.message}</p>

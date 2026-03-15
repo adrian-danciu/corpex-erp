@@ -37,7 +37,7 @@ model Employee {
   city            String
   country         String       @default("Romania")
   position        String
-  department      String
+  department      Department
   contractType    ContractType
   employmentDate  DateTime
   contractEndDate DateTime?
@@ -210,10 +210,16 @@ model StockMovement {
 
 enum Role {
   USER
-  MANAGER
-  FINANCE
   ADMIN
+}
+
+enum Department {
   HR
+  FINANCE
+  WAREHOUSE
+  FLEET
+  MANAGEMENT
+  IT
 }
 
 enum ContractType {

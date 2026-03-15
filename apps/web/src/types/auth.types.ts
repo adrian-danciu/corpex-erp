@@ -1,3 +1,17 @@
+export enum UserRole {
+  USER = "USER",
+  ADMIN = "ADMIN",
+}
+
+export enum Department {
+  HR = "HR",
+  FINANCE = "FINANCE",
+  WAREHOUSE = "WAREHOUSE",
+  FLEET = "FLEET",
+  MANAGEMENT = "MANAGEMENT",
+  IT = "IT",
+}
+
 export interface User {
   id: string;
   firstName: string;
@@ -5,16 +19,10 @@ export interface User {
   email: string;
   profilePicture?: string;
   role: UserRole;
+  department?: Department | null;
+  position?: string | null;
   createdAt?: string;
   updatedAt?: string;
-}
-
-export enum UserRole {
-  USER = "USER",
-  MANAGER = "MANAGER",
-  FINANCE = "FINANCE",
-  HR = "HR",
-  ADMIN = "ADMIN",
 }
 
 export interface LoginInput {

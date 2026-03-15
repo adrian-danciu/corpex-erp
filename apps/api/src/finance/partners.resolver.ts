@@ -5,6 +5,8 @@ import { Partner } from './entities/partner.entity';
 import { CreatePartnerInput } from './dto/create-partner.input';
 import { UpdatePartnerInput } from './dto/update-partner.input';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { DepartmentGuard } from '../auth/guards/department.guard';
+import { RequireModule } from '../auth/decorators/roles.decorator';
 import { PaginationInput } from '../common/dto/pagination.input';
 import { PaginatedPartner } from './dto/paginated-partner.dto';
 
@@ -16,7 +18,8 @@ export class PartnersResolver {
     name: 'partners',
     description: 'Get all partners (paginated)',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('finance', 'read')
   async findAllPartners(
     @Args('pagination', { nullable: true, type: () => PaginationInput })
     pagination?: PaginationInput,
@@ -30,13 +33,15 @@ export class PartnersResolver {
     description: 'Get a partner by ID',
     nullable: true,
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('finance', 'read')
   async findOnePartner(@Args('id') id: string): Promise<Partner | null> {
     return this.partnersService.findOne(id);
   }
 
   @Mutation(() => Partner, { description: 'Create a new partner' })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('finance', 'write')
   async createPartner(
     @Args('createPartnerInput') input: CreatePartnerInput,
   ): Promise<Partner> {
@@ -44,7 +49,8 @@ export class PartnersResolver {
   }
 
   @Mutation(() => Partner, { description: 'Update a partner' })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('finance', 'write')
   async updatePartner(
     @Args('updatePartnerInput') input: UpdatePartnerInput,
   ): Promise<Partner> {
@@ -52,7 +58,8 @@ export class PartnersResolver {
   }
 
   @Mutation(() => Partner, { description: 'Delete a partner' })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('finance', 'write')
   async deletePartner(@Args('id') id: string): Promise<Partner> {
     return this.partnersService.remove(id);
   }

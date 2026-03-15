@@ -240,6 +240,21 @@ export const GET_MY_EMPLOYEE_PROFILE_QUERY = gql`
   }
 `;
 
+export const GET_ORG_CHART_QUERY = gql`
+  query GetOrgChart {
+    employees(pagination: { skip: 0, take: 1000 }) {
+      items {
+        id
+        firstName
+        lastName
+        position
+        department
+        managerId
+      }
+    }
+  }
+`;
+
 export const GET_EMPLOYEES_BY_DEPARTMENT_QUERY = gql`
   query GetEmployeesByDepartment($department: String!) {
     employeesByDepartment(department: $department) {

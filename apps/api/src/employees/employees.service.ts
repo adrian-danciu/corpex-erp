@@ -4,6 +4,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Department } from '@prisma/client';
 import { CreateEmployeeInput } from './dto/create-employee.input';
 import { UpdateEmployeeInput } from './dto/update-employee.input';
 import { Employee } from './entities/employee.entity';
@@ -227,7 +228,7 @@ export class EmployeesService {
    * @param department - Department name
    * @returns Array of employees in the department
    */
-  async findByDepartment(department: string): Promise<Employee[]> {
+  async findByDepartment(department: Department): Promise<Employee[]> {
     return this.prisma.employee.findMany({
       where: { department },
       include: {

@@ -1,5 +1,5 @@
 import { InputType, Field, Float, Int } from '@nestjs/graphql';
-import { ContractType } from '@prisma/client';
+import { ContractType, Department } from '@prisma/client';
 
 @InputType()
 export class CreateEmployeeInput {
@@ -33,8 +33,8 @@ export class CreateEmployeeInput {
   @Field()
   position: string;
 
-  @Field()
-  department: string;
+  @Field(() => Department)
+  department: Department;
 
   @Field(() => ContractType)
   contractType: ContractType;

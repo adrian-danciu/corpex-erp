@@ -228,6 +228,18 @@ type Employee {
   userId: String
 }
 
+type EmployeeReportRow {
+  annualLeaveDays: Int!
+  contractType: String!
+  department: String!
+  employmentDate: DateTime!
+  firstName: String!
+  id: String!
+  lastName: String!
+  position: String!
+  remainingLeave: Int!
+}
+
 enum ExpenseType {
   FUEL
   OTHER
@@ -243,6 +255,17 @@ type FinanceAgingBucket {
   amount: Float!
   invoiceCount: Int!
   label: String!
+}
+
+type FleetReportRow {
+  brand: String!
+  id: String!
+  model: String!
+  nearestDocumentExpiry: DateTime
+  nearestDocumentType: String
+  plateNumber: String!
+  status: String!
+  year: Int!
 }
 
 enum FuelType {
@@ -569,6 +592,7 @@ type Query {
 
   """Get an employee by user ID"""
   employeeByUserId(userId: String!): Employee
+  employeeReport: [EmployeeReportRow!]!
 
   """Get all employees (paginated)"""
   employees(pagination: PaginationInput): PaginatedEmployee!
@@ -579,6 +603,7 @@ type Query {
 
   """Aging analysis for outstanding invoice amounts"""
   financeAgingSummary: [FinanceAgingBucket!]!
+  fleetReport: [FleetReportRow!]!
 
   """Aggregated leave requests by status"""
   hrLeaveSummary: [HrLeaveSummary!]!
@@ -626,6 +651,7 @@ type Query {
 
   """Inventory overview KPIs"""
   stockOverview: StockOverview!
+  stockReport: [StockReportRow!]!
 
   """Get a user by ID"""
   user(id: String!): User
@@ -686,6 +712,14 @@ type StockOverview {
   totalProducts: Int!
   totalStockUnits: Float!
   totalWarehouses: Int!
+}
+
+type StockReportRow {
+  productId: String!
+  productName: String!
+  quantity: Float!
+  sku: String!
+  warehouseName: String!
 }
 
 input UpdateEmployeeInput {

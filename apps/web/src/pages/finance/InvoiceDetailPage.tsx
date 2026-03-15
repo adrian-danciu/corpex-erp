@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { pdf } from "@react-pdf/renderer";
+import { InvoicePDF } from "@/components/finance/InvoicePDF";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -142,6 +144,8 @@ export default function InvoiceDetailPage() {
     },
   });
 
+  const [pdfLoading, setPdfLoading] = useState(false);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -178,69 +182,19 @@ export default function InvoiceDetailPage() {
 
   const remaining = invoice.total - invoice.paidAmount;
 
-  const handlePrint = () => {
-    const invoiceNumber = `${invoice.series}-${String(invoice.number).padStart(4, "0")}`;
-    const itemRows = invoice.items
-      .map(
-        (item, i) =>
-          `<tr>
-            <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0">${i + 1}</td>
-            <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0">${item.description}</td>
-            <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right">${item.quantity}</td>
-            <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0">${item.unit}</td>
-            <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right">${formatCurrency(item.unitPrice, invoice.currency)}</td>
-            <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right">${item.vatRate}%</td>
-            <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600">${formatCurrency(item.amount, invoice.currency)}</td>
-            <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right">${formatCurrency(item.vatAmount, invoice.currency)}</td>
-          </tr>`
-      )
-      .join("");
-
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Invoice ${invoiceNumber}</title>
-      <style>body{font-family:Arial,sans-serif;font-size:13px;color:#1e293b;margin:0;padding:32px}
-      h1{font-size:24px;margin:0}h2{font-size:14px;margin:0 0 8px;color:#475569}
-      table{width:100%;border-collapse:collapse}th{text-align:left;padding:6px 8px;border-bottom:2px solid #e2e8f0;font-size:11px;color:#64748b}
-      .totals td{padding:4px 8px}.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:600;background:#dbeafe;color:#1e40af}
-      @media print{body{padding:16px}}</style></head><body>
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px">
-        <div><h1>${invoiceNumber}</h1><span class="badge">${invoice.status}</span>
-          <p style="margin:8px 0 0;color:#64748b">${invoice.invoiceType === "FISCAL" ? "Fiscal Invoice" : "Proforma Invoice"}</p></div>
-        <div style="text-align:right"><p style="margin:0"><strong>Issue Date:</strong> ${invoice.issueDate}</p>
-          <p style="margin:4px 0"><strong>Due Date:</strong> ${invoice.dueDate}</p>
-          <p style="margin:4px 0"><strong>Currency:</strong> ${invoice.currency}</p></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px">
-        <div><h2>Partner</h2>
-          <p style="margin:0;font-weight:600;font-size:15px">${invoice.partner.name}</p>
-          <p style="margin:4px 0;color:#64748b">CUI: ${invoice.partner.cui}</p>
-          ${invoice.partner.regCom ? `<p style="margin:4px 0;color:#64748b">Reg. Com.: ${invoice.partner.regCom}</p>` : ""}
-          <p style="margin:4px 0;color:#64748b">${invoice.partner.address}, ${invoice.partner.city}</p>
-          ${invoice.partner.bankAccount ? `<p style="margin:4px 0;color:#64748b;font-family:monospace">IBAN: ${invoice.partner.bankAccount}</p>` : ""}
-        </div>
-        <div><h2>Created By</h2><p style="margin:0">${invoice.createdBy.firstName} ${invoice.createdBy.lastName}</p></div>
-      </div>
-      <table style="margin-bottom:24px">
-        <thead><tr><th>#</th><th>Description</th><th style="text-align:right">Qty</th><th>Unit</th><th style="text-align:right">Unit Price</th><th style="text-align:right">VAT%</th><th style="text-align:right">Amount</th><th style="text-align:right">VAT</th></tr></thead>
-        <tbody>${itemRows}</tbody>
-      </table>
-      <div style="display:flex;justify-content:flex-end">
-        <table style="width:280px" class="totals">
-          <tr><td style="color:#64748b">Subtotal:</td><td style="text-align:right">${formatCurrency(invoice.subtotal, invoice.currency)}</td></tr>
-          <tr><td style="color:#64748b">VAT:</td><td style="text-align:right">${formatCurrency(invoice.vatTotal, invoice.currency)}</td></tr>
-          <tr><td style="font-weight:700;font-size:15px">Total:</td><td style="text-align:right;font-weight:700;font-size:15px">${formatCurrency(invoice.total, invoice.currency)}</td></tr>
-          <tr><td style="color:#16a34a">Paid:</td><td style="text-align:right;color:#16a34a">${formatCurrency(invoice.paidAmount, invoice.currency)}</td></tr>
-          <tr><td style="color:#b45309;font-weight:600">Outstanding:</td><td style="text-align:right;color:#b45309;font-weight:600">${formatCurrency(remaining, invoice.currency)}</td></tr>
-        </table>
-      </div>
-      ${invoice.notes ? `<div style="margin-top:24px;padding:12px;background:#f8fafc;border-radius:6px"><h2>Notes</h2><p style="margin:0">${invoice.notes}</p></div>` : ""}
-    </body></html>`;
-
-    const win = window.open("", "_blank", "width=900,height=700");
-    if (!win) return;
-    win.document.write(html);
-    win.document.close();
-    win.focus();
-    win.print();
+  const handlePrint = async () => {
+    setPdfLoading(true);
+    try {
+      const blob = await pdf(<InvoicePDF invoice={invoice} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `invoice-${invoice.series}-${String(invoice.number).padStart(4, "0")}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setPdfLoading(false);
+    }
   };
 
   const handleRecordPayment = (data: { amount: number; paymentDate: string; paymentMethod: string; reference: string }) => {
@@ -294,8 +248,9 @@ export default function InvoiceDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={handlePrint}>
-            <Printer className="h-4 w-4" /> Print / PDF
+          <Button variant="outline" className="gap-2" onClick={handlePrint} disabled={pdfLoading}>
+            {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
+            {pdfLoading ? "Generating..." : "Download PDF"}
           </Button>
           {invoice.status === InvoiceStatus.DRAFT && (
             <Button variant="outline" className="gap-2" onClick={handleMarkAsSent}>

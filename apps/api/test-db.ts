@@ -44,7 +44,7 @@ async function main() {
   // Test 3: Update user
   const updated = await prisma.user.update({
     where: { id: user.id },
-    data: { role: 'MANAGER' },
+    data: { role: 'USER' },
   });
   console.log('✅ Updated user role:', updated.role);
 

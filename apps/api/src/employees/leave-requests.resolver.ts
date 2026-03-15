@@ -5,6 +5,8 @@ import { LeaveRequest } from './entities/leave-request.entity';
 import { CreateLeaveRequestInput } from './dto/create-leave-request.input';
 import { ApproveLeaveRequestInput } from './dto/approve-leave-request.input';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { DepartmentGuard } from '../auth/guards/department.guard';
+import { RequireModule } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
 
@@ -15,7 +17,8 @@ export class LeaveRequestsResolver {
   @Mutation(() => LeaveRequest, {
     description: 'Create a new leave request',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('leaveRequests', 'write')
   async createLeaveRequest(
     @CurrentUser() user: User,
     @Args('createLeaveRequestInput')
@@ -28,7 +31,8 @@ export class LeaveRequestsResolver {
     name: 'leaveRequests',
     description: 'Get all leave requests',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('leaveApprovals', 'approve')
   async findAllLeaveRequests(): Promise<LeaveRequest[]> {
     return this.leaveRequestsService.findAll();
   }
@@ -46,7 +50,8 @@ export class LeaveRequestsResolver {
     name: 'pendingLeaveRequestsForManager',
     description: 'Get pending leave requests for current user subordinates',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('leaveApprovals', 'approve')
   async getPendingLeaveRequestsForManager(
     @CurrentUser() user: User,
   ): Promise<LeaveRequest[]> {
@@ -68,7 +73,8 @@ export class LeaveRequestsResolver {
   @Mutation(() => LeaveRequest, {
     description: 'Approve or reject a leave request',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('leaveApprovals', 'approve')
   async approveOrRejectLeaveRequest(
     @CurrentUser() user: User,
     @Args('approveLeaveRequestInput')
@@ -83,7 +89,8 @@ export class LeaveRequestsResolver {
   @Mutation(() => LeaveRequest, {
     description: 'Cancel a leave request',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('leaveRequests', 'write')
   async cancelLeaveRequest(
     @CurrentUser() user: User,
     @Args('leaveRequestId') leaveRequestId: string,
