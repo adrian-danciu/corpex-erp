@@ -19,6 +19,27 @@ input ChangePasswordInput {
   newPassword: String!
 }
 
+type CompanySettings {
+  address: String!
+  bankAccount: String!
+  bankName: String!
+  city: String!
+  companyName: String!
+  country: String!
+  cui: String!
+  defaultAnnualLeaveDays: Int!
+  defaultCountry: String!
+  defaultCurrency: String!
+  defaultInvoiceSeries: String!
+  defaultVatRate: Float!
+  email: String!
+  id: ID!
+  paymentTermsDays: Int!
+  phone: String!
+  regCom: String!
+  updatedAt: DateTime!
+}
+
 """Type of employment contract"""
 enum ContractType {
   FIXED_TERM
@@ -36,7 +57,7 @@ input CreateEmployeeInput {
   contractType: ContractType!
   country: String! = "Romania"
   dateOfBirth: DateTime!
-  department: String!
+  department: Department!
   employmentDate: DateTime!
   firstName: String!
   lastName: String!
@@ -194,6 +215,16 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+"""Employee department"""
+enum Department {
+  FINANCE
+  FLEET
+  HR
+  IT
+  MANAGEMENT
+  WAREHOUSE
+}
+
 enum DocumentType {
   CASCO
   ITP
@@ -210,7 +241,7 @@ type Employee {
   country: String!
   createdAt: DateTime!
   dateOfBirth: DateTime!
-  department: String!
+  department: Department!
   employmentDate: DateTime!
   firstName: String!
   id: ID!
@@ -453,6 +484,9 @@ type Mutation {
   """Delete an employee record"""
   removeEmployee(id: String!): Employee!
 
+  """Update company settings (admin only)"""
+  updateCompanySettings(updateCompanySettingsInput: UpdateCompanySettingsInput!): CompanySettings!
+
   """Update an employee record"""
   updateEmployee(updateEmployeeInput: UpdateEmployeeInput!): Employee!
 
@@ -584,6 +618,9 @@ type ProductStock {
 }
 
 type Query {
+  """Get company settings"""
+  companySettings: CompanySettings!
+
   """High-level KPIs for the main dashboard"""
   dashboardMetrics: DashboardMetrics!
 
@@ -598,7 +635,7 @@ type Query {
   employees(pagination: PaginationInput): PaginatedEmployee!
 
   """Get employees by department"""
-  employeesByDepartment(department: String!): [Employee!]!
+  employeesByDepartment(department: Department!): [Employee!]!
   expiringDocuments(daysAhead: Int!): [ExpiringDocumentSummary!]!
 
   """Aging analysis for outstanding invoice amounts"""
@@ -671,9 +708,6 @@ type Query {
 """User role in the system"""
 enum Role {
   ADMIN
-  FINANCE
-  HR
-  MANAGER
   USER
 }
 
@@ -722,6 +756,25 @@ type StockReportRow {
   warehouseName: String!
 }
 
+input UpdateCompanySettingsInput {
+  address: String
+  bankAccount: String
+  bankName: String
+  city: String
+  companyName: String
+  country: String
+  cui: String
+  defaultAnnualLeaveDays: Int
+  defaultCountry: String
+  defaultCurrency: String
+  defaultInvoiceSeries: String
+  defaultVatRate: Float
+  email: String
+  paymentTermsDays: Int
+  phone: String
+  regCom: String
+}
+
 input UpdateEmployeeInput {
   address: String
   annualLeaveDays: Int
@@ -730,7 +783,7 @@ input UpdateEmployeeInput {
   contractType: ContractType
   country: String = "Romania"
   dateOfBirth: DateTime
-  department: String
+  department: Department
   employmentDate: DateTime
   firstName: String
   id: String!

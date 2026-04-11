@@ -1,6 +1,7 @@
 import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
-import { AlertCircle, Briefcase, Loader2, Users as UsersIcon, FileText, AlertTriangle } from "lucide-react";
+import { AlertCircle, Briefcase, Users as UsersIcon, FileText, AlertTriangle } from "lucide-react";
+import { PageLoading } from "@/components/ui/page-loading";
 import { FleetExpiryWidget } from "@/components/dashboard/FleetExpiryWidget";
 import { useAuthStore } from "@/stores/auth.store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -105,11 +106,7 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {loading && (
-        <div className="flex items-center justify-center py-10">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        </div>
-      )}
+      {loading && <PageLoading message="Loading dashboard..." />}
 
       {error && !loading && (
         <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -188,7 +185,7 @@ export default function DashboardPage() {
                       innerRadius={50}
                       outerRadius={80}
                       dataKey="value"
-                      label={({ name, percent }: PieLabelRenderProps) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                      label={false}
                       labelLine={false}
                     >
                       <Cell fill="#22c55e" />

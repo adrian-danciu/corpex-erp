@@ -1,5 +1,6 @@
 import { useQuery } from "@apollo/client/react";
 import { AlertCircle, Boxes, PackageSearch, Warehouse } from "lucide-react";
+import { PageLoading } from "@/components/ui/page-loading";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   GET_LOW_STOCK_PRODUCTS_QUERY,
@@ -17,11 +18,7 @@ export default function StockOverviewPage() {
   }>(GET_LOW_STOCK_PRODUCTS_QUERY);
 
   if (overviewLoading || lowStockLoading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <p className="text-slate-600">Loading stock overview...</p>
-      </div>
-    );
+    return <PageLoading message="Loading stock overview..." />;
   }
 
   if (overviewError || lowStockError) {

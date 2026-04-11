@@ -8,6 +8,7 @@ import type { Employee } from "@/types/hr.types";
 import type { PaginatedResult } from "@/types/pagination.types";
 import type { User } from "@/types/auth.types";
 import UserCreateForm from "@/components/users/UserCreateForm";
+import { PageLoading } from "@/components/ui/page-loading";
 
 const LINK_EMPLOYEE_USER_MUTATION = gql`
   mutation LinkEmployeeUser($linkEmployeeUserInput: LinkEmployeeUserInput!) {
@@ -58,11 +59,7 @@ export default function UsersAdminPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading users...</div>
-      </div>
-    );
+    return <PageLoading message="Loading users..." />;
   }
 
   if (error) {

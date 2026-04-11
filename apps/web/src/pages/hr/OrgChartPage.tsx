@@ -5,7 +5,8 @@ import Tree from "react-d3-tree";
 import type { RawNodeDatum, CustomNodeElementProps } from "react-d3-tree";
 import { GET_ORG_CHART_QUERY } from "@/graphql/mutations/employee.mutations";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, AlertCircle } from "lucide-react";
+import { PageLoading } from "@/components/ui/page-loading";
 
 interface OrgEmployee {
   id: string;
@@ -125,11 +126,7 @@ export default function OrgChartPage() {
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageLoading message="Loading org chart..." />;
   }
 
   if (error) {

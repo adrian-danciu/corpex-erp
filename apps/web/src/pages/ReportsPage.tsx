@@ -1,6 +1,7 @@
 import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
-import { AlertCircle, Download, Loader2 } from "lucide-react";
+import { AlertCircle, Download } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -174,7 +175,7 @@ export default function ReportsPage() {
         <CardContent>
           {hrLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <Spinner className="size-5 text-primary" />
             </div>
           ) : hrError ? (
             <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -219,7 +220,7 @@ export default function ReportsPage() {
         <CardContent>
           {financeLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <Spinner className="size-5 text-primary" />
             </div>
           ) : financeError ? (
             <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -287,7 +288,7 @@ export default function ReportsPage() {
         <CardContent>
           {employeeLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <Spinner className="size-5 text-primary" />
             </div>
           ) : employeeError ? (
             <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -357,7 +358,7 @@ export default function ReportsPage() {
         <CardContent>
           {stockLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <Spinner className="size-5 text-primary" />
             </div>
           ) : stockError ? (
             <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -427,7 +428,7 @@ export default function ReportsPage() {
         <CardContent>
           {fleetLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <Spinner className="size-5 text-primary" />
             </div>
           ) : fleetError ? (
             <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-red-50 px-4 py-3 text-sm text-red-700">

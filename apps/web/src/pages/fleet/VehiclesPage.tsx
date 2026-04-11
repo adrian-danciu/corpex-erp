@@ -9,6 +9,7 @@ import { usePagination } from "@/hooks/usePagination";
 import { GET_VEHICLES_QUERY } from "@/graphql/mutations/fleet.queries";
 import type { Vehicle } from "@/types/fleet.types";
 import type { PaginatedResult } from "@/types/pagination.types";
+import { PageLoading } from "@/components/ui/page-loading";
 
 export default function VehiclesPage() {
   const navigate = useNavigate();
@@ -20,11 +21,7 @@ export default function VehiclesPage() {
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-lg text-slate-500">Loading vehicles...</div>
-      </div>
-    );
+    return <PageLoading message="Loading vehicles..." />;
   }
 
   if (error) {

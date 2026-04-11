@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar, CheckCircle, XCircle, Users } from "lucide-react";
+import { PageLoading } from "@/components/ui/page-loading";
 import { format } from "date-fns";
 
 export default function ApprovalsPage() {
@@ -46,11 +47,7 @@ export default function ApprovalsPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading approvals...</div>
-      </div>
-    );
+    return <PageLoading message="Loading approvals..." />;
   }
 
   if (error) {

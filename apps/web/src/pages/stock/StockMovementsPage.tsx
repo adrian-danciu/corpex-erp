@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@apollo/client/react";
 import { Controller, useForm } from "react-hook-form";
 import { AlertCircle } from "lucide-react";
+import { PageLoading } from "@/components/ui/page-loading";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -108,11 +109,7 @@ export default function StockMovementsPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <p className="text-slate-600">Loading stock movements...</p>
-      </div>
-    );
+    return <PageLoading message="Loading stock movements..." />;
   }
 
   if (error) {

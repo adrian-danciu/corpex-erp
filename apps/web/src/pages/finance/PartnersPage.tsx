@@ -3,7 +3,8 @@ import { useQuery } from "@apollo/client/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Building2, Search, Phone, Mail, Loader2, AlertCircle } from "lucide-react";
+import { Plus, Building2, Search, Phone, Mail, AlertCircle } from "lucide-react";
+import { PageLoading } from "@/components/ui/page-loading";
 import { useNavigate } from "react-router-dom";
 import PartnerTypeBadge from "@/components/finance/PartnerTypeBadge";
 import { PartnerType } from "@/types/finance.types";
@@ -30,11 +31,7 @@ export default function PartnersPage() {
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageLoading message="Loading partners..." />;
   }
 
   if (error) {

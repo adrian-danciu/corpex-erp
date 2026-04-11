@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@apollo/client/react";
 import { AlertCircle, Plus, Search } from "lucide-react";
+import { PageLoading } from "@/components/ui/page-loading";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,11 +30,7 @@ export default function ProductsPage() {
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <p className="text-slate-600">Loading products...</p>
-      </div>
-    );
+    return <PageLoading message="Loading products..." />;
   }
 
   if (error) {

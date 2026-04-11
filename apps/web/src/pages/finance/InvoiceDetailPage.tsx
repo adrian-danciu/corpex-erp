@@ -36,6 +36,7 @@ import {
   AlertCircle,
   Printer,
 } from "lucide-react";
+import { PageLoading } from "@/components/ui/page-loading";
 import InvoiceStatusBadge from "@/components/finance/InvoiceStatusBadge";
 import { InvoiceStatus, InvoiceType } from "@/types/finance.types";
 import type { Invoice, InvoiceItem, Payment } from "@/types/finance.types";
@@ -147,11 +148,7 @@ export default function InvoiceDetailPage() {
   const [pdfLoading, setPdfLoading] = useState(false);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageLoading message="Loading invoice..." />;
   }
 
   if (error) {

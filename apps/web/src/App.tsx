@@ -32,6 +32,7 @@ import ReportsPage from "./pages/ReportsPage";
 import VehiclesPage from "./pages/fleet/VehiclesPage";
 import VehicleCreatePage from "./pages/fleet/VehicleCreatePage";
 import VehicleDetailPage from "./pages/fleet/VehicleDetailPage";
+import SettingsPage from "./pages/SettingsPage";
 
 function App() {
   return (
@@ -259,6 +260,16 @@ function App() {
             element={
               <ProtectedRoute requiredModule="fleet" requiredAccess="read">
                 <DashboardLayout><VehicleDetailPage /></DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Settings */}
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute requiredRole={["ADMIN"]}>
+                <DashboardLayout><SettingsPage /></DashboardLayout>
               </ProtectedRoute>
             }
           />

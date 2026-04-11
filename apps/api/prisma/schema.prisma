@@ -368,3 +368,24 @@ enum ExpenseType {
   REPAIR
   OTHER
 }
+
+model CompanySettings {
+  id                    String   @id @default("singleton")
+  companyName           String   @default("")
+  cui                   String   @default("")
+  regCom                String   @default("")
+  address               String   @default("")
+  city                  String   @default("")
+  country               String   @default("Romania")
+  email                 String   @default("")
+  phone                 String   @default("")
+  bankName              String   @default("")
+  bankAccount           String   @default("")
+  defaultInvoiceSeries  String   @default("CORP")
+  defaultCurrency       String   @default("RON")
+  defaultVatRate        Float    @default(19)
+  paymentTermsDays      Int      @default(30)
+  defaultAnnualLeaveDays Int     @default(21)
+  defaultCountry        String   @default("Romania")
+  updatedAt             DateTime @updatedAt
+}

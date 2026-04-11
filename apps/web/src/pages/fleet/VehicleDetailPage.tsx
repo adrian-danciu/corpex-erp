@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Pencil, Trash2, Plus } from "lucide-react";
+import { PageLoading } from "@/components/ui/page-loading";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -109,11 +110,7 @@ export default function VehicleDetailPage() {
   const expenseForm = useForm<CreateVehicleExpenseFormData>({ resolver: zodResolver(createVehicleExpenseSchema) });
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-lg text-slate-500">Loading...</div>
-      </div>
-    );
+    return <PageLoading message="Loading vehicle..." />;
   }
 
   if (error || !data?.vehicle) {

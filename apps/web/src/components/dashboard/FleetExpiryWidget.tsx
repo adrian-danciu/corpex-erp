@@ -1,6 +1,7 @@
 import { useQuery } from "@apollo/client/react";
 import { Link } from "react-router-dom";
 import { Car } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GET_EXPIRING_DOCUMENTS_QUERY } from "@/graphql/mutations/fleet.queries";
 import type { ExpiringDocumentSummary } from "@/types/fleet.types";
@@ -20,7 +21,7 @@ export function FleetExpiryWidget() {
         <Car className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        {loading && <p className="text-sm text-muted-foreground">Loading...</p>}
+        {loading && <Spinner className="size-5 text-primary" />}
         {!loading && summaries.length === 0 && (
           <p className="text-sm text-green-600 font-medium">All documents up to date</p>
         )}

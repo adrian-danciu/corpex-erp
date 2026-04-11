@@ -9,9 +9,9 @@ import {
   Plus,
   Building2,
   Receipt,
-  Loader2,
   AlertCircle,
 } from "lucide-react";
+import { PageLoading } from "@/components/ui/page-loading";
 import { useNavigate } from "react-router-dom";
 import InvoiceStatusBadge from "@/components/finance/InvoiceStatusBadge";
 import { InvoiceStatus } from "@/types/finance.types";
@@ -39,11 +39,7 @@ export default function FinanceOverviewPage() {
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageLoading message="Loading finance overview..." />;
   }
 
   if (error) {

@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PageLoading } from "@/components/ui/page-loading";
 import {
   Select,
   SelectContent,
@@ -122,11 +123,7 @@ export default function LeaveRequestsPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading leave requests...</div>
-      </div>
-    );
+    return <PageLoading message="Loading leave requests..." />;
   }
 
   if (error) {

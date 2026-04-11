@@ -2,7 +2,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, Trash2, Phone, Mail, MapPin, Building2, CreditCard, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Phone, Mail, MapPin, Building2, CreditCard, AlertCircle } from "lucide-react";
+import { PageLoading } from "@/components/ui/page-loading";
 import PartnerTypeBadge from "@/components/finance/PartnerTypeBadge";
 import type { Partner } from "@/types/finance.types";
 import { GET_PARTNER_QUERY, GET_PARTNERS_QUERY, DELETE_PARTNER_MUTATION } from "@/graphql/mutations/finance.mutations";
@@ -30,11 +31,7 @@ export default function PartnerDetailPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageLoading message="Loading partner..." />;
   }
 
   if (error) {

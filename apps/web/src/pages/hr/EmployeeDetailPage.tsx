@@ -9,6 +9,7 @@ import {
   DELETE_EMPLOYEE_MUTATION,
 } from "@/graphql/mutations/employee.mutations";
 import { Department } from "@/types/hr.types";
+import { PageLoading } from "@/components/ui/page-loading";
 import type { Employee, UpdateEmployeeInput } from "@/types/hr.types";
 import { PaginatedResult } from "@/types/pagination.types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Edit, Trash2, Users, Calendar, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Users, Calendar, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 
 function LeaveBar({ remaining, total }: { remaining: number; total: number }) {
@@ -101,11 +102,7 @@ export default function EmployeeDetailPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageLoading message="Loading employee..." />;
   }
 
   if (error) {

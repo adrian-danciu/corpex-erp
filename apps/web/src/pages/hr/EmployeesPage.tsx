@@ -4,6 +4,7 @@ import type { Employee } from "@/types/hr.types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, UserCheck, Briefcase, Calendar, Phone, Network } from "lucide-react";
+import { PageLoading } from "@/components/ui/page-loading";
 import { useNavigate } from "react-router-dom";
 
 import { Pagination } from "@/components/common/Pagination";
@@ -25,11 +26,7 @@ export default function EmployeesPage() {
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading employees...</div>
-      </div>
-    );
+    return <PageLoading message="Loading employees..." />;
   }
 
   if (error) {
