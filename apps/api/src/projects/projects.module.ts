@@ -1,0 +1,39 @@
+import { Module } from '@nestjs/common';
+import { PrismaModule } from '../prisma/prisma.module';
+import { StockModule } from '../stock/stock.module';
+import { ProjectFeedResolver } from './project-feed.resolver';
+import { ProjectFeedService } from './project-feed.service';
+import { ProjectMaterialsResolver } from './project-materials.resolver';
+import { ProjectMaterialsService } from './project-materials.service';
+import { ProjectMembersResolver } from './project-members.resolver';
+import { ProjectMembersService } from './project-members.service';
+import { ProjectTasksResolver } from './project-tasks.resolver';
+import { ProjectTasksService } from './project-tasks.service';
+import { ProjectVehiclesResolver } from './project-vehicles.resolver';
+import { ProjectVehiclesService } from './project-vehicles.service';
+import { ProjectUploadsController } from './project-uploads.controller';
+import { ProjectsResolver } from './projects.resolver';
+import { ProjectsService } from './projects.service';
+import { ProjectAccessGuard } from './guards/project-access.guard';
+
+@Module({
+  imports: [PrismaModule, StockModule],
+  controllers: [ProjectUploadsController],
+  providers: [
+    ProjectAccessGuard,
+    ProjectsService,
+    ProjectsResolver,
+    ProjectMembersService,
+    ProjectMembersResolver,
+    ProjectMaterialsService,
+    ProjectMaterialsResolver,
+    ProjectVehiclesService,
+    ProjectVehiclesResolver,
+    ProjectTasksService,
+    ProjectTasksResolver,
+    ProjectFeedService,
+    ProjectFeedResolver,
+  ],
+  exports: [ProjectsService, ProjectVehiclesService],
+})
+export class ProjectsModule {}

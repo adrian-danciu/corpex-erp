@@ -88,6 +88,7 @@ export interface Invoice {
   paidAmount: number;
   currency: string;
   notes?: string | null;
+  projectId?: string | null;
   createdBy: User;
   items: InvoiceItem[];
   payments: Payment[];

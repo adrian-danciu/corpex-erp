@@ -19,4 +19,7 @@ export class CreateProductInput {
 
   @Field(() => Float, { nullable: true, defaultValue: 0 })
   minimumStock?: number;
+
+  @Field(() => Float, { nullable: true, defaultValue: 0 })
+  unitPrice?: number;
 }

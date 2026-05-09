@@ -41,6 +41,12 @@ export class StockMovement {
   @Field()
   createdById: string;
 
+  @Field(() => String, { nullable: true })
+  projectId?: string | null;
+
+  @Field(() => String, { nullable: true })
+  projectMaterialId?: string | null;
+
   @Field(() => Product)
   product: Product;
 

@@ -31,6 +31,9 @@ export class CreateInvoiceInput {
   @Field({ nullable: true })
   notes?: string;
 
+  @Field(() => String, { nullable: true })
+  projectId?: string;
+
   @Field(() => [CreateInvoiceItemInput])
   items: CreateInvoiceItemInput[];
 }

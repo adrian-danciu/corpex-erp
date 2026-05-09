@@ -129,6 +129,8 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
         return canAccess(user, "stock");
       case "/fleet":
         return canAccess(user, "fleet");
+      case "/projects":
+        return canAccess(user, "projects");
       case "/reports": {
         const perms = getPermissions(user);
         return perms ? perms.reports !== "none" : false;

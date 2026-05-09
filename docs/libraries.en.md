@@ -23,6 +23,8 @@ Tooling / build:
 Runtime libraries:
 - NestJS: application framework.
 - @nestjs/graphql + @nestjs/apollo + @apollo/server + graphql: GraphQL server stack.
+- @nestjs/platform-express + multer (`@types/multer`): file uploads (Project feed attachments via `POST /uploads/project-feed`).
+- graphql-type-json: JSON scalar used by `ProjectFeedEntry.metadata`.
 - Prisma + @prisma/adapter-pg + pg: database ORM + Postgres driver.
 - dotenv: loads environment variables.
 - rxjs, reflect-metadata: NestJS internals.

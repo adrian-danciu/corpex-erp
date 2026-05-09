@@ -43,6 +43,8 @@ export const createInvoiceSchema = z.object({
 
   notes: z.string().max(1000, "Notes are too long").optional().or(z.literal("")),
 
+  projectId: z.string().optional().or(z.literal("")),
+
   items: z.array(invoiceItemSchema).min(1, "At least one item is required"),
 });
 

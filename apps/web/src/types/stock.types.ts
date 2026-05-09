@@ -27,9 +27,20 @@ export interface Product {
   category?: string | null;
   minimumStock: number;
   currentStock: number;
+  unitPrice: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ProductStockBreakdown {
+  id: string;
+  productId: string;
+  warehouseId: string;
+  quantity: number;
+  reservedQty: number;
+  availableQty: number;
+  warehouse: Warehouse;
 }
 
 export interface StockMovement {

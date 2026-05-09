@@ -23,6 +23,8 @@ Tooling / build:
 Librarii runtime:
 - NestJS: framework de aplicatie.
 - @nestjs/graphql + @nestjs/apollo + @apollo/server + graphql: stack server GraphQL.
+- @nestjs/platform-express + multer (`@types/multer`): upload de fisiere (atasamentele din feed-ul de proiect prin `POST /uploads/project-feed`).
+- graphql-type-json: scalar JSON folosit de `ProjectFeedEntry.metadata`.
 - Prisma + @prisma/adapter-pg + pg: ORM + driver Postgres.
 - dotenv: incarca env vars.
 - rxjs, reflect-metadata: dependinte interne NestJS.
@@ -34,4 +36,4 @@ Tooling / dev:
 - TypeScript + ts-node + tsconfig-paths: build/runtime support.
 
 ## Note
-- Codul API inregistreaza modulele GraphQL si Prisma in `src/app.module.ts`, impreuna cu modulele de functionalitate (`Auth`, `Users`, `Employees`, `Finance`).
+- Codul API inregistreaza modulele GraphQL si Prisma in `src/app.module.ts`, impreuna cu modulele de functionalitate (`Auth`, `Users`, `Employees`, `Finance`, `Stock`, `Fleet`, `Projects`, `Reporting`, `Settings`).

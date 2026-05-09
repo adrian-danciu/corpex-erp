@@ -5,7 +5,4 @@
 
 export * from "./auth.schema";
 export * from "./user.schema";
-
-// Future schema exports will be added here:
-// export * from "./product.schema";
-// export * from "./order.schema";
+export * from "./project.schema";

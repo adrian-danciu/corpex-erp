@@ -16,12 +16,14 @@ corpex-erp/
      - `ui/`: shadcn/ui primitives (Radix + Tailwind).
      - `common/`: Shared components (Pagination, etc.).
      - `fleet/`: Fleet-specific components (VehicleStatusBadge, DocumentTypeBadge).
-     - `dashboard/`: Dashboard widgets (FleetExpiryWidget, etc.).
+     - `projects/`: Project status badge, plus tab components under `projects/tabs/` (OverviewTab, TeamTab, MaterialsTab, VehiclesTab, TasksTab, FeedTab, InvoicesTab).
+     - `dashboard/`: Dashboard widgets (FleetExpiryWidget, MyProjectsWidget, MyTasksWidget, etc.).
    - `pages/`: Page components organized by module.
      - `hr/`: Employees, Leave Requests, Approvals.
-     - `finance/`: Overview, Partners, Invoices.
+     - `finance/`: Overview, Partners, Invoices (Invoice editor includes a Project picker + cost-import helper).
      - `stock/`: Warehouses, Products, Stock Movements.
-     - `fleet/`: Vehicles list, create, and detail pages.
+     - `fleet/`: Vehicles list, create, and detail pages (Expense form includes a Project picker with smart default).
+     - `projects/`: Projects list, create, and detail (tabbed) pages.
    - `graphql/mutations/`: Apollo `gql` query and mutation documents (all modules).
    - `types/`: TypeScript interfaces and enums per module.
    - `lib/schemas/`: Zod validation schemas per module.
@@ -42,12 +44,25 @@ corpex-erp/
      - `vehicle-documents.service.ts` / `vehicle-documents.resolver.ts`: Document CRUD + expiry query.
      - `mileage.service.ts` / `mileage.resolver.ts`: Mileage log append + delete.
      - `leases.service.ts` / `leases.resolver.ts`: Lease contract CRUD.
-     - `expenses.service.ts` / `expenses.resolver.ts`: Expense append + delete.
+     - `expenses.service.ts` / `expenses.resolver.ts`: Expense append + delete (accepts optional `projectId` so costs roll into a project).
+   - `projects/`: Projects module (Projects, Members, Materials, Vehicles, Tasks, Feed).
+     - `entities/`: GraphQL ObjectTypes for all project models + `ProjectCostRollup` computed type.
+     - `dto/`: Input types for every mutation (create/update project, status transition, member add/role/remove, material request/reserve/issue/cancel, vehicle assign/end, task create/update/transition, feed post).
+     - `decorators/project-access.decorator.ts` + `guards/project-access.guard.ts`: project-scoped RBAC (`member` / `manager` levels). Auto-resolves project context from `taskId`, `projectMaterialId`, `assignmentId`, `feedEntryId`, or `memberId` if `projectId` isn't passed directly.
+     - `projects.service.ts` / `projects.resolver.ts`: Project CRUD, lifecycle transitions, cost rollup query.
+     - `project-members.service.ts` / `project-members.resolver.ts`: Membership management.
+     - `project-materials.service.ts` / `project-materials.resolver.ts`: Reserve / issue / cancel flow; calls `StockService` helpers in transactions.
+     - `project-vehicles.service.ts` / `project-vehicles.resolver.ts`: Time-bounded assignments with auto-end-previous; `currentProjectForVehicle` query for the smart default.
+     - `project-tasks.service.ts` / `project-tasks.resolver.ts`: Task CRUD + kanban transitions; `myProjectTasks` query.
+     - `project-feed.service.ts` / `project-feed.resolver.ts`: Combined feed (auto + manual). `recordAutoEntry` is consumed by every other project sub-service.
+     - `project-uploads.controller.ts`: REST endpoint `POST /uploads/project-feed` for feed attachments (multer, image+PDF, 10MB cap).
    - `common/`: Shared DTOs (PaginationInput, Paginated factory).
    - `reporting/`: Dashboard metrics module.
+   - `settings/`: Company settings (singleton).
  - `src/schema.gql`: Auto-generated GraphQL schema.
- - `prisma/schema.prisma`: Prisma schema (User, Employee, Partner, Invoice, Vehicle, VehicleDocument, MileageLog, VehicleLease, VehicleExpense, etc.).
+ - `prisma/schema.prisma`: Prisma schema (User, Employee, Partner, Invoice, Vehicle, VehicleDocument, MileageLog, VehicleLease, VehicleExpense, Project, ProjectMember, ProjectMaterial, ProjectVehicle, ProjectTask, ProjectFeedEntry, etc.). `Invoice`, `StockMovement`, and `VehicleExpense` carry an optional `projectId`. `ProductStock` carries `reservedQty`.
  - `prisma.config.ts`: Prisma config with `DATABASE_URL`.
+ - `uploads/` (gitignored): runtime storage for feed attachments. Served at `/uploads/` via `useStaticAssets`.
 
 ## How parts fit together
 - `apps/web` uses Apollo Client + GraphQL to call the API.

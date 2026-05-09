@@ -23,6 +23,7 @@ export const GET_PRODUCTS_QUERY = gql`
         category
         minimumStock
         currentStock
+        unitPrice
         isActive
         createdAt
         updatedAt
@@ -32,6 +33,40 @@ export const GET_PRODUCTS_QUERY = gql`
         skip
         take
       }
+    }
+  }
+`;
+
+export const GET_PRODUCT_STOCK_BY_PRODUCT_QUERY = gql`
+  query GetProductStockByProduct($productId: String!) {
+    productStockByProduct(productId: $productId) {
+      id
+      productId
+      warehouseId
+      quantity
+      reservedQty
+      availableQty
+      warehouse {
+        id
+        code
+        name
+      }
+    }
+  }
+`;
+
+export const UPDATE_PRODUCT_MUTATION = gql`
+  mutation UpdateProduct($input: UpdateProductInput!) {
+    updateProduct(input: $input) {
+      id
+      name
+      description
+      unit
+      category
+      minimumStock
+      unitPrice
+      isActive
+      updatedAt
     }
   }
 `;
@@ -120,6 +155,7 @@ export const CREATE_PRODUCT_MUTATION = gql`
       category
       minimumStock
       currentStock
+      unitPrice
       isActive
       createdAt
       updatedAt

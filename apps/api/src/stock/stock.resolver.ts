@@ -7,12 +7,14 @@ import { DepartmentGuard } from '../auth/guards/department.guard';
 import { PaginationInput } from '../common/dto/pagination.input';
 import { User } from '../users/entities/user.entity';
 import { CreateProductInput } from './dto/create-product.input';
+import { UpdateProductInput } from './dto/update-product.input';
 import { CreateStockMovementInput } from './dto/create-stock-movement.input';
 import { CreateWarehouseInput } from './dto/create-warehouse.input';
 import { PaginatedProduct } from './dto/paginated-product.dto';
 import { PaginatedWarehouse } from './dto/paginated-warehouse.dto';
 import { StockMovementFilterInput } from './dto/stock-movement-filter.input';
 import { Product } from './entities/product.entity';
+import { ProductStock } from './entities/product-stock.entity';
 import { StockMovement } from './entities/stock-movement.entity';
 import { StockOverview } from './entities/stock-overview.type';
 import { Warehouse } from './entities/warehouse.entity';
@@ -97,6 +99,25 @@ export class StockResolver {
     @Args('createProductInput') input: CreateProductInput,
   ): Promise<Product> {
     return this.stockService.createProduct(input);
+  }
+
+  @Mutation(() => Product, { description: 'Update an existing product' })
+  @RequireModule('stock', 'write')
+  async updateProduct(
+    @Args('input') input: UpdateProductInput,
+  ): Promise<Product> {
+    return this.stockService.updateProduct(input);
+  }
+
+  @Query(() => [ProductStock], {
+    name: 'productStockByProduct',
+    description: 'Per-warehouse stock breakdown for a product',
+  })
+  @RequireModule('stock', 'read')
+  async getProductStockByProduct(
+    @Args('productId') productId: string,
+  ): Promise<ProductStock[]> {
+    return this.stockService.productStockByProduct(productId) as Promise<ProductStock[]>;
   }
 
   @Mutation(() => StockMovement, {

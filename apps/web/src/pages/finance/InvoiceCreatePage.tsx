@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useQuery, useMutation } from "@apollo/client/react";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useQuery, useMutation, useLazyQuery } from "@apollo/client/react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createInvoiceSchema, type CreateInvoiceFormData } from "@/lib/schemas/invoice.schema";
@@ -17,10 +17,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Plus, Trash2, Loader2 } from "lucide-react";
+import { ArrowLeft, Download, Plus, Trash2, Loader2 } from "lucide-react";
 import type { Partner } from "@/types/finance.types";
 import { PaginatedResult } from "@/types/pagination.types";
 import { GET_PARTNERS_QUERY, CREATE_INVOICE_MUTATION, GET_INVOICES_QUERY } from "@/graphql/mutations/finance.mutations";
+import {
+  GET_PROJECTS_QUERY,
+  GET_PROJECT_COSTS_FOR_INVOICE_QUERY,
+} from "@/graphql/mutations/project.queries";
+import type { InvoiceLineDraft, Project } from "@/types/project.types";
+import { useCurrency } from "@/hooks/useCurrency";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("ro-RO", {
@@ -32,6 +38,9 @@ function formatCurrency(amount: number) {
 
 export default function InvoiceCreatePage() {
   const navigate = useNavigate();
+  const { currency: defaultCurrency } = useCurrency();
+  const [searchParams] = useSearchParams();
+  const initialProjectId = searchParams.get("projectId") ?? "";
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -44,6 +53,16 @@ export default function InvoiceCreatePage() {
   });
 
   const partners = partnersData?.partners?.items ?? [];
+
+  const { data: projectsData } = useQuery<{ projects: Project[] }>(
+    GET_PROJECTS_QUERY,
+    { variables: { filter: {} } },
+  );
+  const projects = projectsData?.projects ?? [];
+
+  const [fetchProjectCosts, { loading: importingCosts }] = useLazyQuery<{
+    projectCostsForInvoice: InvoiceLineDraft[];
+  }>(GET_PROJECT_COSTS_FOR_INVOICE_QUERY, { fetchPolicy: "network-only" });
 
   const [createInvoice, { loading: isLoading }] = useMutation(CREATE_INVOICE_MUTATION, {
     refetchQueries: [{ query: GET_INVOICES_QUERY }],
@@ -65,6 +84,7 @@ export default function InvoiceCreatePage() {
     handleSubmit,
     control,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<CreateInvoiceFormData>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -77,13 +97,25 @@ export default function InvoiceCreatePage() {
       issueDate: today,
       dueDate: defaultDueDate,
       deliveryDate: "",
-      currency: "RON",
+      currency: defaultCurrency,
       notes: "",
+      projectId: initialProjectId,
       items: [{ description: "", quantity: 1, unit: "buc", unitPrice: 0, vatRate: 19 }],
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const selectedProjectId = watch("projectId");
+
+  // When project changes (or is provided via URL), pre-fill partnerId from the project
+  useEffect(() => {
+    if (!selectedProjectId) return;
+    const proj = projects.find((p) => p.id === selectedProjectId);
+    if (proj?.partnerId) {
+      setValue("partnerId", proj.partnerId, { shouldValidate: true });
+    }
+  }, [selectedProjectId, projects, setValue]);
+
+  const { fields, append, remove, replace } = useFieldArray({
     control,
     name: "items",
   });
@@ -104,7 +136,7 @@ export default function InvoiceCreatePage() {
   const onSubmit = (data: CreateInvoiceFormData) => {
     setErrorMessage("");
 
-    const { deliveryDate, ...rest } = data;
+    const { deliveryDate, projectId, ...rest } = data;
 
     createInvoice({
       variables: {
@@ -113,9 +145,35 @@ export default function InvoiceCreatePage() {
           // Send null when delivery date is empty so backend/Prisma
           // don't receive an invalid Date object
           deliveryDate: deliveryDate ? deliveryDate : null,
+          projectId: projectId || undefined,
         },
       },
     });
+  };
+
+  const importCostsFromProject = async () => {
+    if (!selectedProjectId) return;
+    setErrorMessage("");
+    const result = await fetchProjectCosts({
+      variables: { projectId: selectedProjectId },
+    });
+    const drafts = result.data?.projectCostsForInvoice ?? [];
+    if (drafts.length === 0) {
+      setErrorMessage(
+        "No issued materials or vehicle expenses on this project yet.",
+      );
+      return;
+    }
+    // Replace the items array with imported drafts
+    replace(
+      drafts.map((d) => ({
+        description: d.description,
+        quantity: d.quantity,
+        unit: d.unit,
+        unitPrice: d.unitPrice,
+        vatRate: d.vatRate,
+      })),
+    );
   };
 
   return (
@@ -194,6 +252,58 @@ export default function InvoiceCreatePage() {
                   </Select>
                 )}
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Project (optional) */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-lg">Project (optional)</CardTitle>
+            {selectedProjectId && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={importCostsFromProject}
+                disabled={importingCosts}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                {importingCosts ? "Importing..." : "Import costs from project"}
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label>Linked project</Label>
+              <Controller
+                name="projectId"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    onValueChange={(v) => field.onChange(v === "__none__" ? "" : v)}
+                    value={field.value || "__none__"}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="No project" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">No project</SelectItem>
+                      {projects.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.code} — {p.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {selectedProjectId && (
+                <p className="text-xs text-slate-500">
+                  Partner is auto-set from the project. Use "Import costs from project" to populate line items from issued materials and tagged vehicle expenses.
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>

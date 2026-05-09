@@ -13,7 +13,8 @@
       "mcp__github__get_file_contents",
       "mcp__github__search_repositories",
       "Bash(cd:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(bunx prisma *)"
     ]
   }
 }

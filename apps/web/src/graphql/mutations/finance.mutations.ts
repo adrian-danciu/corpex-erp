@@ -127,6 +127,7 @@ export const GET_INVOICES_QUERY = gql`
         total
         paidAmount
         currency
+        projectId
         createdAt
       }
       meta {

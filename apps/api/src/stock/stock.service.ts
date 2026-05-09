@@ -9,6 +9,7 @@ import { PaginationInput } from '../common/dto/pagination.input';
 import { IPaginatedType } from '../common/dto/pagination-result.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductInput } from './dto/create-product.input';
+import { UpdateProductInput } from './dto/update-product.input';
 import { CreateStockMovementInput } from './dto/create-stock-movement.input';
 import { CreateWarehouseInput } from './dto/create-warehouse.input';
 import { StockMovementFilterInput } from './dto/stock-movement-filter.input';
@@ -60,7 +61,44 @@ export class StockService {
         unit: input.unit || 'pcs',
         category: input.category,
         minimumStock: input.minimumStock ?? 0,
+        unitPrice: input.unitPrice ?? 0,
       },
+    });
+  }
+
+  async updateProduct(input: UpdateProductInput): Promise<Product> {
+    const existing = await this.prisma.product.findUnique({
+      where: { id: input.productId },
+    });
+    if (!existing) {
+      throw new NotFoundException(`Product ${input.productId} not found`);
+    }
+
+    return this.prisma.product.update({
+      where: { id: input.productId },
+      data: {
+        name: input.name ?? undefined,
+        description: input.description ?? undefined,
+        unit: input.unit ?? undefined,
+        category: input.category ?? undefined,
+        minimumStock: input.minimumStock ?? undefined,
+        unitPrice: input.unitPrice ?? undefined,
+        isActive: input.isActive ?? undefined,
+      },
+    });
+  }
+
+  async productStockByProduct(productId: string) {
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+    });
+    if (!product) {
+      throw new NotFoundException(`Product ${productId} not found`);
+    }
+    return this.prisma.productStock.findMany({
+      where: { productId },
+      include: { warehouse: true },
+      orderBy: { warehouse: { code: 'asc' } },
     });
   }
 
@@ -243,6 +281,168 @@ export class StockService {
       },
       orderBy: [{ currentStock: 'asc' }, { name: 'asc' }],
     });
+  }
+
+  async reserveStock(
+    productId: string,
+    warehouseId: string,
+    qty: number,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    if (qty <= 0) {
+      throw new BadRequestException('Quantity to reserve must be greater than 0');
+    }
+
+    const run = async (client: Prisma.TransactionClient) => {
+      const stock = await client.productStock.findUnique({
+        where: { productId_warehouseId: { productId, warehouseId } },
+      });
+
+      const onHand = stock?.quantity ?? 0;
+      const alreadyReserved = stock?.reservedQty ?? 0;
+      const available = onHand - alreadyReserved;
+
+      if (available < qty) {
+        throw new BadRequestException(
+          `Insufficient available stock. Requested: ${qty}, Available: ${available}`,
+        );
+      }
+
+      await client.productStock.upsert({
+        where: { productId_warehouseId: { productId, warehouseId } },
+        update: { reservedQty: alreadyReserved + qty },
+        create: {
+          productId,
+          warehouseId,
+          quantity: 0,
+          reservedQty: qty,
+        },
+      });
+    };
+
+    if (tx) {
+      await run(tx);
+    } else {
+      await this.prisma.$transaction(run);
+    }
+  }
+
+  async releaseReservation(
+    productId: string,
+    warehouseId: string,
+    qty: number,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    if (qty <= 0) return;
+
+    const run = async (client: Prisma.TransactionClient) => {
+      const stock = await client.productStock.findUnique({
+        where: { productId_warehouseId: { productId, warehouseId } },
+      });
+      if (!stock) return;
+
+      const next = Math.max(0, stock.reservedQty - qty);
+      await client.productStock.update({
+        where: { productId_warehouseId: { productId, warehouseId } },
+        data: { reservedQty: next },
+      });
+    };
+
+    if (tx) {
+      await run(tx);
+    } else {
+      await this.prisma.$transaction(run);
+    }
+  }
+
+  async issueStock(
+    params: {
+      productId: string;
+      warehouseId: string;
+      qty: number;
+      unitCost?: number | null;
+      reference?: string | null;
+      notes?: string | null;
+      projectId?: string | null;
+      projectMaterialId?: string | null;
+      releaseReservedQty?: number;
+      performedById: string;
+    },
+    tx?: Prisma.TransactionClient,
+  ) {
+    const {
+      productId,
+      warehouseId,
+      qty,
+      unitCost,
+      reference,
+      notes,
+      projectId,
+      projectMaterialId,
+      releaseReservedQty = 0,
+      performedById,
+    } = params;
+
+    if (qty <= 0) {
+      throw new BadRequestException('Quantity to issue must be greater than 0');
+    }
+
+    const run = async (client: Prisma.TransactionClient) => {
+      const [stock, product] = await Promise.all([
+        client.productStock.findUnique({
+          where: { productId_warehouseId: { productId, warehouseId } },
+        }),
+        client.product.findUnique({ where: { id: productId } }),
+      ]);
+
+      const onHand = stock?.quantity ?? 0;
+      if (onHand < qty) {
+        throw new BadRequestException(
+          `Insufficient stock to issue. Requested: ${qty}, On hand: ${onHand}`,
+        );
+      }
+
+      const nextQuantity = onHand - qty;
+      const nextReserved = Math.max(
+        0,
+        (stock?.reservedQty ?? 0) - releaseReservedQty,
+      );
+
+      await client.productStock.update({
+        where: { productId_warehouseId: { productId, warehouseId } },
+        data: { quantity: nextQuantity, reservedQty: nextReserved },
+      });
+
+      const aggregate = await client.productStock.aggregate({
+        where: { productId },
+        _sum: { quantity: true },
+      });
+
+      await client.product.update({
+        where: { id: productId },
+        data: { currentStock: aggregate._sum.quantity ?? 0 },
+      });
+
+      const resolvedUnitCost =
+        unitCost ?? (product?.unitPrice && product.unitPrice > 0 ? product.unitPrice : null);
+
+      return client.stockMovement.create({
+        data: {
+          productId,
+          warehouseId,
+          type: StockMovementType.OUT,
+          quantity: qty,
+          unitCost: resolvedUnitCost,
+          reference: reference ?? null,
+          notes: notes ?? null,
+          createdById: performedById,
+          projectId: projectId ?? null,
+          projectMaterialId: projectMaterialId ?? null,
+        },
+      });
+    };
+
+    return tx ? run(tx) : this.prisma.$transaction(run);
   }
 
   async getOverview(): Promise<StockOverview> {

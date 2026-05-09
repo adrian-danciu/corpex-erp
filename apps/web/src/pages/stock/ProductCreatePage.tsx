@@ -6,8 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { CREATE_PRODUCT_MUTATION } from "@/graphql/mutations/stock.mutations";
 import type { Product } from "@/types/stock.types";
+import { UNITS, DEFAULT_UNIT } from "@/lib/units";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface ProductFormData {
   sku: string;
@@ -16,10 +25,12 @@ interface ProductFormData {
   category: string;
   unit: string;
   minimumStock: number;
+  unitPrice: number;
 }
 
 export default function ProductCreatePage() {
   const navigate = useNavigate();
+  const { currency } = useCurrency();
   const [createProduct, { loading }] = useMutation<{ createProduct: Product }>(
     CREATE_PRODUCT_MUTATION
   );
@@ -27,6 +38,8 @@ export default function ProductCreatePage() {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<ProductFormData>({
     defaultValues: {
@@ -34,8 +47,9 @@ export default function ProductCreatePage() {
       name: "",
       description: "",
       category: "",
-      unit: "pcs",
+      unit: DEFAULT_UNIT,
       minimumStock: 0,
+      unitPrice: 0,
     },
   });
 
@@ -49,6 +63,7 @@ export default function ProductCreatePage() {
           category: values.category || undefined,
           unit: values.unit || "pcs",
           minimumStock: Number(values.minimumStock) || 0,
+          unitPrice: Number(values.unitPrice) || 0,
         },
       },
     });
@@ -98,18 +113,48 @@ export default function ProductCreatePage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="unit">Unit</Label>
-                <Input id="unit" {...register("unit")} />
+                <Select
+                  value={watch("unit") || DEFAULT_UNIT}
+                  onValueChange={(v) =>
+                    setValue("unit", v, { shouldDirty: true })
+                  }
+                >
+                  <SelectTrigger id="unit">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {UNITS.map((u) => (
+                      <SelectItem key={u.value} value={u.value}>
+                        {u.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="minimumStock">Minimum Stock</Label>
-              <Input
-                id="minimumStock"
-                type="number"
-                step="0.01"
-                {...register("minimumStock", { valueAsNumber: true })}
-              />
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="minimumStock">Minimum Stock</Label>
+                <Input
+                  id="minimumStock"
+                  type="number"
+                  step="0.01"
+                  {...register("minimumStock", { valueAsNumber: true })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="unitPrice">Unit price ({currency})</Label>
+                <Input
+                  id="unitPrice"
+                  type="number"
+                  step="0.01"
+                  {...register("unitPrice", { valueAsNumber: true })}
+                />
+                <p className="text-xs text-slate-500">
+                  Reference cost per unit. Used for stock value and project cost rollups.
+                </p>
+              </div>
             </div>
 
             <div className="space-y-2">

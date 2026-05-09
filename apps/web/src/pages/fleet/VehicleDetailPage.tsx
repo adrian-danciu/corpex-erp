@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Pencil, Trash2, Plus } from "lucide-react";
@@ -21,6 +21,11 @@ import {
 import { VehicleStatusBadge } from "@/components/fleet/VehicleStatusBadge";
 import { DocumentTypeBadge } from "@/components/fleet/DocumentTypeBadge";
 import { GET_VEHICLE_QUERY } from "@/graphql/mutations/fleet.queries";
+import {
+  GET_CURRENT_PROJECT_FOR_VEHICLE_QUERY,
+  GET_PROJECTS_QUERY,
+} from "@/graphql/mutations/project.queries";
+import type { Project } from "@/types/project.types";
 import {
   UPDATE_VEHICLE_MUTATION,
   CREATE_VEHICLE_DOCUMENT_MUTATION,
@@ -67,6 +72,7 @@ export default function VehicleDetailPage() {
   const [addLeaseOpen, setAddLeaseOpen] = useState(false);
   const [editLeaseOpen, setEditLeaseOpen] = useState<VehicleLease | null>(null);
   const [addExpenseOpen, setAddExpenseOpen] = useState(false);
+  const [expenseProjectId, setExpenseProjectId] = useState<string>("");
 
   const { data, loading, error, refetch } = useQuery<{ vehicle: Vehicle }>(GET_VEHICLE_QUERY, {
     variables: { id },
@@ -108,6 +114,27 @@ export default function VehicleDetailPage() {
   const addLeaseForm = useForm<CreateVehicleLeaseFormData>({ resolver: zodResolver(createVehicleLeaseSchema) });
   const editLeaseForm = useForm<UpdateVehicleLeaseFormData>({ resolver: zodResolver(updateVehicleLeaseSchema) });
   const expenseForm = useForm<CreateVehicleExpenseFormData>({ resolver: zodResolver(createVehicleExpenseSchema) });
+
+  const { data: currentProjectData } = useQuery<{
+    currentProjectForVehicle: Pick<Project, "id" | "code" | "name"> | null;
+  }>(GET_CURRENT_PROJECT_FOR_VEHICLE_QUERY, {
+    variables: { vehicleId: id },
+    skip: !id,
+  });
+  const currentProject = currentProjectData?.currentProjectForVehicle ?? null;
+
+  const { data: projectsData } = useQuery<{ projects: Project[] }>(
+    GET_PROJECTS_QUERY,
+    { variables: { filter: {} } },
+  );
+  const projectsList = projectsData?.projects ?? [];
+
+  // Smart default: pre-select the currently-active project when opening the dialog
+  useEffect(() => {
+    if (addExpenseOpen) {
+      setExpenseProjectId(currentProject?.id ?? "");
+    }
+  }, [addExpenseOpen, currentProject]);
 
   if (loading) {
     return <PageLoading message="Loading vehicle..." />;
@@ -841,6 +868,7 @@ export default function VehicleDetailPage() {
                     ...data,
                     date: new Date(data.date),
                     amount: Number(data.amount),
+                    projectId: expenseProjectId || undefined,
                   },
                 },
               })
@@ -885,6 +913,32 @@ export default function VehicleDetailPage() {
                 {...expenseForm.register("description")}
                 placeholder="Optional description"
               />
+            </div>
+            <div className="space-y-2">
+              <Label>Project (optional)</Label>
+              <Select
+                value={expenseProjectId || "__none__"}
+                onValueChange={(v) =>
+                  setExpenseProjectId(v === "__none__" ? "" : v)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="No project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">No project</SelectItem>
+                  {projectsList.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.code} — {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {currentProject && (
+                <p className="text-xs text-slate-500">
+                  Defaults to {currentProject.code} (currently active on this vehicle).
+                </p>
+              )}
             </div>
             <div className="flex gap-3">
               <Button type="submit">Add Expense</Button>

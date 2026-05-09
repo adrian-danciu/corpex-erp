@@ -1,4 +1,4 @@
-import { Field, ID, ObjectType } from '@nestjs/graphql';
+import { Field, Float, ID, ObjectType } from '@nestjs/graphql';
 import { ProductStock } from './product-stock.entity';
 
 @ObjectType()
@@ -26,6 +26,9 @@ export class Product {
 
   @Field()
   currentStock: number;
+
+  @Field(() => Float)
+  unitPrice: number;
 
   @Field()
   isActive: boolean;

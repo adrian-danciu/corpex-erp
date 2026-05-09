@@ -35,6 +35,12 @@ Start by reading these docs in order:
 - Forms use React Hook Form + Zod validation
 - State management with Zustand
 
+**UI primitive rule (non-negotiable)**:
+- ALWAYS use the shadcn/ui components in `apps/web/src/components/ui/` for buttons, inputs, tables, dialogs, selects, tabs, badges, cards, etc. Do NOT hand-roll `<table>`, `<button>`, or other primitives with raw Tailwind.
+- BEFORE writing any UI, list `apps/web/src/components/ui/` to confirm which primitives exist. Use them.
+- IF a needed shadcn component is missing from that folder (e.g. you need `Dropdown`, `Tooltip`, `Toast`, `Combobox`, etc. and it isn't there), STOP coding and tell the user to add it via the shadcn CLI. Do not invent a substitute or hand-roll the missing primitive.
+- The same rule applies when refactoring existing pages — replace any hand-rolled primitives with the shadcn equivalent.
+
 ### Step 3: Proceed with the Task
 
 After reading the documentation, you can proceed with the user's request while keeping the project conventions in mind.

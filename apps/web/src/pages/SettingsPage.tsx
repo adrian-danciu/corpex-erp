@@ -33,7 +33,6 @@ interface CompanySettingsData {
   bankName: string;
   bankAccount: string;
   defaultInvoiceSeries: string;
-  defaultCurrency: string;
   defaultVatRate: number;
   paymentTermsDays: number;
   defaultAnnualLeaveDays: number;
@@ -66,7 +65,7 @@ export default function SettingsPage() {
     register: regInvoice,
     handleSubmit: submitInvoice,
     reset: resetInvoice,
-  } = useForm<Pick<CompanySettingsData, "defaultInvoiceSeries" | "defaultCurrency" | "defaultVatRate" | "paymentTermsDays">>();
+  } = useForm<Pick<CompanySettingsData, "defaultInvoiceSeries" | "defaultVatRate" | "paymentTermsDays">>();
 
   // HR form
   const {
@@ -93,7 +92,6 @@ export default function SettingsPage() {
       });
       resetInvoice({
         defaultInvoiceSeries: s.defaultInvoiceSeries,
-        defaultCurrency: s.defaultCurrency,
         defaultVatRate: s.defaultVatRate,
         paymentTermsDays: s.paymentTermsDays,
       });
@@ -273,13 +271,6 @@ export default function SettingsPage() {
                     <Input id="defaultInvoiceSeries" placeholder="CORP" {...regInvoice("defaultInvoiceSeries")} />
                     <p className="text-xs text-muted-foreground">
                       The prefix used for invoice numbering (e.g. CORP-0001)
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="defaultCurrency">Default Currency</Label>
-                    <Input id="defaultCurrency" placeholder="RON" {...regInvoice("defaultCurrency")} />
-                    <p className="text-xs text-muted-foreground">
-                      ISO currency code used for new invoices
                     </p>
                   </div>
                   <div className="space-y-2">

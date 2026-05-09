@@ -33,6 +33,9 @@ import VehiclesPage from "./pages/fleet/VehiclesPage";
 import VehicleCreatePage from "./pages/fleet/VehicleCreatePage";
 import VehicleDetailPage from "./pages/fleet/VehicleDetailPage";
 import SettingsPage from "./pages/SettingsPage";
+import ProjectsPage from "./pages/projects/ProjectsPage";
+import ProjectCreatePage from "./pages/projects/ProjectCreatePage";
+import ProjectDetailPage from "./pages/projects/ProjectDetailPage";
 
 function App() {
   return (
@@ -260,6 +263,32 @@ function App() {
             element={
               <ProtectedRoute requiredModule="fleet" requiredAccess="read">
                 <DashboardLayout><VehicleDetailPage /></DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Projects Module */}
+          <Route
+            path="/projects"
+            element={
+              <ProtectedRoute requiredModule="projects" requiredAccess="read">
+                <DashboardLayout><ProjectsPage /></DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects/new"
+            element={
+              <ProtectedRoute requiredModule="projects" requiredAccess="write">
+                <DashboardLayout><ProjectCreatePage /></DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects/:id"
+            element={
+              <ProtectedRoute requiredModule="projects" requiredAccess="read">
+                <DashboardLayout><ProjectDetailPage /></DashboardLayout>
               </ProtectedRoute>
             }
           />

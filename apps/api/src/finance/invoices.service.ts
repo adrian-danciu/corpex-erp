@@ -3,8 +3,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateInvoiceInput } from './dto/create-invoice.input';
 import { UpdateInvoiceStatusInput } from './dto/update-invoice-status.input';
 import { Invoice } from './entities/invoice.entity';
+import { InvoiceLineDraft } from './entities/invoice-line-draft.entity';
 import { PaginationInput } from '../common/dto/pagination.input';
 import { IPaginatedType } from '../common/dto/pagination-result.dto';
+import { ProjectMaterialStatus } from '@prisma/client';
 
 const invoiceInclude = {
   partner: true,
@@ -50,6 +52,7 @@ export class InvoicesService {
         deliveryDate: input.deliveryDate,
         currency: input.currency,
         notes: input.notes,
+        projectId: input.projectId ?? null,
         subtotal,
         vatTotal,
         total,
@@ -114,5 +117,76 @@ export class InvoicesService {
       where: { id },
       include: invoiceInclude,
     });
+  }
+
+  async projectCostsForInvoice(projectId: string): Promise<InvoiceLineDraft[]> {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true },
+    });
+    if (!project) {
+      throw new NotFoundException(`Project with ID ${projectId} not found`);
+    }
+
+    const settings = await this.prisma.companySettings.findUnique({
+      where: { id: 'singleton' },
+    });
+    const defaultVatRate = settings?.defaultVatRate ?? 19;
+
+    const [materials, vehicleExpenses] = await Promise.all([
+      this.prisma.projectMaterial.findMany({
+        where: {
+          projectId,
+          status: {
+            in: [
+              ProjectMaterialStatus.PARTIALLY_ISSUED,
+              ProjectMaterialStatus.FULLY_ISSUED,
+            ],
+          },
+        },
+        include: {
+          product: true,
+          warehouse: true,
+          movements: { where: { type: 'OUT' } },
+        },
+      }),
+      this.prisma.vehicleExpense.findMany({
+        where: { projectId },
+        include: { vehicle: true },
+      }),
+    ]);
+
+    const drafts: InvoiceLineDraft[] = [];
+
+    for (const m of materials) {
+      const issuedQty = m.movements.reduce((acc, mv) => acc + mv.quantity, 0);
+      if (issuedQty <= 0) continue;
+      const totalCost = m.movements.reduce(
+        (acc, mv) => acc + mv.quantity * (mv.unitCost ?? 0),
+        0,
+      );
+      const unitPrice = issuedQty > 0 ? totalCost / issuedQty : 0;
+      drafts.push({
+        description: `${m.product.name} (issued from ${m.warehouse.code})`,
+        quantity: issuedQty,
+        unit: m.product.unit,
+        unitPrice,
+        vatRate: defaultVatRate,
+        source: `project-material:${m.id}`,
+      });
+    }
+
+    for (const e of vehicleExpenses) {
+      drafts.push({
+        description: `${e.type} — ${e.vehicle.plateNumber} — ${e.date.toISOString().split('T')[0]}`,
+        quantity: 1,
+        unit: 'service',
+        unitPrice: e.amount,
+        vatRate: defaultVatRate,
+        source: `vehicle-expense:${e.id}`,
+      });
+    }
+
+    return drafts;
   }
 }

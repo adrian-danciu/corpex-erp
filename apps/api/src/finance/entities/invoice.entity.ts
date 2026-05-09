@@ -93,6 +93,9 @@ export class Invoice {
   @Field(() => [Payment])
   payments: Payment[];
 
+  @Field(() => String, { nullable: true })
+  projectId?: string | null;
+
   @Field(() => Date)
   createdAt: Date;
 

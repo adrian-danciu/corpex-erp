@@ -17,4 +17,7 @@ export class CreateVehicleExpenseInput {
 
   @Field({ nullable: true })
   description?: string;
+
+  @Field(() => String, { nullable: true })
+  projectId?: string;
 }

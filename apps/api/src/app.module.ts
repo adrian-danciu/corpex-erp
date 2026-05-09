@@ -14,6 +14,7 @@ import { ReportingModule } from './reporting/reporting.module';
 import { StockModule } from './stock/stock.module';
 import { FleetModule } from './fleet/fleet.module';
 import { SettingsModule } from './settings/settings.module';
+import { ProjectsModule } from './projects/projects.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { SettingsModule } from './settings/settings.module';
     StockModule,
     FleetModule,
     SettingsModule,
+    ProjectsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

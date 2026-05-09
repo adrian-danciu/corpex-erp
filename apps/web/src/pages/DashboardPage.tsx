@@ -3,6 +3,8 @@ import { useQuery } from "@apollo/client/react";
 import { AlertCircle, Briefcase, Users as UsersIcon, FileText, AlertTriangle } from "lucide-react";
 import { PageLoading } from "@/components/ui/page-loading";
 import { FleetExpiryWidget } from "@/components/dashboard/FleetExpiryWidget";
+import { MyProjectsWidget } from "@/components/dashboard/MyProjectsWidget";
+import { MyTasksWidget } from "@/components/dashboard/MyTasksWidget";
 import { useAuthStore } from "@/stores/auth.store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -254,6 +256,12 @@ export default function DashboardPage() {
                 )}
               </CardContent>
             </Card>
+          </div>
+
+          {/* Project widgets */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <MyProjectsWidget />
+            <MyTasksWidget />
           </div>
 
           {/* Fleet Expiry Widget */}

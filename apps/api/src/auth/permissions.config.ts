@@ -10,6 +10,7 @@ export interface ModulePermissions {
   finance: AccessLevel;
   stock: AccessLevel;
   fleet: AccessLevel;
+  projects: AccessLevel;
   reports: ReportScope;
   dashboard: boolean;
 }
@@ -22,6 +23,7 @@ export const DEPARTMENT_PERMISSIONS: Record<Department, ModulePermissions> = {
     finance: 'none',
     stock: 'none',
     fleet: 'none',
+    projects: 'read',
     reports: 'hr',
     dashboard: true,
   },
@@ -32,6 +34,7 @@ export const DEPARTMENT_PERMISSIONS: Record<Department, ModulePermissions> = {
     finance: 'write',
     stock: 'none',
     fleet: 'none',
+    projects: 'read',
     reports: 'finance',
     dashboard: true,
   },
@@ -42,6 +45,7 @@ export const DEPARTMENT_PERMISSIONS: Record<Department, ModulePermissions> = {
     finance: 'none',
     stock: 'write',
     fleet: 'none',
+    projects: 'read',
     reports: 'stock',
     dashboard: true,
   },
@@ -52,6 +56,7 @@ export const DEPARTMENT_PERMISSIONS: Record<Department, ModulePermissions> = {
     finance: 'none',
     stock: 'none',
     fleet: 'write',
+    projects: 'read',
     reports: 'fleet',
     dashboard: true,
   },
@@ -62,6 +67,7 @@ export const DEPARTMENT_PERMISSIONS: Record<Department, ModulePermissions> = {
     finance: 'read',
     stock: 'read',
     fleet: 'read',
+    projects: 'write',
     reports: 'all',
     dashboard: true,
   },
@@ -72,6 +78,7 @@ export const DEPARTMENT_PERMISSIONS: Record<Department, ModulePermissions> = {
     finance: 'none',
     stock: 'none',
     fleet: 'none',
+    projects: 'none',
     reports: 'none',
     dashboard: true,
   },
