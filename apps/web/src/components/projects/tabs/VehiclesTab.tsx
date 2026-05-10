@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useMutation, useQuery } from "@apollo/client/react";
+import { useQuery } from "@apollo/client/react";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { Plus } from "lucide-react";
 import {
   Card,
@@ -74,26 +75,26 @@ export function VehiclesTab({ project, isProjectManager }: Props) {
     variables: { pagination: { skip: 0, take: 200 } },
   });
 
-  const [assignVehicle, { loading: assigning }] = useMutation(
+  const [assignVehicle, { loading: assigning }] = useMutationWithToast(
     ASSIGN_PROJECT_VEHICLE_MUTATION,
     {
+      successMessage: "Vehicle assigned",
       onCompleted: () => {
         setAssignOpen(false);
         setVehicleId("");
         setStartDate("");
         setEndDate("");
         setNotes("");
-        refetch();
+        void refetch();
       },
-      onError: (e) => setError(e.message),
     },
   );
 
-  const [endAssignment] = useMutation(
+  const [endAssignment] = useMutationWithToast(
     END_PROJECT_VEHICLE_ASSIGNMENT_MUTATION,
     {
-      onCompleted: () => refetch(),
-      onError: (e) => setError(e.message),
+      successMessage: "Assignment ended",
+      onCompleted: () => void refetch(),
     },
   );
 

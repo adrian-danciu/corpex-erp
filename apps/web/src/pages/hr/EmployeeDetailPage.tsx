@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useQuery, useMutation } from "@apollo/client/react";
+import { useQuery } from "@apollo/client/react";
 import { useForm, Controller } from "react-hook-form";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import {
   GET_EMPLOYEE_QUERY,
   GET_EMPLOYEES_QUERY,
@@ -53,16 +54,24 @@ export default function EmployeeDetailPage() {
     variables: { pagination: { skip: 0, take: 500 } },
   });
 
-  const [updateEmployee, { loading: updating, error: updateError }] = useMutation(UPDATE_EMPLOYEE_MUTATION, {
-    onCompleted: () => {
-      setEditing(false);
-      refetch();
+  const [updateEmployee, { loading: updating }] = useMutationWithToast(
+    UPDATE_EMPLOYEE_MUTATION,
+    {
+      successMessage: "Employee updated",
+      onCompleted: () => {
+        setEditing(false);
+        void refetch();
+      },
     },
-  });
+  );
 
-  const [deleteEmployee, { loading: deleting }] = useMutation(DELETE_EMPLOYEE_MUTATION, {
-    onCompleted: () => navigate("/hr/employees"),
-  });
+  const [deleteEmployee, { loading: deleting }] = useMutationWithToast(
+    DELETE_EMPLOYEE_MUTATION,
+    {
+      successMessage: "Employee deleted",
+      onCompleted: () => navigate("/hr/employees"),
+    },
+  );
 
   const employee = data?.employee;
 
@@ -83,21 +92,25 @@ export default function EmployeeDetailPage() {
       : { id: id ?? "" },
   });
 
-  const onSubmit = (values: UpdateEmployeeInput) => {
-    updateEmployee({
-      variables: {
-        updateEmployeeInput: {
-          ...values,
-          salary: values.salary || undefined,
-          managerId: values.managerId || undefined,
+  const onSubmit = async (values: UpdateEmployeeInput) => {
+    try {
+      await updateEmployee({
+        variables: {
+          updateEmployeeInput: {
+            ...values,
+            salary: values.salary || undefined,
+            managerId: values.managerId || undefined,
+          },
         },
-      },
-    });
+      });
+    } catch {
+      // toast already shown
+    }
   };
 
   const handleDelete = () => {
     if (window.confirm("Are you sure you want to delete this employee record? This action cannot be undone.")) {
-      deleteEmployee({ variables: { id } });
+      void deleteEmployee({ variables: { id } });
     }
   };
 
@@ -277,11 +290,6 @@ export default function EmployeeDetailPage() {
                 <CardTitle>Edit Employee</CardTitle>
               </CardHeader>
               <CardContent>
-                {updateError && (
-                  <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                    {updateError.message}
-                  </div>
-                )}
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">

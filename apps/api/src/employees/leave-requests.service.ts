@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   BadRequestException,
   ForbiddenException,
@@ -9,10 +10,16 @@ import { CreateLeaveRequestInput } from './dto/create-leave-request.input';
 import { ApproveLeaveRequestInput } from './dto/approve-leave-request.input';
 import { LeaveRequest } from './entities/leave-request.entity';
 import { LeaveStatus } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class LeaveRequestsService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(LeaveRequestsService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private notifications: NotificationsService,
+  ) {}
 
   /**
    * Create a new leave request
@@ -58,6 +65,19 @@ export class LeaveRequestsService {
       },
     });
 
+    const employeeName =
+      `${leaveRequest.employee.firstName} ${leaveRequest.employee.lastName}`.trim() ||
+      leaveRequest.employee.email;
+    this.notifications
+      .notifyLeaveSubmitted({
+        leaveRequestId: leaveRequest.id,
+        employeeName,
+        employeeUserId: userId,
+      })
+      .catch((err) =>
+        this.logger.error('Failed to emit notifyLeaveSubmitted', err),
+      );
+
     return leaveRequest;
   }
 
@@ -93,6 +113,33 @@ export class LeaveRequestsService {
         createdAt: 'desc',
       },
     });
+  }
+
+  /**
+   * Find ALL pending leave requests across the company. Used by users with
+   * `leaveApprovals: true` (HR + MANAGEMENT) for oversight: HR sees everything
+   * read-only, managers see everything with action buttons enabled only on
+   * their direct subordinates.
+   */
+  async findAllPending(): Promise<LeaveRequest[]> {
+    return this.prisma.leaveRequest.findMany({
+      where: { status: LeaveStatus.PENDING },
+      include: { employee: true, approver: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
+   * Resolve the direct manager (User) for a given leave-request employee.
+   * Used by the GraphQL resolver field so the UI can display "Manager: X"
+   * and gate Approve/Reject buttons.
+   */
+  async findDirectManagerFor(leaveRequestEmployeeId: string) {
+    const employee = await this.prisma.employee.findUnique({
+      where: { userId: leaveRequestEmployeeId },
+      include: { manager: { include: { user: true } } },
+    });
+    return employee?.manager?.user ?? null;
   }
 
   /**
@@ -218,6 +265,21 @@ export class LeaveRequestsService {
         },
       });
     }
+
+    const approverName = updatedLeaveRequest.approver
+      ? `${updatedLeaveRequest.approver.firstName} ${updatedLeaveRequest.approver.lastName}`.trim() ||
+        updatedLeaveRequest.approver.email
+      : 'a manager';
+    this.notifications
+      .notifyLeaveDecision({
+        leaveRequestId: updatedLeaveRequest.id,
+        requesterUserId: leaveRequest.employeeId,
+        decision: approveLeaveRequestInput.approved ? 'APPROVED' : 'REJECTED',
+        approverName,
+      })
+      .catch((err) =>
+        this.logger.error('Failed to emit notifyLeaveDecision', err),
+      );
 
     return updatedLeaveRequest;
   }

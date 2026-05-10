@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { useMutation } from "@apollo/client/react";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { CHANGE_PASSWORD_MUTATION, UPDATE_PROFILE_PICTURE_MUTATION } from "@/graphql/mutations/profile.mutations";
 import { User, Camera } from "lucide-react";
 
@@ -57,36 +57,28 @@ export default function ProfilePage() {
   const newPassword = watchPassword("newPassword");
 
   // Mutations
-  const [changePasswordMutation, { loading: changingPassword }] = useMutation(
-    CHANGE_PASSWORD_MUTATION,
-    {
+  const [changePasswordMutation, { loading: changingPassword }] =
+    useMutationWithToast(CHANGE_PASSWORD_MUTATION, {
+      successMessage: "Password updated",
       onCompleted: () => {
         setPasswordSuccess(true);
         resetPasswordForm();
         setTimeout(() => setPasswordSuccess(false), 5000);
       },
-      onError: (error) => {
-        // Surface backend error on currentPassword field
-        console.error("Password change error:", error);
-      },
-    }
-  );
+    });
 
-  const [updateProfilePictureMutation, { loading: updatingPicture }] = useMutation<{
-    updateProfilePicture: UserType;
-  }>(
-    UPDATE_PROFILE_PICTURE_MUTATION,
-    {
-      onCompleted: (data) => {
-        updateUser(data.updateProfilePicture);
-        setPictureSuccess(true);
-        setTimeout(() => setPictureSuccess(false), 5000);
+  const [updateProfilePictureMutation, { loading: updatingPicture }] =
+    useMutationWithToast<{ updateProfilePicture: UserType }>(
+      UPDATE_PROFILE_PICTURE_MUTATION,
+      {
+        successMessage: "Profile picture updated",
+        onCompleted: (data) => {
+          updateUser(data.updateProfilePicture);
+          setPictureSuccess(true);
+          setTimeout(() => setPictureSuccess(false), 5000);
+        },
       },
-      onError: (error) => {
-        setPictureError(error.message);
-      },
-    }
-  );
+    );
 
   // Handle password change
   const onPasswordSubmit = async (values: PasswordFormValues) => {

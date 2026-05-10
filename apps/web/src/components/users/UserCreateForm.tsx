@@ -1,7 +1,7 @@
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
-import { useMutation } from "@apollo/client/react";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -41,8 +41,9 @@ export default function UserCreateForm({
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
 
-  // Apollo mutation hook
-  const [createUser, { loading: mutationLoading }] = useMutation<{
+  // Apollo mutation hook (toast on error; success is shown inline because
+  // we need to display the auto-generated password to the admin)
+  const [createUser, { loading: mutationLoading }] = useMutationWithToast<{
     createUser: UserType;
   }>(CREATE_USER_MUTATION);
 

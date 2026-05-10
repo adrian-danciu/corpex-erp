@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
@@ -15,6 +16,7 @@ import { StockModule } from './stock/stock.module';
 import { FleetModule } from './fleet/fleet.module';
 import { SettingsModule } from './settings/settings.module';
 import { ProjectsModule } from './projects/projects.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -35,6 +37,8 @@ import { ProjectsModule } from './projects/projects.module';
         res,
       }), // Pass request/response to context
     }),
+    // Cron / scheduled jobs
+    ScheduleModule.forRoot(),
     // Database
     PrismaModule,
     // Feature Modules
@@ -47,6 +51,7 @@ import { ProjectsModule } from './projects/projects.module';
     FleetModule,
     SettingsModule,
     ProjectsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

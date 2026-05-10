@@ -1,4 +1,5 @@
-import { useMutation, useQuery } from "@apollo/client/react";
+import { useQuery } from "@apollo/client/react";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import {
   Card,
   CardContent,
@@ -58,12 +59,13 @@ export function OverviewTab({ project, isProjectManager, onChange }: Props) {
     fetchPolicy: "cache-and-network",
   });
 
-  const [transitionStatus, { loading: transitioning }] = useMutation(
+  const [transitionStatus, { loading: transitioning }] = useMutationWithToast(
     TRANSITION_PROJECT_STATUS_MUTATION,
     {
       refetchQueries: [
         { query: GET_PROJECT_QUERY, variables: { projectId: project.id } },
       ],
+      successMessage: "Project status updated",
       onCompleted: () => onChange(),
     },
   );

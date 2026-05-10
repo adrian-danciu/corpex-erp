@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { useMutation, useQuery } from "@apollo/client/react";
+import { useQuery } from "@apollo/client/react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +34,6 @@ interface CreateProjectMutationResult {
 export default function ProjectCreatePage() {
   const navigate = useNavigate();
   const { currency: defaultCurrency } = useCurrency();
-  const [errorMessage, setErrorMessage] = useState("");
 
   const { data: partnersData, loading: partnersLoading } = useQuery<{
     partners: PaginatedResult<Partner>;
@@ -58,37 +57,40 @@ export default function ProjectCreatePage() {
   const partnerId = watch("partnerId");
 
   const [createProject, { loading: isCreating }] =
-    useMutation<CreateProjectMutationResult>(CREATE_PROJECT_MUTATION, {
+    useMutationWithToast<CreateProjectMutationResult>(CREATE_PROJECT_MUTATION, {
       refetchQueries: [{ query: GET_PROJECTS_QUERY }],
+      successMessage: (data) => `Project "${data.createProject.name}" created`,
       onCompleted: (data) => {
         if (data?.createProject?.id) {
           navigate(`/projects/${data.createProject.id}`);
         }
       },
-      onError: (err) => setErrorMessage(err.message),
     });
 
-  const onSubmit = (formData: CreateProjectFormData) => {
-    setErrorMessage("");
-    createProject({
-      variables: {
-        input: {
-          code: formData.code,
-          name: formData.name,
-          description: formData.description || undefined,
-          partnerId: formData.partnerId,
-          budget: formData.budget,
-          currency: formData.currency || "RON",
-          plannedStartDate: formData.plannedStartDate
-            ? new Date(formData.plannedStartDate)
-            : undefined,
-          plannedEndDate: formData.plannedEndDate
-            ? new Date(formData.plannedEndDate)
-            : undefined,
-          notes: formData.notes || undefined,
+  const onSubmit = async (formData: CreateProjectFormData) => {
+    try {
+      await createProject({
+        variables: {
+          input: {
+            code: formData.code,
+            name: formData.name,
+            description: formData.description || undefined,
+            partnerId: formData.partnerId,
+            budget: formData.budget,
+            currency: formData.currency || "RON",
+            plannedStartDate: formData.plannedStartDate
+              ? new Date(formData.plannedStartDate)
+              : undefined,
+            plannedEndDate: formData.plannedEndDate
+              ? new Date(formData.plannedEndDate)
+              : undefined,
+            notes: formData.notes || undefined,
+          },
         },
-      },
-    });
+      });
+    } catch {
+      // toast already shown
+    }
   };
 
   const partners = partnersData?.partners.items ?? [];
@@ -110,12 +112,6 @@ export default function ProjectCreatePage() {
           </p>
         </div>
       </div>
-
-      {errorMessage && (
-        <div className="rounded-lg bg-red-50 p-4 text-red-800 border border-red-200">
-          {errorMessage}
-        </div>
-      )}
 
       <Card>
         <CardHeader>

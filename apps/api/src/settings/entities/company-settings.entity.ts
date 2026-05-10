@@ -53,6 +53,18 @@ export class CompanySettings {
   @Field()
   defaultCountry: string;
 
+  @Field(() => Int)
+  fleetExpiryThresholdItp: number;
+
+  @Field(() => Int)
+  fleetExpiryThresholdRca: number;
+
+  @Field(() => Int)
+  fleetExpiryThresholdCasco: number;
+
+  @Field(() => Int)
+  fleetExpiryThresholdRovinieta: number;
+
   @Field(() => Date)
   updatedAt: Date;
 }

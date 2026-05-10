@@ -1,6 +1,7 @@
 import { useForm, Controller } from "react-hook-form";
-import { useMutation, useQuery } from "@apollo/client/react";
+import { useQuery } from "@apollo/client/react";
 import { useNavigate } from "react-router-dom";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,25 +44,30 @@ export default function EmployeeCreatePage() {
   });
   const allEmployees = employeesData?.employees.items ?? [];
 
-  const [createEmployee, { loading, error }] = useMutation(CREATE_EMPLOYEE_MUTATION, {
-    onCompleted: () => {
-      navigate("/hr/employees");
+  const [createEmployee, { loading }] = useMutationWithToast(
+    CREATE_EMPLOYEE_MUTATION,
+    {
+      successMessage: "Employee created",
+      onCompleted: () => navigate("/hr/employees"),
     },
-  });
+  );
 
-  const onSubmit = (values: CreateEmployeeInput) => {
-    createEmployee({
-      variables: {
-        createEmployeeInput: {
-          ...values,
-          // backend expects Date, GraphQL client sends ISO strings
-          contractEndDate: values.contractEndDate || undefined,
-          salary: values.salary ?? undefined,
-          managerId: values.managerId || undefined,
-          country: values.country || "Romania",
+  const onSubmit = async (values: CreateEmployeeInput) => {
+    try {
+      await createEmployee({
+        variables: {
+          createEmployeeInput: {
+            ...values,
+            contractEndDate: values.contractEndDate || undefined,
+            salary: values.salary ?? undefined,
+            managerId: values.managerId || undefined,
+            country: values.country || "Romania",
+          },
         },
-      },
-    });
+      });
+    } catch {
+      // toast already shown
+    }
   };
 
   return (
@@ -83,12 +89,6 @@ export default function EmployeeCreatePage() {
           <CardTitle>Employee Details</CardTitle>
         </CardHeader>
         <CardContent>
-          {error && (
-            <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {error.message}
-            </div>
-          )}
-
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Identity */}
             <div className="grid gap-4 md:grid-cols-2">

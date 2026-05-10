@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation, useQuery } from "@apollo/client/react";
+import { useQuery } from "@apollo/client/react";
 import { useForm } from "react-hook-form";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
+import { useAuthStore } from "@/stores/auth.store";
+import { canAccess } from "@/lib/permissions";
 import { AlertCircle, Pencil, Plus, Search } from "lucide-react";
 import { PageLoading } from "@/components/ui/page-loading";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,6 +48,8 @@ interface EditProductFormData {
 
 export default function ProductsPage() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const canWrite = canAccess(user, "stock", "write");
   const [search, setSearch] = useState("");
   const [searchValue, setSearchValue] = useState("");
   const [editing, setEditing] = useState<Product | null>(null);
@@ -79,34 +84,38 @@ export default function ProductsPage() {
     }
   }, [editing, editForm]);
 
-  const [updateProduct, { loading: saving }] = useMutation(
+  const [updateProduct, { loading: saving }] = useMutationWithToast(
     UPDATE_PRODUCT_MUTATION,
     {
+      successMessage: "Product updated",
       onCompleted: () => {
         setEditing(null);
-        refetch();
+        void refetch();
       },
-      onError: (err) => setEditError(err.message),
     },
   );
 
-  const submitEdit = (values: EditProductFormData) => {
+  const submitEdit = async (values: EditProductFormData) => {
     if (!editing) return;
     setEditError("");
-    updateProduct({
-      variables: {
-        input: {
-          productId: editing.id,
-          name: values.name,
-          description: values.description || undefined,
-          category: values.category || undefined,
-          unit: values.unit,
-          minimumStock: Number(values.minimumStock) || 0,
-          unitPrice: Number(values.unitPrice) || 0,
-          isActive: values.isActive,
+    try {
+      await updateProduct({
+        variables: {
+          input: {
+            productId: editing.id,
+            name: values.name,
+            description: values.description || undefined,
+            category: values.category || undefined,
+            unit: values.unit,
+            minimumStock: Number(values.minimumStock) || 0,
+            unitPrice: Number(values.unitPrice) || 0,
+            isActive: values.isActive,
+          },
         },
-      },
-    });
+      });
+    } catch {
+      // toast already shown
+    }
   };
 
   if (loading) {
@@ -132,10 +141,12 @@ export default function ProductsPage() {
           <h1 className="text-3xl font-bold text-slate-900">Products</h1>
           <p className="text-slate-600 mt-1">Manage stock products and thresholds.</p>
         </div>
-        <Button onClick={() => navigate("/stock/products/new")} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Product
-        </Button>
+        {canWrite && (
+          <Button onClick={() => navigate("/stock/products/new")} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Product
+          </Button>
+        )}
       </div>
 
       <Card>
@@ -219,15 +230,17 @@ export default function ProductsPage() {
                         {formatMoney(product.currentStock * product.unitPrice)}
                       </td>
                       <td className="py-2 text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => setEditing(product)}
-                          aria-label={`Edit ${product.name}`}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
+                        {canWrite && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => setEditing(product)}
+                            aria-label={`Edit ${product.name}`}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   ))}

@@ -1,6 +1,9 @@
-import { useMutation, useQuery } from "@apollo/client/react";
+import { useQuery } from "@apollo/client/react";
 import { useForm } from "react-hook-form";
 import { AlertCircle, Plus } from "lucide-react";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
+import { useAuthStore } from "@/stores/auth.store";
+import { canAccess } from "@/lib/permissions";
 import { PageLoading } from "@/components/ui/page-loading";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +27,8 @@ interface WarehouseFormData {
 }
 
 export default function WarehousesPage() {
+  const { user } = useAuthStore();
+  const canWrite = canAccess(user, "stock", "write");
   const { page, pageSize, skip, take, setPage } = usePagination();
   const { data, loading, error, refetch } = useQuery<{
     warehouses: PaginatedResult<Warehouse>;
@@ -32,9 +37,11 @@ export default function WarehousesPage() {
     fetchPolicy: "cache-and-network",
   });
 
-  const [createWarehouse, { loading: creating }] = useMutation<{
+  const [createWarehouse, { loading: creating }] = useMutationWithToast<{
     createWarehouse: Warehouse;
-  }>(CREATE_WAREHOUSE_MUTATION);
+  }>(CREATE_WAREHOUSE_MUTATION, {
+    successMessage: (data) => `Warehouse "${data.createWarehouse.name}" created`,
+  });
 
   const {
     register,
@@ -52,19 +59,23 @@ export default function WarehousesPage() {
   });
 
   const onSubmit = async (values: WarehouseFormData) => {
-    await createWarehouse({
-      variables: {
-        createWarehouseInput: {
-          name: values.name,
-          code: values.code,
-          address: values.address || undefined,
-          city: values.city || undefined,
-          country: values.country || "Romania",
+    try {
+      await createWarehouse({
+        variables: {
+          createWarehouseInput: {
+            name: values.name,
+            code: values.code,
+            address: values.address || undefined,
+            city: values.city || undefined,
+            country: values.country || "Romania",
+          },
         },
-      },
-    });
-    reset();
-    refetch();
+      });
+      reset();
+      void refetch();
+    } catch {
+      // toast already shown
+    }
   };
 
   if (loading) {
@@ -90,6 +101,7 @@ export default function WarehousesPage() {
         <p className="text-slate-600 mt-1">Manage warehouse locations.</p>
       </div>
 
+      {canWrite && (
       <Card>
         <CardHeader>
           <CardTitle>Add Warehouse</CardTitle>
@@ -135,6 +147,7 @@ export default function WarehousesPage() {
           </form>
         </CardContent>
       </Card>
+      )}
 
       <Card>
         <CardHeader>

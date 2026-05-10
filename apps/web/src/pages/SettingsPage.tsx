@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { useQuery, useMutation } from "@apollo/client/react";
+import { useQuery } from "@apollo/client/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,13 +13,14 @@ import {
   Receipt,
   Users,
   Save,
-  CheckCircle,
   AlertCircle,
+  Car,
 } from "lucide-react";
 import {
   GET_COMPANY_SETTINGS_QUERY,
   UPDATE_COMPANY_SETTINGS_MUTATION,
 } from "@/graphql/mutations/settings.mutations";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 
 interface CompanySettingsData {
   companyName: string;
@@ -37,6 +38,10 @@ interface CompanySettingsData {
   paymentTermsDays: number;
   defaultAnnualLeaveDays: number;
   defaultCountry: string;
+  fleetExpiryThresholdItp: number;
+  fleetExpiryThresholdRca: number;
+  fleetExpiryThresholdCasco: number;
+  fleetExpiryThresholdRovinieta: number;
 }
 
 export default function SettingsPage() {
@@ -44,14 +49,13 @@ export default function SettingsPage() {
     GET_COMPANY_SETTINGS_QUERY,
   );
 
-  const [updateSettings] = useMutation(UPDATE_COMPANY_SETTINGS_MUTATION, {
-    refetchQueries: [{ query: GET_COMPANY_SETTINGS_QUERY }],
-  });
-
-  // Success states
-  const [companySuccess, setCompanySuccess] = useState(false);
-  const [invoiceSuccess, setInvoiceSuccess] = useState(false);
-  const [hrSuccess, setHrSuccess] = useState(false);
+  const [updateSettings] = useMutationWithToast(
+    UPDATE_COMPANY_SETTINGS_MUTATION,
+    {
+      refetchQueries: [{ query: GET_COMPANY_SETTINGS_QUERY }],
+      successMessage: "Settings saved",
+    },
+  );
 
   // Company form
   const {
@@ -73,6 +77,13 @@ export default function SettingsPage() {
     handleSubmit: submitHr,
     reset: resetHr,
   } = useForm<Pick<CompanySettingsData, "defaultAnnualLeaveDays" | "defaultCountry">>();
+
+  // Fleet form
+  const {
+    register: regFleet,
+    handleSubmit: submitFleet,
+    reset: resetFleet,
+  } = useForm<Pick<CompanySettingsData, "fleetExpiryThresholdItp" | "fleetExpiryThresholdRca" | "fleetExpiryThresholdCasco" | "fleetExpiryThresholdRovinieta">>();
 
   // Populate forms when data loads
   useEffect(() => {
@@ -99,43 +110,49 @@ export default function SettingsPage() {
         defaultAnnualLeaveDays: s.defaultAnnualLeaveDays,
         defaultCountry: s.defaultCountry,
       });
+      resetFleet({
+        fleetExpiryThresholdItp: s.fleetExpiryThresholdItp,
+        fleetExpiryThresholdRca: s.fleetExpiryThresholdRca,
+        fleetExpiryThresholdCasco: s.fleetExpiryThresholdCasco,
+        fleetExpiryThresholdRovinieta: s.fleetExpiryThresholdRovinieta,
+      });
     }
-  }, [data, resetCompany, resetInvoice, resetHr]);
+  }, [data, resetCompany, resetInvoice, resetHr, resetFleet]);
 
-  const showSuccess = (setter: (v: boolean) => void) => {
-    setter(true);
-    setTimeout(() => setter(false), 3000);
+  const submit = async (values: Record<string, unknown>) => {
+    try {
+      await updateSettings({
+        variables: { updateCompanySettingsInput: values },
+      });
+    } catch {
+      // toast already shown
+    }
   };
 
-  const onCompanySubmit = async (values: Record<string, unknown>) => {
-    await updateSettings({ variables: { updateCompanySettingsInput: values } });
-    showSuccess(setCompanySuccess);
-  };
+  const onCompanySubmit = (values: Record<string, unknown>) => submit(values);
 
-  const onInvoiceSubmit = async (values: Record<string, unknown>) => {
-    await updateSettings({
-      variables: {
-        updateCompanySettingsInput: {
-          ...values,
-          defaultVatRate: Number(values.defaultVatRate),
-          paymentTermsDays: Number(values.paymentTermsDays),
-        },
-      },
+  const onInvoiceSubmit = (values: Record<string, unknown>) =>
+    submit({
+      ...values,
+      defaultVatRate: Number(values.defaultVatRate),
+      paymentTermsDays: Number(values.paymentTermsDays),
     });
-    showSuccess(setInvoiceSuccess);
-  };
 
-  const onHrSubmit = async (values: Record<string, unknown>) => {
-    await updateSettings({
-      variables: {
-        updateCompanySettingsInput: {
-          ...values,
-          defaultAnnualLeaveDays: Number(values.defaultAnnualLeaveDays),
-        },
-      },
+  const onHrSubmit = (values: Record<string, unknown>) =>
+    submit({
+      ...values,
+      defaultAnnualLeaveDays: Number(values.defaultAnnualLeaveDays),
     });
-    showSuccess(setHrSuccess);
-  };
+
+  const onFleetSubmit = (values: Record<string, unknown>) =>
+    submit({
+      fleetExpiryThresholdItp: Number(values.fleetExpiryThresholdItp),
+      fleetExpiryThresholdRca: Number(values.fleetExpiryThresholdRca),
+      fleetExpiryThresholdCasco: Number(values.fleetExpiryThresholdCasco),
+      fleetExpiryThresholdRovinieta: Number(
+        values.fleetExpiryThresholdRovinieta,
+      ),
+    });
 
   if (loading) return <PageLoading message="Loading settings..." />;
 
@@ -170,6 +187,10 @@ export default function SettingsPage() {
           <TabsTrigger value="hr" className="gap-2">
             <Users className="h-4 w-4" />
             HR
+          </TabsTrigger>
+          <TabsTrigger value="fleet" className="gap-2">
+            <Car className="h-4 w-4" />
+            Fleet alerts
           </TabsTrigger>
         </TabsList>
 
@@ -237,24 +258,16 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <Button type="submit">
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Company Settings
-                  </Button>
-                  {companySuccess && (
-                    <span className="flex items-center gap-1 text-sm text-green-600">
-                      <CheckCircle className="h-4 w-4" />
-                      Saved successfully
-                    </span>
-                  )}
-                </div>
+                <Button type="submit">
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Company Settings
+                </Button>
               </CardContent>
             </Card>
           </form>
         </TabsContent>
 
-        {/* Invoice Settings */}
+        {/* Invoice Settings */}{/* */}
         <TabsContent value="invoice">
           <form onSubmit={submitInvoice(onInvoiceSubmit)}>
             <Card>
@@ -289,18 +302,10 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <Button type="submit">
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Invoice Settings
-                  </Button>
-                  {invoiceSuccess && (
-                    <span className="flex items-center gap-1 text-sm text-green-600">
-                      <CheckCircle className="h-4 w-4" />
-                      Saved successfully
-                    </span>
-                  )}
-                </div>
+                <Button type="submit">
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Invoice Settings
+                </Button>
               </CardContent>
             </Card>
           </form>
@@ -339,18 +344,87 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <Button type="submit">
-                    <Save className="h-4 w-4 mr-2" />
-                    Save HR Settings
-                  </Button>
-                  {hrSuccess && (
-                    <span className="flex items-center gap-1 text-sm text-green-600">
-                      <CheckCircle className="h-4 w-4" />
-                      Saved successfully
-                    </span>
-                  )}
+                <Button type="submit">
+                  <Save className="h-4 w-4 mr-2" />
+                  Save HR Settings
+                </Button>
+              </CardContent>
+            </Card>
+          </form>
+        </TabsContent>
+
+        {/* Fleet expiry alert thresholds */}
+        <TabsContent value="fleet">
+          <form onSubmit={submitFleet(onFleetSubmit)}>
+            <Card>
+              <CardHeader>
+                <CardTitle>Fleet Document Expiry Alerts</CardTitle>
+                <CardDescription>
+                  Number of days before a vehicle document's expiry that a
+                  notification is sent to fleet & management users. The daily
+                  scan picks up the latest values.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="fleetExpiryThresholdItp">ITP (days)</Label>
+                    <Input
+                      id="fleetExpiryThresholdItp"
+                      type="number"
+                      min="1"
+                      placeholder="30"
+                      {...regFleet("fleetExpiryThresholdItp", {
+                        valueAsNumber: true,
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="fleetExpiryThresholdRca">RCA (days)</Label>
+                    <Input
+                      id="fleetExpiryThresholdRca"
+                      type="number"
+                      min="1"
+                      placeholder="30"
+                      {...regFleet("fleetExpiryThresholdRca", {
+                        valueAsNumber: true,
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="fleetExpiryThresholdCasco">
+                      CASCO (days)
+                    </Label>
+                    <Input
+                      id="fleetExpiryThresholdCasco"
+                      type="number"
+                      min="1"
+                      placeholder="30"
+                      {...regFleet("fleetExpiryThresholdCasco", {
+                        valueAsNumber: true,
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="fleetExpiryThresholdRovinieta">
+                      Rovinietă (days)
+                    </Label>
+                    <Input
+                      id="fleetExpiryThresholdRovinieta"
+                      type="number"
+                      min="1"
+                      placeholder="7"
+                      {...regFleet("fleetExpiryThresholdRovinieta", {
+                        valueAsNumber: true,
+                      })}
+                    />
+                  </div>
                 </div>
+
+                <Button type="submit">
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Fleet Alert Settings
+                </Button>
               </CardContent>
             </Card>
           </form>

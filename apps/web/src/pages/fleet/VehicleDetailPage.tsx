@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery, useMutation } from "@apollo/client/react";
+import { useQuery } from "@apollo/client/react";
 import { useEffect, useState } from "react";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Pencil, Trash2, Plus } from "lucide-react";
@@ -81,31 +82,50 @@ export default function VehicleDetailPage() {
 
   const refetchVehicle = () => refetch();
 
-  const [updateVehicle] = useMutation(UPDATE_VEHICLE_MUTATION, {
+  const [updateVehicle] = useMutationWithToast(UPDATE_VEHICLE_MUTATION, {
+    successMessage: "Vehicle updated",
     onCompleted: () => { setEditVehicleOpen(false); refetchVehicle(); },
   });
-  const [createDoc] = useMutation(CREATE_VEHICLE_DOCUMENT_MUTATION, {
+  const [createDoc] = useMutationWithToast(CREATE_VEHICLE_DOCUMENT_MUTATION, {
+    successMessage: "Document added",
     onCompleted: () => { setAddDocOpen(false); refetchVehicle(); },
   });
-  const [updateDoc] = useMutation(UPDATE_VEHICLE_DOCUMENT_MUTATION, {
+  const [updateDoc] = useMutationWithToast(UPDATE_VEHICLE_DOCUMENT_MUTATION, {
+    successMessage: "Document updated",
     onCompleted: () => { setEditDocOpen(null); refetchVehicle(); },
   });
-  const [deleteDoc] = useMutation(DELETE_VEHICLE_DOCUMENT_MUTATION, { onCompleted: refetchVehicle });
-  const [createMileage] = useMutation(CREATE_MILEAGE_LOG_MUTATION, {
+  const [deleteDoc] = useMutationWithToast(DELETE_VEHICLE_DOCUMENT_MUTATION, {
+    successMessage: "Document deleted",
+    onCompleted: refetchVehicle,
+  });
+  const [createMileage] = useMutationWithToast(CREATE_MILEAGE_LOG_MUTATION, {
+    successMessage: "Mileage logged",
     onCompleted: () => { setAddMileageOpen(false); refetchVehicle(); },
   });
-  const [deleteMileage] = useMutation(DELETE_MILEAGE_LOG_MUTATION, { onCompleted: refetchVehicle });
-  const [createLease] = useMutation(CREATE_VEHICLE_LEASE_MUTATION, {
+  const [deleteMileage] = useMutationWithToast(DELETE_MILEAGE_LOG_MUTATION, {
+    successMessage: "Mileage entry deleted",
+    onCompleted: refetchVehicle,
+  });
+  const [createLease] = useMutationWithToast(CREATE_VEHICLE_LEASE_MUTATION, {
+    successMessage: "Lease added",
     onCompleted: () => { setAddLeaseOpen(false); refetchVehicle(); },
   });
-  const [updateLease] = useMutation(UPDATE_VEHICLE_LEASE_MUTATION, {
+  const [updateLease] = useMutationWithToast(UPDATE_VEHICLE_LEASE_MUTATION, {
+    successMessage: "Lease updated",
     onCompleted: () => { setEditLeaseOpen(null); refetchVehicle(); },
   });
-  const [deleteLease] = useMutation(DELETE_VEHICLE_LEASE_MUTATION, { onCompleted: refetchVehicle });
-  const [createExpense] = useMutation(CREATE_VEHICLE_EXPENSE_MUTATION, {
+  const [deleteLease] = useMutationWithToast(DELETE_VEHICLE_LEASE_MUTATION, {
+    successMessage: "Lease deleted",
+    onCompleted: refetchVehicle,
+  });
+  const [createExpense] = useMutationWithToast(CREATE_VEHICLE_EXPENSE_MUTATION, {
+    successMessage: "Expense recorded",
     onCompleted: () => { setAddExpenseOpen(false); refetchVehicle(); },
   });
-  const [deleteExpense] = useMutation(DELETE_VEHICLE_EXPENSE_MUTATION, { onCompleted: refetchVehicle });
+  const [deleteExpense] = useMutationWithToast(DELETE_VEHICLE_EXPENSE_MUTATION, {
+    successMessage: "Expense deleted",
+    onCompleted: refetchVehicle,
+  });
 
   const editVehicleForm = useForm<UpdateVehicleFormData>({ resolver: zodResolver(updateVehicleSchema) });
   const addDocForm = useForm<CreateVehicleDocumentFormData>({ resolver: zodResolver(createVehicleDocumentSchema) });

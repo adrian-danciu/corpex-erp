@@ -1,4 +1,11 @@
-import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
+import {
+  Resolver,
+  Query,
+  Mutation,
+  Args,
+  ResolveField,
+  Parent,
+} from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { LeaveRequestsService } from './leave-requests.service';
 import { LeaveRequest } from './entities/leave-request.entity';
@@ -56,6 +63,26 @@ export class LeaveRequestsResolver {
     @CurrentUser() user: User,
   ): Promise<LeaveRequest[]> {
     return this.leaveRequestsService.findPendingForManager(user.id);
+  }
+
+  @Query(() => [LeaveRequest], {
+    name: 'allPendingLeaveRequests',
+    description:
+      'All pending leave requests org-wide. Returned to anyone with leaveApprovals so HR can monitor; the UI gates Approve/Reject by direct-manager relationship.',
+  })
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('leaveApprovals', 'approve')
+  async getAllPendingLeaveRequests(): Promise<LeaveRequest[]> {
+    return this.leaveRequestsService.findAllPending();
+  }
+
+  @ResolveField(() => User, { nullable: true })
+  async directManager(
+    @Parent() leaveRequest: LeaveRequest,
+  ): Promise<User | null> {
+    return this.leaveRequestsService.findDirectManagerFor(
+      leaveRequest.employeeId,
+    );
   }
 
   @Query(() => LeaveRequest, {

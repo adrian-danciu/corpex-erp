@@ -1,9 +1,11 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Department, Role } from '@prisma/client';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { RequireModule } from '../auth/decorators/roles.decorator';
 import { DepartmentGuard } from '../auth/guards/department.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { DEPARTMENT_PERMISSIONS } from '../auth/permissions.config';
 import { User } from '../users/entities/user.entity';
 import { RequireProjectAccess } from './decorators/project-access.decorator';
 import { CreateProjectInput } from './dto/create-project.input';
@@ -15,6 +17,19 @@ import { ProjectCostRollup } from './entities/project-cost-rollup.entity';
 import { ProjectAccessGuard } from './guards/project-access.guard';
 import { ProjectsService } from './projects.service';
 
+// JWT strategy attaches department + position alongside the User fields.
+interface AuthUser {
+  id: string;
+  role: Role;
+  department: Department | null;
+}
+
+function canSeeAllProjects(user: AuthUser): boolean {
+  if (user.role === Role.ADMIN) return true;
+  if (!user.department) return false;
+  return DEPARTMENT_PERMISSIONS[user.department]?.projects === 'write';
+}
+
 @Resolver(() => Project)
 @UseGuards(JwtAuthGuard, DepartmentGuard, ProjectAccessGuard)
 export class ProjectsResolver {
@@ -23,11 +38,19 @@ export class ProjectsResolver {
   @Query(() => [Project], { name: 'projects' })
   @RequireModule('projects', 'read')
   async findAll(
-    @CurrentUser() user: User,
+    @CurrentUser() user: AuthUser,
     @Args('filter', { nullable: true, type: () => ProjectsFilterInput })
     filter?: ProjectsFilterInput,
   ) {
-    return this.projectsService.findAll(filter, user.id);
+    // Read-only project users (e.g. employees in IT dept) can only see
+    // projects they're a member of — even if they pass onlyMine: false.
+    const effectiveFilter: ProjectsFilterInput | undefined = canSeeAllProjects(
+      user,
+    )
+      ? filter
+      : { ...(filter ?? {}), onlyMine: true };
+
+    return this.projectsService.findAll(effectiveFilter, user.id);
   }
 
   @Query(() => Project, { name: 'project' })

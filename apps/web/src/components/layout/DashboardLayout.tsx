@@ -239,8 +239,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Mobile Navbar - only visible on mobile */}
-      <Navbar onMenuClick={() => setIsMobileMenuOpen(true)} />
+      {/* Top Navbar - notification bell on desktop, full nav on mobile */}
+      <div
+        className={cn(
+          "transition-all duration-300",
+          isCollapsed ? "md:pl-16" : "md:pl-64",
+        )}
+      >
+        <Navbar onMenuClick={() => setIsMobileMenuOpen(true)} />
+      </div>
 
       {/* Desktop Sidebar - always visible on desktop */}
       <div className="hidden md:block">
@@ -265,7 +272,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main Content */}
       <main
         className={cn(
-          "transition-all duration-300 md:pt-0 pt-16",
+          "transition-all duration-300",
           isCollapsed ? "md:pl-16" : "md:pl-64"
         )}
       >

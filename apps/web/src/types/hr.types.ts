@@ -58,6 +58,8 @@ export interface LeaveRequest {
   id: string;
   employeeId: string;
   employee: User;
+  /** Resolver field: the employee's direct manager (per Employee.managerId), if any. */
+  directManager?: User | null;
   leaveType: LeaveType;
   startDate: string;
   endDate: string;

@@ -1,5 +1,6 @@
 import { useState, type DragEvent } from "react";
-import { useMutation, useQuery } from "@apollo/client/react";
+import { useQuery } from "@apollo/client/react";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { Plus } from "lucide-react";
 import {
   Card,
@@ -95,9 +96,10 @@ export function TasksTab({ project, isProjectManager }: Props) {
     { variables, fetchPolicy: "cache-and-network" },
   );
 
-  const [createTask, { loading: creating }] = useMutation(
+  const [createTask, { loading: creating }] = useMutationWithToast(
     CREATE_PROJECT_TASK_MUTATION,
     {
+      successMessage: "Task created",
       onCompleted: () => {
         setCreateOpen(false);
         setTitle("");
@@ -105,15 +107,14 @@ export function TasksTab({ project, isProjectManager }: Props) {
         setAssigneeId("");
         setPriority(ProjectTaskPriority.MEDIUM);
         setDueDate("");
-        refetch();
+        void refetch();
       },
-      onError: (e) => setError(e.message),
     },
   );
 
-  const [transitionTask] = useMutation(TRANSITION_PROJECT_TASK_MUTATION, {
-    onCompleted: () => refetch(),
-    onError: (e) => setError(e.message),
+  const [transitionTask] = useMutationWithToast(TRANSITION_PROJECT_TASK_MUTATION, {
+    successMessage: "Task moved",
+    onCompleted: () => void refetch(),
   });
 
   const tasks = data?.projectTasks ?? [];

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module';
 import { StockModule } from '../stock/stock.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { ProjectFeedResolver } from './project-feed.resolver';
 import { ProjectFeedService } from './project-feed.service';
 import { ProjectMaterialsResolver } from './project-materials.resolver';
@@ -17,7 +18,7 @@ import { ProjectsService } from './projects.service';
 import { ProjectAccessGuard } from './guards/project-access.guard';
 
 @Module({
-  imports: [PrismaModule, StockModule],
+  imports: [PrismaModule, StockModule, NotificationsModule],
   controllers: [ProjectUploadsController],
   providers: [
     ProjectAccessGuard,

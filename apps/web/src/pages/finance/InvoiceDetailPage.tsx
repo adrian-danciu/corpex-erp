@@ -2,7 +2,8 @@ import { useState } from "react";
 import { pdf } from "@react-pdf/renderer";
 import { InvoicePDF } from "@/components/finance/InvoicePDF";
 import { useNavigate, useParams } from "react-router-dom";
-import { useQuery, useMutation } from "@apollo/client/react";
+import { useQuery } from "@apollo/client/react";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -125,25 +126,28 @@ export default function InvoiceDetailPage() {
     skip: !id,
   });
 
-  const [createPayment, { loading: paymentLoading }] = useMutation(CREATE_PAYMENT_MUTATION, {
-    onCompleted: () => {
-      refetch();
+  const [createPayment, { loading: paymentLoading }] = useMutationWithToast(
+    CREATE_PAYMENT_MUTATION,
+    {
+      successMessage: "Payment recorded",
+      onCompleted: () => void refetch(),
     },
+  );
+
+  const [updateStatus] = useMutationWithToast(UPDATE_INVOICE_STATUS_MUTATION, {
+    refetchQueries: [{ query: GET_INVOICES_QUERY }],
+    successMessage: "Invoice status updated",
+    onCompleted: () => void refetch(),
   });
 
-  const [updateStatus] = useMutation(UPDATE_INVOICE_STATUS_MUTATION, {
-    refetchQueries: [{ query: GET_INVOICES_QUERY }],
-    onCompleted: () => {
-      refetch();
+  const [deleteInvoice, { loading: deleting }] = useMutationWithToast(
+    DELETE_INVOICE_MUTATION,
+    {
+      refetchQueries: [{ query: GET_INVOICES_QUERY }],
+      successMessage: "Invoice deleted",
+      onCompleted: () => navigate("/finance/invoices"),
     },
-  });
-
-  const [deleteInvoice, { loading: deleting }] = useMutation(DELETE_INVOICE_MUTATION, {
-    refetchQueries: [{ query: GET_INVOICES_QUERY }],
-    onCompleted: () => {
-      navigate("/finance/invoices");
-    },
-  });
+  );
 
   const [pdfLoading, setPdfLoading] = useState(false);
 

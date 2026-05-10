@@ -4,9 +4,10 @@ import { LeaveRequestsService } from './leave-requests.service';
 import { EmployeesResolver } from './employees.resolver';
 import { LeaveRequestsResolver } from './leave-requests.resolver';
 import { PrismaModule } from '../prisma/prisma.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, NotificationsModule],
   providers: [
     EmployeesResolver,
     LeaveRequestsResolver,

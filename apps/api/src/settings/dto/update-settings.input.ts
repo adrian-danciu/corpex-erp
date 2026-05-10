@@ -49,4 +49,16 @@ export class UpdateCompanySettingsInput {
 
   @Field({ nullable: true })
   defaultCountry?: string;
+
+  @Field(() => Int, { nullable: true })
+  fleetExpiryThresholdItp?: number;
+
+  @Field(() => Int, { nullable: true })
+  fleetExpiryThresholdRca?: number;
+
+  @Field(() => Int, { nullable: true })
+  fleetExpiryThresholdCasco?: number;
+
+  @Field(() => Int, { nullable: true })
+  fleetExpiryThresholdRovinieta?: number;
 }

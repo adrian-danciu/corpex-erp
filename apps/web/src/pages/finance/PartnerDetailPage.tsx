@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useQuery, useMutation } from "@apollo/client/react";
+import { useQuery } from "@apollo/client/react";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Edit, Trash2, Phone, Mail, MapPin, Building2, CreditCard, AlertCircle } from "lucide-react";
@@ -17,16 +18,18 @@ export default function PartnerDetailPage() {
     skip: !id,
   });
 
-  const [deletePartner, { loading: deleting }] = useMutation(DELETE_PARTNER_MUTATION, {
-    refetchQueries: [{ query: GET_PARTNERS_QUERY }],
-    onCompleted: () => {
-      navigate("/finance/partners");
+  const [deletePartner, { loading: deleting }] = useMutationWithToast(
+    DELETE_PARTNER_MUTATION,
+    {
+      refetchQueries: [{ query: GET_PARTNERS_QUERY }],
+      successMessage: "Partner deleted",
+      onCompleted: () => navigate("/finance/partners"),
     },
-  });
+  );
 
   const handleDelete = () => {
     if (window.confirm(`Are you sure you want to delete this partner?`)) {
-      deletePartner({ variables: { id } });
+      void deletePartner({ variables: { id } }).catch(() => {});
     }
   };
 

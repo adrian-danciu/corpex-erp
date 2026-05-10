@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { useLazyQuery, useMutation, useQuery } from "@apollo/client/react";
+import { useLazyQuery, useQuery } from "@apollo/client/react";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { Plus, Trash2 } from "lucide-react";
 import {
   Card,
@@ -138,25 +139,25 @@ export function MaterialsTab({ project, isProjectManager }: Props) {
     setError("");
   };
 
-  const [allocateMaterial, { loading: allocating }] = useMutation(
+  const [allocateMaterial, { loading: allocating }] = useMutationWithToast(
     ALLOCATE_PROJECT_MATERIAL_MUTATION,
     {
+      successMessage: "Material allocated",
       onCompleted: () => {
         closeDialog();
         refetchAll();
       },
-      onError: (e) => setError(e.message),
     },
   );
 
-  const [removeMaterial, { loading: removing }] = useMutation(
+  const [removeMaterial, { loading: removing }] = useMutationWithToast(
     REMOVE_PROJECT_MATERIAL_MUTATION,
     {
+      successMessage: "Material removed",
       onCompleted: () => {
         setConfirmRemove(null);
         refetchAll();
       },
-      onError: (e) => setError(e.message),
     },
   );
 

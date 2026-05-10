@@ -1,6 +1,6 @@
-import { useMutation } from "@apollo/client/react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,9 +31,11 @@ interface ProductFormData {
 export default function ProductCreatePage() {
   const navigate = useNavigate();
   const { currency } = useCurrency();
-  const [createProduct, { loading }] = useMutation<{ createProduct: Product }>(
-    CREATE_PRODUCT_MUTATION
-  );
+  const [createProduct, { loading }] = useMutationWithToast<{
+    createProduct: Product;
+  }>(CREATE_PRODUCT_MUTATION, {
+    successMessage: (data) => `Product "${data.createProduct.name}" created`,
+  });
 
   const {
     register,
@@ -54,21 +56,24 @@ export default function ProductCreatePage() {
   });
 
   const onSubmit = async (values: ProductFormData) => {
-    await createProduct({
-      variables: {
-        createProductInput: {
-          sku: values.sku,
-          name: values.name,
-          description: values.description || undefined,
-          category: values.category || undefined,
-          unit: values.unit || "pcs",
-          minimumStock: Number(values.minimumStock) || 0,
-          unitPrice: Number(values.unitPrice) || 0,
+    try {
+      await createProduct({
+        variables: {
+          createProductInput: {
+            sku: values.sku,
+            name: values.name,
+            description: values.description || undefined,
+            category: values.category || undefined,
+            unit: values.unit || "pcs",
+            minimumStock: Number(values.minimumStock) || 0,
+            unitPrice: Number(values.unitPrice) || 0,
+          },
         },
-      },
-    });
-
-    navigate("/stock/products");
+      });
+      navigate("/stock/products");
+    } catch {
+      // error toast handled by hook; stay on form so user can retry
+    }
   };
 
   return (

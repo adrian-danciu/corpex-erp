@@ -1,6 +1,9 @@
-import { useMutation, useQuery } from "@apollo/client/react";
+import { useQuery } from "@apollo/client/react";
 import { Controller, useForm } from "react-hook-form";
 import { AlertCircle } from "lucide-react";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
+import { useAuthStore } from "@/stores/auth.store";
+import { canAccess } from "@/lib/permissions";
 import { PageLoading } from "@/components/ui/page-loading";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,6 +38,8 @@ interface StockMovementFormData {
 }
 
 export default function StockMovementsPage() {
+  const { user } = useAuthStore();
+  const canWrite = canAccess(user, "stock", "write");
   const { skip, take } = usePagination({ defaultPageSize: 20 });
 
   const { data: productsData } = useQuery<{ products: PaginatedResult<Product> }>(
@@ -62,9 +67,11 @@ export default function StockMovementsPage() {
     fetchPolicy: "cache-and-network",
   });
 
-  const [createStockMovement, { loading: creating }] = useMutation<{
+  const [createStockMovement, { loading: creating }] = useMutationWithToast<{
     createStockMovement: StockMovement;
-  }>(CREATE_STOCK_MOVEMENT_MUTATION);
+  }>(CREATE_STOCK_MOVEMENT_MUTATION, {
+    successMessage: "Movement registered",
+  });
 
   const {
     control,
@@ -85,27 +92,31 @@ export default function StockMovementsPage() {
   });
 
   const onSubmit = async (values: StockMovementFormData) => {
-    await createStockMovement({
-      variables: {
-        createStockMovementInput: {
-          ...values,
-          quantity: Number(values.quantity),
-          unitCost: values.unitCost ? Number(values.unitCost) : undefined,
-          reference: values.reference || undefined,
-          notes: values.notes || undefined,
+    try {
+      await createStockMovement({
+        variables: {
+          createStockMovementInput: {
+            ...values,
+            quantity: Number(values.quantity),
+            unitCost: values.unitCost ? Number(values.unitCost) : undefined,
+            reference: values.reference || undefined,
+            notes: values.notes || undefined,
+          },
         },
-      },
-    });
-    reset({
-      productId: "",
-      warehouseId: "",
-      type: StockMovementTypeEnum.IN,
-      quantity: 1,
-      unitCost: undefined,
-      reference: "",
-      notes: "",
-    });
-    refetch();
+      });
+      reset({
+        productId: "",
+        warehouseId: "",
+        type: StockMovementTypeEnum.IN,
+        quantity: 1,
+        unitCost: undefined,
+        reference: "",
+        notes: "",
+      });
+      void refetch();
+    } catch {
+      // toast already shown
+    }
   };
 
   if (loading) {
@@ -132,6 +143,7 @@ export default function StockMovementsPage() {
         <p className="text-slate-600 mt-1">Record incoming, outgoing and adjustment operations.</p>
       </div>
 
+      {canWrite && (
       <Card>
         <CardHeader>
           <CardTitle>Register Movement</CardTitle>
@@ -250,6 +262,7 @@ export default function StockMovementsPage() {
           </form>
         </CardContent>
       </Card>
+      )}
 
       <Card>
         <CardHeader>

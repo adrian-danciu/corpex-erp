@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useQuery, useMutation, useLazyQuery } from "@apollo/client/react";
+import { useQuery, useLazyQuery } from "@apollo/client/react";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
+import { toastInfo } from "@/lib/toast";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createInvoiceSchema, type CreateInvoiceFormData } from "@/lib/schemas/invoice.schema";
@@ -41,8 +43,6 @@ export default function InvoiceCreatePage() {
   const { currency: defaultCurrency } = useCurrency();
   const [searchParams] = useSearchParams();
   const initialProjectId = searchParams.get("projectId") ?? "";
-  const [successMessage, setSuccessMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
 
   const { data: partnersData, loading: partnersLoading } = useQuery<{
     partners: PaginatedResult<Partner>;
@@ -64,17 +64,14 @@ export default function InvoiceCreatePage() {
     projectCostsForInvoice: InvoiceLineDraft[];
   }>(GET_PROJECT_COSTS_FOR_INVOICE_QUERY, { fetchPolicy: "network-only" });
 
-  const [createInvoice, { loading: isLoading }] = useMutation(CREATE_INVOICE_MUTATION, {
-    refetchQueries: [{ query: GET_INVOICES_QUERY }],
-    onCompleted: () => {
-      setSuccessMessage("Invoice created successfully!");
-      setErrorMessage("");
-      setTimeout(() => navigate("/finance/invoices"), 1500);
+  const [createInvoice, { loading: isLoading }] = useMutationWithToast(
+    CREATE_INVOICE_MUTATION,
+    {
+      refetchQueries: [{ query: GET_INVOICES_QUERY }],
+      successMessage: "Invoice created",
+      onCompleted: () => navigate("/finance/invoices"),
     },
-    onError: (err) => {
-      setErrorMessage(err.message);
-    },
-  });
+  );
 
   const today = new Date().toISOString().split("T")[0];
   const defaultDueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
@@ -134,11 +131,10 @@ export default function InvoiceCreatePage() {
   const total = subtotal + vatTotal;
 
   const onSubmit = (data: CreateInvoiceFormData) => {
-    setErrorMessage("");
 
     const { deliveryDate, projectId, ...rest } = data;
 
-    createInvoice({
+    void createInvoice({
       variables: {
         createInvoiceInput: {
           ...rest,
@@ -148,20 +144,19 @@ export default function InvoiceCreatePage() {
           projectId: projectId || undefined,
         },
       },
+    }).catch(() => {
+      // toast already shown
     });
   };
 
   const importCostsFromProject = async () => {
     if (!selectedProjectId) return;
-    setErrorMessage("");
     const result = await fetchProjectCosts({
       variables: { projectId: selectedProjectId },
     });
     const drafts = result.data?.projectCostsForInvoice ?? [];
     if (drafts.length === 0) {
-      setErrorMessage(
-        "No issued materials or vehicle expenses on this project yet.",
-      );
+      toastInfo("No issued materials or vehicle expenses on this project yet.");
       return;
     }
     // Replace the items array with imported drafts
@@ -188,18 +183,6 @@ export default function InvoiceCreatePage() {
           <p className="text-slate-600 mt-1">Create a new fiscal or proforma invoice</p>
         </div>
       </div>
-
-      {successMessage && (
-        <div className="rounded-lg bg-green-50 p-4 text-green-800 border border-green-200">
-          {successMessage}
-        </div>
-      )}
-
-      {errorMessage && (
-        <div className="rounded-lg bg-red-50 p-4 text-red-800 border border-red-200">
-          {errorMessage}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Invoice Details */}

@@ -1,49 +1,76 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@apollo/client/react";
+import { useQuery } from "@apollo/client/react";
 import {
-  GET_PENDING_LEAVE_REQUESTS_FOR_MANAGER_QUERY,
+  GET_ALL_PENDING_LEAVE_REQUESTS_QUERY,
   APPROVE_OR_REJECT_LEAVE_REQUEST_MUTATION,
 } from "@/graphql/mutations/leave-request.mutations";
 import { GET_MY_SUBORDINATES_QUERY } from "@/graphql/mutations/employee.mutations";
 import type { LeaveRequest, Employee } from "@/types/hr.types";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, CheckCircle, XCircle, Users } from "lucide-react";
+import { Calendar, CheckCircle, XCircle, Users, Eye } from "lucide-react";
 import { PageLoading } from "@/components/ui/page-loading";
 import { format } from "date-fns";
+import { useAuthStore } from "@/stores/auth.store";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 
 export default function ApprovalsPage() {
   const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
   const [comments, setComments] = useState("");
+  const { user: currentUser } = useAuthStore();
 
-  const { data: requestsData, loading, error, refetch } = useQuery<{ pendingLeaveRequestsForManager: LeaveRequest[] }>(
-    GET_PENDING_LEAVE_REQUESTS_FOR_MANAGER_QUERY
+  const {
+    data: requestsData,
+    loading,
+    error,
+    refetch,
+  } = useQuery<{ allPendingLeaveRequests: LeaveRequest[] }>(
+    GET_ALL_PENDING_LEAVE_REQUESTS_QUERY,
   );
-  const { data: subordinatesData } = useQuery<{ mySubordinates: Employee[] }>(GET_MY_SUBORDINATES_QUERY);
+  const { data: subordinatesData } = useQuery<{ mySubordinates: Employee[] }>(
+    GET_MY_SUBORDINATES_QUERY,
+  );
 
-  const [approveOrReject, { loading: processing }] = useMutation(
+  const [approveOrReject, { loading: processing }] = useMutationWithToast(
     APPROVE_OR_REJECT_LEAVE_REQUEST_MUTATION,
     {
+      successMessage: (d: unknown) => {
+        const result = d as { approveOrRejectLeaveRequest: LeaveRequest };
+        return `Request ${result.approveOrRejectLeaveRequest.status === "APPROVED" ? "approved" : "rejected"}`;
+      },
       onCompleted: () => {
         setSelectedRequest(null);
         setComments("");
-        refetch();
+        void refetch();
       },
-    }
+    },
   );
 
-  const handleApproveOrReject = (leaveRequestId: string, approved: boolean) => {
-    approveOrReject({
-      variables: {
-        approveLeaveRequestInput: {
-          leaveRequestId,
-          approved,
-          comments: comments || undefined,
+  const handleApproveOrReject = async (
+    leaveRequestId: string,
+    approved: boolean,
+  ) => {
+    try {
+      await approveOrReject({
+        variables: {
+          approveLeaveRequestInput: {
+            leaveRequestId,
+            approved,
+            comments: comments || undefined,
+          },
         },
-      },
-    });
+      });
+    } catch {
+      // toast already shown
+    }
   };
 
   if (loading) {
@@ -53,31 +80,57 @@ export default function ApprovalsPage() {
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg text-red-600">Error loading approvals: {error.message}</div>
+        <div className="text-lg text-red-600">
+          Error loading approvals: {error.message}
+        </div>
       </div>
     );
   }
 
-  const pendingRequests: LeaveRequest[] = requestsData?.pendingLeaveRequestsForManager || [];
-  const subordinates: Employee[] = subordinatesData?.mySubordinates || [];
+  const pendingRequests: LeaveRequest[] =
+    requestsData?.allPendingLeaveRequests ?? [];
+  const subordinates: Employee[] = subordinatesData?.mySubordinates ?? [];
+
+  const isMyDirectReport = (req: LeaveRequest) =>
+    !!req.directManager && req.directManager.id === currentUser?.id;
+
+  const myActionable = pendingRequests.filter(isMyDirectReport).length;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-slate-900">Leave Approvals</h1>
-        <p className="text-slate-600 mt-1">Review and approve leave requests from your team</p>
+        <p className="text-slate-600 mt-1">
+          Review pending leave requests across the company. You can act on the
+          ones from your direct reports; others are shown for oversight.
+        </p>
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Pending (org-wide)
+            </CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{pendingRequests.length}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              You can action
+            </CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{myActionable}</div>
+            <p className="text-xs text-muted-foreground">From your direct reports</p>
           </CardContent>
         </Card>
 
@@ -96,112 +149,157 @@ export default function ApprovalsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Pending Leave Requests</CardTitle>
-          <CardDescription>Review and respond to leave requests from your team</CardDescription>
+          <CardDescription>
+            Approve/Reject is enabled only on requests where you are the direct
+            manager. Other requests are read-only.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {pendingRequests.length === 0 ? (
             <div className="text-center py-12 text-slate-500">
               <CheckCircle className="h-12 w-12 mx-auto mb-4 text-slate-300" />
               <p className="text-lg font-medium">No pending approvals</p>
-              <p className="text-sm mt-1">All leave requests have been reviewed</p>
+              <p className="text-sm mt-1">
+                All leave requests have been reviewed
+              </p>
             </div>
           ) : (
             <div className="space-y-4">
-              {pendingRequests.map((request) => (
-                <div
-                  key={request.id}
-                  className="border rounded-lg p-4 hover:bg-slate-50 transition-colors"
-                >
-                  <div className="space-y-4">
-                    {/* Request Info */}
-                    <div>
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h3 className="font-semibold text-lg text-slate-900">
-                            {request.employee.firstName} {request.employee.lastName}
-                          </h3>
-                          <p className="text-sm text-slate-600">{request.employee.email}</p>
-                        </div>
-                        <span className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium bg-blue-50 text-blue-700">
-                          {request.leaveType.replace("_", " ")}
-                        </span>
-                      </div>
+              {pendingRequests.map((request) => {
+                const canAct = isMyDirectReport(request);
+                const managerName = request.directManager
+                  ? `${request.directManager.firstName} ${request.directManager.lastName}`.trim()
+                  : "— (no manager assigned)";
 
-                      <div className="grid gap-2 text-sm text-slate-600">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4" />
-                          <span>
-                            {format(new Date(request.startDate), "MMM dd, yyyy")} -{" "}
-                            {format(new Date(request.endDate), "MMM dd, yyyy")}
+                return (
+                  <div
+                    key={request.id}
+                    className="border rounded-lg p-4 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="space-y-4">
+                      {/* Request Info */}
+                      <div>
+                        <div className="flex items-start justify-between mb-3 gap-3">
+                          <div>
+                            <h3 className="font-semibold text-lg text-slate-900">
+                              {request.employee.firstName}{" "}
+                              {request.employee.lastName}
+                            </h3>
+                            <p className="text-sm text-slate-600">
+                              {request.employee.email}
+                            </p>
+                            <p className="text-xs text-slate-500 mt-1">
+                              Direct manager:{" "}
+                              <span className="font-medium text-slate-700">
+                                {managerName}
+                              </span>
+                              {canAct && (
+                                <span className="ml-2 inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+                                  you
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                          <span className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium bg-blue-50 text-blue-700 shrink-0">
+                            {request.leaveType.replace("_", " ")}
                           </span>
-                          <span className="font-medium text-slate-900">({request.days} days)</span>
                         </div>
-                        {request.reason && (
-                          <p className="text-slate-700">
-                            <span className="font-medium">Reason:</span> {request.reason}
-                          </p>
-                        )}
-                        <p className="text-xs text-slate-500">
-                          Requested on {format(new Date(request.createdAt), "MMM dd, yyyy 'at' HH:mm")}
-                        </p>
-                      </div>
-                    </div>
 
-                    {/* Comments Section */}
-                    {selectedRequest === request.id ? (
-                      <div className="space-y-3 pt-3 border-t">
-                        <div className="space-y-2">
-                          <Label htmlFor="comments">Comments (Optional)</Label>
-                          <Input
-                            id="comments"
-                            value={comments}
-                            onChange={(e) => setComments(e.target.value)}
-                            placeholder="Add comments for the employee"
-                          />
+                        <div className="grid gap-2 text-sm text-slate-600">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            <span>
+                              {format(new Date(request.startDate), "MMM dd, yyyy")} -{" "}
+                              {format(new Date(request.endDate), "MMM dd, yyyy")}
+                            </span>
+                            <span className="font-medium text-slate-900">
+                              ({request.days} days)
+                            </span>
+                          </div>
+                          {request.reason && (
+                            <p className="text-slate-700">
+                              <span className="font-medium">Reason:</span>{" "}
+                              {request.reason}
+                            </p>
+                          )}
+                          <p className="text-xs text-slate-500">
+                            Requested on{" "}
+                            {format(
+                              new Date(request.createdAt),
+                              "MMM dd, yyyy 'at' HH:mm",
+                            )}
+                          </p>
                         </div>
-                        <div className="flex gap-2">
+                      </div>
+
+                      {/* Actions */}
+                      {!canAct ? (
+                        <div className="pt-3 border-t flex items-center gap-2 text-xs text-slate-500">
+                          <Eye className="h-3.5 w-3.5" />
+                          Read-only — only the direct manager can approve or
+                          reject.
+                        </div>
+                      ) : selectedRequest === request.id ? (
+                        <div className="space-y-3 pt-3 border-t">
+                          <div className="space-y-2">
+                            <Label htmlFor="comments">
+                              Comments (Optional)
+                            </Label>
+                            <Input
+                              id="comments"
+                              value={comments}
+                              onChange={(e) => setComments(e.target.value)}
+                              placeholder="Add comments for the employee"
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() =>
+                                handleApproveOrReject(request.id, true)
+                              }
+                              disabled={processing}
+                              className="gap-2 bg-green-600 hover:bg-green-700"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                              {processing ? "Approving..." : "Approve"}
+                            </Button>
+                            <Button
+                              onClick={() =>
+                                handleApproveOrReject(request.id, false)
+                              }
+                              disabled={processing}
+                              variant="destructive"
+                              className="gap-2"
+                            >
+                              <XCircle className="h-4 w-4" />
+                              {processing ? "Rejecting..." : "Reject"}
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                setSelectedRequest(null);
+                                setComments("");
+                              }}
+                              variant="outline"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2 pt-3 border-t">
                           <Button
-                            onClick={() => handleApproveOrReject(request.id, true)}
-                            disabled={processing}
-                            className="gap-2 bg-green-600 hover:bg-green-700"
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                            {processing ? "Approving..." : "Approve"}
-                          </Button>
-                          <Button
-                            onClick={() => handleApproveOrReject(request.id, false)}
-                            disabled={processing}
-                            variant="destructive"
+                            onClick={() => setSelectedRequest(request.id)}
+                            variant="outline"
                             className="gap-2"
                           >
-                            <XCircle className="h-4 w-4" />
-                            {processing ? "Rejecting..." : "Reject"}
-                          </Button>
-                          <Button
-                            onClick={() => {
-                              setSelectedRequest(null);
-                              setComments("");
-                            }}
-                            variant="outline"
-                          >
-                            Cancel
+                            Review Request
                           </Button>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="flex gap-2 pt-3 border-t">
-                        <Button
-                          onClick={() => setSelectedRequest(request.id)}
-                          variant="outline"
-                          className="gap-2"
-                        >
-                          Review Request
-                        </Button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -225,8 +323,12 @@ export default function ApprovalsPage() {
                           ? `${employee.user.firstName} ${employee.user.lastName}`
                           : `${employee.firstName} ${employee.lastName}`}
                       </p>
-                      <p className="text-sm text-slate-600">{employee.position}</p>
-                      <p className="text-xs text-slate-500 mt-1">{employee.department}</p>
+                      <p className="text-sm text-slate-600">
+                        {employee.position}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        {employee.department}
+                      </p>
                     </div>
                   </div>
                   <div className="mt-3 pt-3 border-t text-sm">

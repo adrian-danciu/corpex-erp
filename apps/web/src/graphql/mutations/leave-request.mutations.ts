@@ -156,6 +156,35 @@ export const GET_PENDING_LEAVE_REQUESTS_FOR_MANAGER_QUERY = gql`
   }
 `;
 
+export const GET_ALL_PENDING_LEAVE_REQUESTS_QUERY = gql`
+  query GetAllPendingLeaveRequests {
+    allPendingLeaveRequests {
+      id
+      employeeId
+      employee {
+        id
+        firstName
+        lastName
+        email
+      }
+      directManager {
+        id
+        firstName
+        lastName
+        email
+      }
+      leaveType
+      startDate
+      endDate
+      days
+      reason
+      status
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
 export const GET_LEAVE_REQUEST_QUERY = gql`
   query GetLeaveRequest($id: String!) {
     leaveRequest(id: $id) {

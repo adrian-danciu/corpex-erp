@@ -1,5 +1,9 @@
-import { useMutation } from "@apollo/client/react";
+import { useMutation, useApolloClient } from "@apollo/client/react";
 import { useNavigate } from "react-router-dom";
+import {
+  MY_NOTIFICATIONS_QUERY,
+  MY_UNREAD_COUNT_QUERY,
+} from "@/graphql/mutations/notifications.mutations";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { User } from "@/types/auth.types";
@@ -27,6 +31,7 @@ interface LoginFormValues {
 
 export default function LoginForm() {
   const navigate = useNavigate();
+  const apolloClient = useApolloClient();
   const { login } = useAuthStore();
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -45,6 +50,10 @@ export default function LoginForm() {
       const { department, position } = decodeJwtPayload(accessToken);
       const enrichedUser: User = { ...user, department: department ?? null, position: position ?? null };
       login(accessToken, refreshToken, enrichedUser);
+      // Prime the notification queries so the bell + counts are accurate from the first paint.
+      void apolloClient.refetchQueries({
+        include: [MY_NOTIFICATIONS_QUERY, MY_UNREAD_COUNT_QUERY],
+      });
       navigate("/dashboard");
     },
     onError: (error) => {

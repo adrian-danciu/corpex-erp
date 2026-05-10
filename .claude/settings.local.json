@@ -14,7 +14,8 @@
       "mcp__github__search_repositories",
       "Bash(cd:*)",
       "Bash(sed:*)",
-      "Bash(bunx prisma *)"
+      "Bash(bunx prisma *)",
+      "Bash(bun run *)"
     ]
   }
 }

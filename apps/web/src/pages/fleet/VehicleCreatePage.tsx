@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@apollo/client/react";
 import { ArrowLeft } from "lucide-react";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,15 +34,20 @@ export default function VehicleCreatePage() {
     resolver: zodResolver(createVehicleSchema),
   });
 
-  const [createVehicle] = useMutation(CREATE_VEHICLE_MUTATION, {
+  const [createVehicle] = useMutationWithToast(CREATE_VEHICLE_MUTATION, {
     refetchQueries: [GET_VEHICLES_QUERY],
+    successMessage: "Vehicle added",
     onCompleted: () => navigate("/fleet"),
   });
 
   const onSubmit = async (data: CreateVehicleFormData) => {
-    await createVehicle({
-      variables: { createVehicleInput: { ...data, year: Number(data.year) } },
-    });
+    try {
+      await createVehicle({
+        variables: { createVehicleInput: { ...data, year: Number(data.year) } },
+      });
+    } catch {
+      // error toast already shown by useMutationWithToast; swallow to stay on the form
+    }
   };
 
   return (

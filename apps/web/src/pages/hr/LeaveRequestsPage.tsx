@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@apollo/client/react";
+import { useQuery } from "@apollo/client/react";
 import { useForm, Controller } from "react-hook-form";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import {
   GET_MY_LEAVE_REQUESTS_QUERY,
   CREATE_LEAVE_REQUEST_MUTATION,
@@ -57,38 +58,50 @@ export default function LeaveRequestsPage() {
   const { data: leaveRequestsData, loading, error, refetch } = useQuery<{ myLeaveRequests: LeaveRequest[] }>(GET_MY_LEAVE_REQUESTS_QUERY);
   const { data: profileData } = useQuery<{ myEmployeeProfile: { remainingLeave: number; annualLeaveDays: number } | null }>(GET_MY_EMPLOYEE_PROFILE_QUERY);
 
-  const [createLeaveRequest, { loading: creating }] = useMutation(CREATE_LEAVE_REQUEST_MUTATION, {
-    onCompleted: () => {
-      setShowForm(false);
-      reset();
-      refetch();
-    },
-  });
-
-  const [cancelLeaveRequest] = useMutation(CANCEL_LEAVE_REQUEST_MUTATION, {
-    onCompleted: () => {
-      refetch();
-    },
-  });
-
-  const onSubmit = (values: LeaveRequestFormValues) => {
-    createLeaveRequest({
-      variables: {
-        createLeaveRequestInput: {
-          leaveType: values.leaveType,
-          startDate: values.startDate,
-          endDate: values.endDate,
-          days: values.days,
-          reason: values.reason || undefined,
-        },
+  const [createLeaveRequest, { loading: creating }] = useMutationWithToast(
+    CREATE_LEAVE_REQUEST_MUTATION,
+    {
+      successMessage: "Leave request submitted",
+      onCompleted: () => {
+        setShowForm(false);
+        reset();
+        void refetch();
       },
-    });
+    },
+  );
+
+  const [cancelLeaveRequest] = useMutationWithToast(
+    CANCEL_LEAVE_REQUEST_MUTATION,
+    {
+      successMessage: "Leave request cancelled",
+      onCompleted: () => {
+        void refetch();
+      },
+    },
+  );
+
+  const onSubmit = async (values: LeaveRequestFormValues) => {
+    try {
+      await createLeaveRequest({
+        variables: {
+          createLeaveRequestInput: {
+            leaveType: values.leaveType,
+            startDate: values.startDate,
+            endDate: values.endDate,
+            days: values.days,
+            reason: values.reason || undefined,
+          },
+        },
+      });
+    } catch {
+      // toast already shown
+    }
   };
 
   const handleCancel = (leaveRequestId: string) => {
     if (confirm("Are you sure you want to cancel this leave request?")) {
-      cancelLeaveRequest({
-        variables: { leaveRequestId },
+      void cancelLeaveRequest({ variables: { leaveRequestId } }).catch(() => {
+        // toast already shown
       });
     }
   };

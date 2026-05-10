@@ -28,6 +28,7 @@ model User {
   assignedProjectTasks  ProjectTask[]        @relation("UserAssignedTasks")
   createdProjectTasks   ProjectTask[]        @relation("UserCreatedTasks")
   projectFeedPosts      ProjectFeedEntry[]   @relation("UserProjectPosts")
+  notifications         Notification[]       @relation("UserNotifications")
 }
 
 model Employee {
@@ -406,6 +407,10 @@ model CompanySettings {
   paymentTermsDays      Int      @default(30)
   defaultAnnualLeaveDays Int     @default(21)
   defaultCountry        String   @default("Romania")
+  fleetExpiryThresholdItp       Int @default(30)
+  fleetExpiryThresholdRca       Int @default(30)
+  fleetExpiryThresholdCasco     Int @default(30)
+  fleetExpiryThresholdRovinieta Int @default(7)
   updatedAt             DateTime @updatedAt
 }
 
@@ -554,4 +559,38 @@ enum ProjectTaskPriority {
 enum ProjectFeedKind {
   AUTO
   POST
+}
+
+model Notification {
+  id          String                   @id @default(uuid())
+  recipientId String
+  recipient   User                     @relation("UserNotifications", fields: [recipientId], references: [id], onDelete: Cascade)
+  type        NotificationType
+  title       String
+  body        String?
+  linkPath    String?
+  entityType  NotificationEntityType?
+  entityId    String?
+  isRead      Boolean                  @default(false)
+  readAt      DateTime?
+  createdAt   DateTime                 @default(now())
+
+  @@index([recipientId, isRead, createdAt])
+  @@index([recipientId, entityType, entityId])
+}
+
+enum NotificationType {
+  LEAVE_REQUEST_SUBMITTED
+  LEAVE_REQUEST_APPROVED
+  LEAVE_REQUEST_REJECTED
+  PROJECT_TASK_ASSIGNED
+  FLEET_DOCUMENT_EXPIRING
+  STOCK_BELOW_MINIMUM
+}
+
+enum NotificationEntityType {
+  LEAVE_REQUEST
+  PROJECT_TASK
+  VEHICLE_DOCUMENT
+  PRODUCT
 }

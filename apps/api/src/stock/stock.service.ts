@@ -2,12 +2,14 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, StockMovementType } from '@prisma/client';
 import { PaginationInput } from '../common/dto/pagination.input';
 import { IPaginatedType } from '../common/dto/pagination-result.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateProductInput } from './dto/create-product.input';
 import { UpdateProductInput } from './dto/update-product.input';
 import { CreateStockMovementInput } from './dto/create-stock-movement.input';
@@ -20,7 +22,38 @@ import { Warehouse } from './entities/warehouse.entity';
 
 @Injectable()
 export class StockService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(StockService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
+
+  /**
+   * Best-effort: if the product's stock is now below its minimum, emit a
+   * low-stock notification. The 24h dedup in NotificationsService ensures
+   * we don't spam recipients on every subsequent movement.
+   */
+  private async maybeEmitLowStock(productId: string): Promise<void> {
+    try {
+      const product = await this.prisma.product.findUnique({
+        where: { id: productId },
+      });
+      if (!product) return;
+      if (product.minimumStock <= 0) return;
+      if (product.currentStock >= product.minimumStock) return;
+
+      await this.notifications.notifyStockBelowMinimum({
+        productId: product.id,
+        productName: product.name,
+        sku: product.sku,
+        currentStock: product.currentStock,
+        minimumStock: product.minimumStock,
+      });
+    } catch (err) {
+      this.logger.error('Failed to emit notifyStockBelowMinimum', err);
+    }
+  }
 
   async createWarehouse(input: CreateWarehouseInput): Promise<Warehouse> {
     const existing = await this.prisma.warehouse.findUnique({
@@ -125,7 +158,7 @@ export class StockService {
       );
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       const currentStock = await tx.productStock.findUnique({
         where: {
           productId_warehouseId: {
@@ -199,6 +232,13 @@ export class StockService {
         },
       });
     });
+
+    // Outside the transaction: notify if the product fell below minimum.
+    if (input.type !== StockMovementType.IN) {
+      void this.maybeEmitLowStock(input.productId);
+    }
+
+    return result;
   }
 
   async findAllWarehouses(
@@ -442,7 +482,9 @@ export class StockService {
       });
     };
 
-    return tx ? run(tx) : this.prisma.$transaction(run);
+    const movement = tx ? await run(tx) : await this.prisma.$transaction(run);
+    void this.maybeEmitLowStock(productId);
+    return movement;
   }
 
   async getOverview(): Promise<StockOverview> {

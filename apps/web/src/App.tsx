@@ -36,10 +36,13 @@ import SettingsPage from "./pages/SettingsPage";
 import ProjectsPage from "./pages/projects/ProjectsPage";
 import ProjectCreatePage from "./pages/projects/ProjectCreatePage";
 import ProjectDetailPage from "./pages/projects/ProjectDetailPage";
+import NotificationsPage from "./pages/NotificationsPage";
+import { Toaster } from "@/components/ui/sonner";
 
 function App() {
   return (
     <ApolloProvider client={apolloClient}>
+      <Toaster richColors closeButton position="bottom-right" />
       <BrowserRouter>
         <Routes>
           {/* Public routes */}
@@ -289,6 +292,16 @@ function App() {
             element={
               <ProtectedRoute requiredModule="projects" requiredAccess="read">
                 <DashboardLayout><ProjectDetailPage /></DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Notifications inbox (any logged-in user) */}
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout><NotificationsPage /></DashboardLayout>
               </ProtectedRoute>
             }
           />

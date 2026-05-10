@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useMutation, useQuery } from "@apollo/client/react";
+import { useQuery } from "@apollo/client/react";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { Plus, X } from "lucide-react";
 import {
   Card,
@@ -75,36 +76,36 @@ export function TeamTab({ project, isProjectManager, onChange }: Props) {
     variables: { pagination: { skip: 0, take: 200 } },
   });
 
-  const [addMember, { loading: adding }] = useMutation(
+  const [addMember, { loading: adding }] = useMutationWithToast(
     ADD_PROJECT_MEMBER_MUTATION,
     {
       refetchQueries: [
         { query: GET_PROJECT_MEMBERS_QUERY, variables: { projectId: project.id } },
         { query: GET_PROJECT_QUERY, variables: { projectId: project.id } },
       ],
+      successMessage: "Member added",
       onCompleted: () => {
         setAddOpen(false);
         setPendingUserId("");
         setPendingRole(ProjectMemberRole.MEMBER);
         onChange();
       },
-      onError: (e) => setErrorMessage(e.message),
     },
   );
 
-  const [removeMember] = useMutation(REMOVE_PROJECT_MEMBER_MUTATION, {
+  const [removeMember] = useMutationWithToast(REMOVE_PROJECT_MEMBER_MUTATION, {
     refetchQueries: [
       { query: GET_PROJECT_MEMBERS_QUERY, variables: { projectId: project.id } },
       { query: GET_PROJECT_QUERY, variables: { projectId: project.id } },
     ],
-    onError: (e) => setErrorMessage(e.message),
+    successMessage: "Member removed",
   });
 
-  const [updateRole] = useMutation(UPDATE_PROJECT_MEMBER_ROLE_MUTATION, {
+  const [updateRole] = useMutationWithToast(UPDATE_PROJECT_MEMBER_ROLE_MUTATION, {
     refetchQueries: [
       { query: GET_PROJECT_MEMBERS_QUERY, variables: { projectId: project.id } },
     ],
-    onError: (e) => setErrorMessage(e.message),
+    successMessage: "Role updated",
   });
 
   const members = membersData?.projectMembers.filter((m) => !m.leftAt) ?? [];

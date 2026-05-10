@@ -20,6 +20,10 @@ export const GET_COMPANY_SETTINGS_QUERY = gql`
       paymentTermsDays
       defaultAnnualLeaveDays
       defaultCountry
+      fleetExpiryThresholdItp
+      fleetExpiryThresholdRca
+      fleetExpiryThresholdCasco
+      fleetExpiryThresholdRovinieta
       updatedAt
     }
   }
@@ -45,6 +49,10 @@ export const UPDATE_COMPANY_SETTINGS_MUTATION = gql`
       paymentTermsDays
       defaultAnnualLeaveDays
       defaultCountry
+      fleetExpiryThresholdItp
+      fleetExpiryThresholdRca
+      fleetExpiryThresholdCasco
+      fleetExpiryThresholdRovinieta
       updatedAt
     }
   }

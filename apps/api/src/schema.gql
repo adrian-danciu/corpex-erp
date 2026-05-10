@@ -8,6 +8,15 @@ input AddProjectMemberInput {
   userId: String!
 }
 
+input AllocateProjectMaterialInput {
+  notes: String
+  productId: String!
+  projectId: String!
+  quantity: Float!
+  unitCost: Float
+  warehouseId: String!
+}
+
 input ApproveLeaveRequestInput {
   approved: Boolean!
   comments: String
@@ -26,11 +35,6 @@ type AuthResponse {
   accessToken: String!
   refreshToken: String!
   user: User!
-}
-
-input CancelProjectMaterialInput {
-  projectId: String!
-  projectMaterialId: String!
 }
 
 input ChangePasswordInput {
@@ -52,6 +56,10 @@ type CompanySettings {
   defaultInvoiceSeries: String!
   defaultVatRate: Float!
   email: String!
+  fleetExpiryThresholdCasco: Int!
+  fleetExpiryThresholdItp: Int!
+  fleetExpiryThresholdRca: Int!
+  fleetExpiryThresholdRovinieta: Int!
   id: ID!
   paymentTermsDays: Int!
   phone: String!
@@ -437,14 +445,6 @@ enum InvoiceType {
   PROFORMA
 }
 
-input IssueProjectMaterialInput {
-  notes: String
-  projectId: String!
-  projectMaterialId: String!
-  qty: Float!
-  unitCost: Float
-}
-
 """
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
 """
@@ -508,6 +508,7 @@ type MileageLog {
 
 type Mutation {
   addProjectMember(input: AddProjectMemberInput!): ProjectMember!
+  allocateProjectMaterial(input: AllocateProjectMaterialInput!): ProjectMaterial!
 
   """Approve or reject a leave request"""
   approveOrRejectLeaveRequest(approveLeaveRequestInput: ApproveLeaveRequestInput!): LeaveRequest!
@@ -515,7 +516,6 @@ type Mutation {
 
   """Cancel a leave request"""
   cancelLeaveRequest(leaveRequestId: String!): LeaveRequest!
-  cancelProjectMaterial(input: CancelProjectMaterialInput!): ProjectMaterial!
 
   """Change user password"""
   changePassword(changePasswordInput: ChangePasswordInput!): User!
@@ -567,18 +567,18 @@ type Mutation {
   deleteVehicleExpense(id: String!): VehicleExpense!
   deleteVehicleLease(id: String!): VehicleLease!
   endProjectVehicleAssignment(input: EndProjectVehicleAssignmentInput!): ProjectVehicle!
-  issueProjectMaterial(input: IssueProjectMaterialInput!): ProjectMaterial!
 
   """Link an existing employee to an existing user account"""
   linkEmployeeToUser(linkEmployeeUserInput: LinkEmployeeUserInput!): Employee!
   login(loginInput: LoginInput!): AuthResponse!
+  markAllNotificationsRead: Int!
+  markNotificationRead(id: String!): Notification!
   refreshToken(refreshToken: String!): String!
 
   """Delete an employee record"""
   removeEmployee(id: String!): Employee!
+  removeProjectMaterial(input: RemoveProjectMaterialInput!): ProjectMaterial!
   removeProjectMember(input: RemoveProjectMemberInput!): ProjectMember!
-  requestProjectMaterial(input: RequestProjectMaterialInput!): ProjectMaterial!
-  reserveProjectMaterial(input: ReserveProjectMaterialInput!): ProjectMaterial!
   transitionProjectStatus(input: TransitionProjectStatusInput!): Project!
   transitionProjectTask(input: TransitionProjectTaskInput!): ProjectTask!
 
@@ -607,6 +607,41 @@ type Mutation {
   updateVehicleLease(updateVehicleLeaseInput: UpdateVehicleLeaseInput!): VehicleLease!
 }
 
+type Notification {
+  body: String
+  createdAt: DateTime!
+  entityId: String
+  entityType: NotificationEntityType
+  id: ID!
+  isRead: Boolean!
+  linkPath: String
+  readAt: DateTime
+  recipientId: String!
+  title: String!
+  type: NotificationType!
+}
+
+enum NotificationEntityType {
+  LEAVE_REQUEST
+  PRODUCT
+  PROJECT_TASK
+  VEHICLE_DOCUMENT
+}
+
+input NotificationFilterInput {
+  isRead: Boolean
+  type: NotificationType
+}
+
+enum NotificationType {
+  FLEET_DOCUMENT_EXPIRING
+  LEAVE_REQUEST_APPROVED
+  LEAVE_REQUEST_REJECTED
+  LEAVE_REQUEST_SUBMITTED
+  PROJECT_TASK_ASSIGNED
+  STOCK_BELOW_MINIMUM
+}
+
 type PaginatedEmployee {
   items: [Employee!]!
   meta: PaginationMeta!
@@ -614,6 +649,11 @@ type PaginatedEmployee {
 
 type PaginatedInvoice {
   items: [Invoice!]!
+  meta: PaginationMeta!
+}
+
+type PaginatedNotification {
+  items: [Notification!]!
   meta: PaginationMeta!
 }
 
@@ -789,6 +829,7 @@ type ProjectMaterial {
   requestedQty: Float!
   reservedQty: Float!
   status: ProjectMaterialStatus!
+  unitCost: Float!
   updatedAt: DateTime!
   warehouse: Warehouse
   warehouseId: String!
@@ -929,10 +970,12 @@ type Query {
 
   """Get leave requests of current user"""
   myLeaveRequests: [LeaveRequest!]!
+  myNotifications(filter: NotificationFilterInput, pagination: PaginationInput): PaginatedNotification!
   myProjectTasks: [ProjectTask!]!
 
   """Get subordinates of current user (if manager)"""
   mySubordinates: [Employee!]!
+  myUnreadNotificationCount: Int!
 
   """Get a partner by ID"""
   partner(id: String!): Partner
@@ -984,22 +1027,14 @@ type Query {
   warehouses(pagination: PaginationInput): PaginatedWarehouse!
 }
 
+input RemoveProjectMaterialInput {
+  projectId: String!
+  projectMaterialId: String!
+}
+
 input RemoveProjectMemberInput {
   memberId: String!
   projectId: String!
-}
-
-input RequestProjectMaterialInput {
-  notes: String
-  productId: String!
-  projectId: String!
-  requestedQty: Float!
-  warehouseId: String!
-}
-
-input ReserveProjectMaterialInput {
-  projectId: String!
-  projectMaterialId: String!
 }
 
 """User role in the system"""
@@ -1079,6 +1114,10 @@ input UpdateCompanySettingsInput {
   defaultInvoiceSeries: String
   defaultVatRate: Float
   email: String
+  fleetExpiryThresholdCasco: Int
+  fleetExpiryThresholdItp: Int
+  fleetExpiryThresholdRca: Int
+  fleetExpiryThresholdRovinieta: Int
   paymentTermsDays: Int
   phone: String
   regCom: String

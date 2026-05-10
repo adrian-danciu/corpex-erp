@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@apollo/client/react";
+import { useQuery } from "@apollo/client/react";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { GET_EMPLOYEES_QUERY } from "@/graphql/mutations/employee.mutations";
@@ -36,7 +37,9 @@ export default function UsersAdminPage() {
     fetchPolicy: "cache-and-network",
   });
 
-  const [linkEmployeeUser] = useMutation(LINK_EMPLOYEE_USER_MUTATION);
+  const [linkEmployeeUser] = useMutationWithToast(LINK_EMPLOYEE_USER_MUTATION, {
+    successMessage: "Account linked",
+  });
 
   const employees = data?.employees.items ?? [];
   const withoutAccount = employees.filter((e) => !e.userId);
@@ -45,17 +48,20 @@ export default function UsersAdminPage() {
   const handleUserCreated = async (user: User) => {
     if (!selectedEmployee) return;
 
-    await linkEmployeeUser({
-      variables: {
-        linkEmployeeUserInput: {
-          employeeId: selectedEmployee.id,
-          userId: user.id,
+    try {
+      await linkEmployeeUser({
+        variables: {
+          linkEmployeeUserInput: {
+            employeeId: selectedEmployee.id,
+            userId: user.id,
+          },
         },
-      },
-    });
-
-    setSelectedEmployee(null);
-    refetch();
+      });
+      setSelectedEmployee(null);
+      void refetch();
+    } catch {
+      // toast already shown
+    }
   };
 
   if (loading) {

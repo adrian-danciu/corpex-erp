@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -17,14 +18,18 @@ import {
   UpdateProjectTaskInput,
 } from './dto/project-task.inputs';
 import { ProjectFeedService } from './project-feed.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 const taskInclude = { assignee: true, createdBy: true };
 
 @Injectable()
 export class ProjectTasksService {
+  private readonly logger = new Logger(ProjectTasksService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly feed: ProjectFeedService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async create(input: CreateProjectTaskInput, actorId: string) {
@@ -43,8 +48,8 @@ export class ProjectTasksService {
       }
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      const task = await tx.projectTask.create({
+    const task = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.projectTask.create({
         data: {
           projectId: input.projectId,
           title: input.title,
@@ -61,15 +66,31 @@ export class ProjectTasksService {
         {
           projectId: input.projectId,
           type: 'TASK_CREATED',
-          content: `Task created: "${task.title}"`,
+          content: `Task created: "${created.title}"`,
           authorId: actorId,
-          metadata: { taskId: task.id, assigneeId: task.assigneeId },
+          metadata: { taskId: created.id, assigneeId: created.assigneeId },
         },
         tx,
       );
 
-      return task;
+      return created;
     });
+
+    if (task.assigneeId) {
+      this.notifications
+        .notifyTaskAssigned({
+          taskId: task.id,
+          taskTitle: task.title,
+          projectId: task.projectId,
+          assigneeUserId: task.assigneeId,
+          assignerUserId: actorId,
+        })
+        .catch((err) =>
+          this.logger.error('Failed to emit notifyTaskAssigned (create)', err),
+        );
+    }
+
+    return task;
   }
 
   async update(input: UpdateProjectTaskInput, actorId: string) {
@@ -93,8 +114,11 @@ export class ProjectTasksService {
       }
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      const updated = await tx.projectTask.update({
+    const assigneeChanged =
+      input.assigneeId !== undefined && input.assigneeId !== task.assigneeId;
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const result = await tx.projectTask.update({
         where: { id: task.id },
         data: {
           title: input.title ?? undefined,
@@ -107,17 +131,14 @@ export class ProjectTasksService {
         include: taskInclude,
       });
 
-      if (
-        input.assigneeId !== undefined &&
-        input.assigneeId !== task.assigneeId
-      ) {
+      if (assigneeChanged) {
         await this.feed.recordAutoEntry(
           {
             projectId: task.projectId,
             type: 'TASK_ASSIGNED',
             content: input.assigneeId
-              ? `Task "${updated.title}" assigned to ${updated.assignee?.firstName ?? ''} ${updated.assignee?.lastName ?? ''}`.trim()
-              : `Task "${updated.title}" unassigned`,
+              ? `Task "${result.title}" assigned to ${result.assignee?.firstName ?? ''} ${result.assignee?.lastName ?? ''}`.trim()
+              : `Task "${result.title}" unassigned`,
             authorId: actorId,
             metadata: {
               taskId: task.id,
@@ -129,8 +150,24 @@ export class ProjectTasksService {
         );
       }
 
-      return updated;
+      return result;
     });
+
+    if (assigneeChanged && updated.assigneeId) {
+      this.notifications
+        .notifyTaskAssigned({
+          taskId: updated.id,
+          taskTitle: updated.title,
+          projectId: updated.projectId,
+          assigneeUserId: updated.assigneeId,
+          assignerUserId: actorId,
+        })
+        .catch((err) =>
+          this.logger.error('Failed to emit notifyTaskAssigned (update)', err),
+        );
+    }
+
+    return updated;
   }
 
   async transition(

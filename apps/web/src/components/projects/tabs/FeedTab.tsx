@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useMutation, useQuery } from "@apollo/client/react";
+import { useQuery } from "@apollo/client/react";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { Paperclip, Send, X } from "lucide-react";
 import {
   Card,
@@ -53,21 +54,21 @@ export function FeedTab({ project }: Props) {
     fetchPolicy: "cache-and-network",
   });
 
-  const [createPost, { loading: posting }] = useMutation(
+  const [createPost, { loading: posting }] = useMutationWithToast(
     CREATE_PROJECT_FEED_POST_MUTATION,
     {
+      successMessage: "Posted",
       onCompleted: () => {
         setContent("");
         setFile(null);
-        refetch();
+        void refetch();
       },
-      onError: (e) => setError(e.message),
     },
   );
 
-  const [deletePost] = useMutation(DELETE_PROJECT_FEED_ENTRY_MUTATION, {
-    onCompleted: () => refetch(),
-    onError: (e) => setError(e.message),
+  const [deletePost] = useMutationWithToast(DELETE_PROJECT_FEED_ENTRY_MUTATION, {
+    successMessage: "Post deleted",
+    onCompleted: () => void refetch(),
   });
 
   const submitPost = async () => {
