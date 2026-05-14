@@ -53,3 +53,9 @@ export class TransitionProjectTaskInput {
   @Field(() => ProjectTaskStatus)
   status: ProjectTaskStatus;
 }
+
+@InputType()
+export class DeleteProjectTaskInput {
+  @Field()
+  taskId: string;
+}

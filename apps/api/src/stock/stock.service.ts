@@ -83,7 +83,9 @@ export class StockService {
     });
 
     if (existing) {
-      throw new ConflictException(`Product with SKU ${input.sku} already exists`);
+      throw new ConflictException(
+        `Product with SKU ${input.sku} already exists`,
+      );
     }
 
     return this.prisma.product.create({
@@ -149,7 +151,9 @@ export class StockService {
     ]);
 
     if (!product) {
-      throw new NotFoundException(`Product with ID ${input.productId} not found`);
+      throw new NotFoundException(
+        `Product with ID ${input.productId} not found`,
+      );
     }
 
     if (!warehouse) {
@@ -330,7 +334,9 @@ export class StockService {
     tx?: Prisma.TransactionClient,
   ): Promise<void> {
     if (qty <= 0) {
-      throw new BadRequestException('Quantity to reserve must be greater than 0');
+      throw new BadRequestException(
+        'Quantity to reserve must be greater than 0',
+      );
     }
 
     const run = async (client: Prisma.TransactionClient) => {
@@ -464,7 +470,10 @@ export class StockService {
       });
 
       const resolvedUnitCost =
-        unitCost ?? (product?.unitPrice && product.unitPrice > 0 ? product.unitPrice : null);
+        unitCost ??
+        (product?.unitPrice && product.unitPrice > 0
+          ? product.unitPrice
+          : null);
 
       return client.stockMovement.create({
         data: {

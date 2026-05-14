@@ -117,7 +117,9 @@ export class StockResolver {
   async getProductStockByProduct(
     @Args('productId') productId: string,
   ): Promise<ProductStock[]> {
-    return this.stockService.productStockByProduct(productId) as Promise<ProductStock[]>;
+    return this.stockService.productStockByProduct(productId) as Promise<
+      ProductStock[]
+    >;
   }
 
   @Mutation(() => StockMovement, {

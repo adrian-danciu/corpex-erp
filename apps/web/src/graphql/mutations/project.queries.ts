@@ -188,3 +188,32 @@ export const GET_PROJECT_COSTS_FOR_INVOICE_QUERY = gql`
     }
   }
 `;
+
+export const GET_PROJECT_TASK_COMMENTS_QUERY = gql`
+  query GetProjectTaskComments($taskId: String!) {
+    projectTaskComments(taskId: $taskId) {
+      id
+      taskId
+      authorId
+      content
+      createdAt
+      updatedAt
+      author { id firstName lastName }
+    }
+  }
+`;
+
+export const GET_PROJECT_TASK_ACTIVITY_QUERY = gql`
+  query GetProjectTaskActivity($taskId: String!) {
+    projectTaskActivity(taskId: $taskId) {
+      id
+      projectId
+      kind
+      authorId
+      content
+      metadata
+      createdAt
+      author { id firstName lastName }
+    }
+  }
+`;

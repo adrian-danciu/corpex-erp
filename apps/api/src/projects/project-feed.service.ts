@@ -33,10 +33,7 @@ export interface AutoEventInput {
 export class ProjectFeedService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async recordAutoEntry(
-    input: AutoEventInput,
-    tx?: Prisma.TransactionClient,
-  ) {
+  async recordAutoEntry(input: AutoEventInput, tx?: Prisma.TransactionClient) {
     const client = tx ?? this.prisma;
     return client.projectFeedEntry.create({
       data: {
@@ -52,10 +49,7 @@ export class ProjectFeedService {
     });
   }
 
-  async listFeed(
-    projectId: string,
-    filter?: { kind?: ProjectFeedKind },
-  ) {
+  async listFeed(projectId: string, filter?: { kind?: ProjectFeedKind }) {
     return this.prisma.projectFeedEntry.findMany({
       where: {
         projectId,
@@ -100,8 +94,7 @@ export class ProjectFeedService {
     if (!isAdmin && entry.authorId !== actorId) {
       const fifteenMinutesMs = 15 * 60 * 1000;
       const isOwn = entry.authorId === actorId;
-      const isFresh =
-        Date.now() - entry.createdAt.getTime() < fifteenMinutesMs;
+      const isFresh = Date.now() - entry.createdAt.getTime() < fifteenMinutesMs;
       if (!isOwn || !isFresh) {
         throw new Error('You can only delete your own posts within 15 minutes');
       }

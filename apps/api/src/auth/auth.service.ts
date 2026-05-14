@@ -25,7 +25,10 @@ export class AuthService {
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.usersService.findByEmail(email);
     if (!user) return null;
-    const isPasswordValid = await this.usersService.verifyPassword(password, user.password);
+    const isPasswordValid = await this.usersService.verifyPassword(
+      password,
+      user.password,
+    );
     if (!isPasswordValid) return null;
     return user;
   }
@@ -72,7 +75,9 @@ export class AuthService {
         position: employee?.position ?? null,
       };
 
-      const accessToken = this.jwtService.sign(newPayload, { expiresIn: '15m' });
+      const accessToken = this.jwtService.sign(newPayload, {
+        expiresIn: '15m',
+      });
       return { accessToken };
     } catch {
       throw new UnauthorizedException('Invalid refresh token');

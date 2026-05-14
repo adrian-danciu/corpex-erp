@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import {
   NotificationEntityType,
   NotificationType,
@@ -63,7 +67,9 @@ export class NotificationsService {
 
   // ─── Recipient resolution helpers ──────────────────────────────────────
 
-  private async usersInDepartments(departments: Department[]): Promise<string[]> {
+  private async usersInDepartments(
+    departments: Department[],
+  ): Promise<string[]> {
     const employees = await this.prisma.employee.findMany({
       where: { department: { in: departments }, userId: { not: null } },
       select: { userId: true },
@@ -261,7 +267,9 @@ export class NotificationsService {
       throw new NotFoundException(`Notification ${id} not found`);
     }
     if (notification.recipientId !== userId) {
-      throw new ForbiddenException('Cannot modify notifications of another user');
+      throw new ForbiddenException(
+        'Cannot modify notifications of another user',
+      );
     }
     if (notification.isRead) return notification;
 

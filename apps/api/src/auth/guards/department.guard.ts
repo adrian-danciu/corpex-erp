@@ -38,7 +38,8 @@ export class DepartmentGuard implements CanActivate {
     if (!user) throw new ForbiddenException('Not authenticated');
     if (user.role === Role.ADMIN) return true;
 
-    if (!user.department) throw new ForbiddenException('No department assigned');
+    if (!user.department)
+      throw new ForbiddenException('No department assigned');
 
     const perms = DEPARTMENT_PERMISSIONS[user.department];
     if (!perms) throw new ForbiddenException('Unknown department');
@@ -47,7 +48,9 @@ export class DepartmentGuard implements CanActivate {
 
     if (module === 'leaveApprovals') {
       if (!perms.leaveApprovals) {
-        throw new ForbiddenException('Leave approval access not allowed for your department');
+        throw new ForbiddenException(
+          'Leave approval access not allowed for your department',
+        );
       }
       return true;
     }
@@ -56,7 +59,9 @@ export class DepartmentGuard implements CanActivate {
       return perms.dashboard;
     }
 
-    const moduleAccess = perms[module as keyof typeof perms] as AccessLevel | undefined;
+    const moduleAccess = perms[module as keyof typeof perms] as
+      | AccessLevel
+      | undefined;
     if (!moduleAccess || moduleAccess === 'none') {
       throw new ForbiddenException(
         `Access to ${module} not allowed for your department`,

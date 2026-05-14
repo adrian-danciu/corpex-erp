@@ -67,7 +67,9 @@ export class ProjectAccessGuard implements CanActivate {
     return true;
   }
 
-  private async resolveProjectId(args: Record<string, unknown>): Promise<string | null> {
+  private async resolveProjectId(
+    args: Record<string, unknown>,
+  ): Promise<string | null> {
     const direct = this.findStringField(args, 'projectId');
     if (direct) return direct;
 
@@ -81,13 +83,26 @@ export class ProjectAccessGuard implements CanActivate {
       return row.projectId;
     }
 
+    const commentId = this.findStringField(args, 'commentId');
+    if (commentId) {
+      const row = await this.prisma.projectTaskComment.findUnique({
+        where: { id: commentId },
+        select: { task: { select: { projectId: true } } },
+      });
+      if (!row) throw new NotFoundException(`Comment ${commentId} not found`);
+      return row.task.projectId;
+    }
+
     const materialId = this.findStringField(args, 'projectMaterialId');
     if (materialId) {
       const row = await this.prisma.projectMaterial.findUnique({
         where: { id: materialId },
         select: { projectId: true },
       });
-      if (!row) throw new NotFoundException(`Material allocation ${materialId} not found`);
+      if (!row)
+        throw new NotFoundException(
+          `Material allocation ${materialId} not found`,
+        );
       return row.projectId;
     }
 
@@ -97,7 +112,10 @@ export class ProjectAccessGuard implements CanActivate {
         where: { id: assignmentId },
         select: { projectId: true },
       });
-      if (!row) throw new NotFoundException(`Vehicle assignment ${assignmentId} not found`);
+      if (!row)
+        throw new NotFoundException(
+          `Vehicle assignment ${assignmentId} not found`,
+        );
       return row.projectId;
     }
 
@@ -107,7 +125,8 @@ export class ProjectAccessGuard implements CanActivate {
         where: { id: feedEntryId },
         select: { projectId: true },
       });
-      if (!row) throw new NotFoundException(`Feed entry ${feedEntryId} not found`);
+      if (!row)
+        throw new NotFoundException(`Feed entry ${feedEntryId} not found`);
       return row.projectId;
     }
 
@@ -117,15 +136,19 @@ export class ProjectAccessGuard implements CanActivate {
         where: { id: memberId },
         select: { projectId: true },
       });
-      if (!row) throw new NotFoundException(`Project member ${memberId} not found`);
+      if (!row)
+        throw new NotFoundException(`Project member ${memberId} not found`);
       return row.projectId;
     }
 
     return null;
   }
 
-  private findStringField(args: Record<string, unknown>, key: string): string | null {
-    if (typeof args[key] === 'string') return args[key] as string;
+  private findStringField(
+    args: Record<string, unknown>,
+    key: string,
+  ): string | null {
+    if (typeof args[key] === 'string') return args[key];
     for (const value of Object.values(args)) {
       if (value && typeof value === 'object') {
         const nested = (value as Record<string, unknown>)[key];

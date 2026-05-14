@@ -20,8 +20,11 @@ export class LeasesService {
   }
 
   async update(input: UpdateVehicleLeaseInput): Promise<VehicleLease> {
-    const lease = await this.prisma.vehicleLease.findUnique({ where: { id: input.id } });
-    if (!lease) throw new NotFoundException(`Lease with ID ${input.id} not found`);
+    const lease = await this.prisma.vehicleLease.findUnique({
+      where: { id: input.id },
+    });
+    if (!lease)
+      throw new NotFoundException(`Lease with ID ${input.id} not found`);
 
     const { id, ...data } = input;
     const cleanData = Object.fromEntries(

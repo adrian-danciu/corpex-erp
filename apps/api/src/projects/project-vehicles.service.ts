@@ -125,7 +125,9 @@ export class ProjectVehiclesService {
 
     const endDate = input.endDate ?? new Date();
     if (endDate <= assignment.startDate) {
-      throw new BadRequestException('endDate must be after the assignment startDate');
+      throw new BadRequestException(
+        'endDate must be after the assignment startDate',
+      );
     }
 
     return this.prisma.$transaction(async (tx) => {

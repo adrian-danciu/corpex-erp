@@ -13,9 +13,11 @@ interface RequestUser {
 import { RequireProjectAccess } from './decorators/project-access.decorator';
 import {
   CreateProjectTaskInput,
+  DeleteProjectTaskInput,
   TransitionProjectTaskInput,
   UpdateProjectTaskInput,
 } from './dto/project-task.inputs';
+import { ProjectFeedEntry } from './entities/project-feed-entry.entity';
 import { ProjectTask } from './entities/project-task.entity';
 import { ProjectAccessGuard } from './guards/project-access.guard';
 import { ProjectTasksService } from './project-tasks.service';
@@ -61,5 +63,20 @@ export class ProjectTasksResolver {
     @CurrentUser() user: RequestUser,
   ) {
     return this.service.transition(input, user);
+  }
+
+  @Mutation(() => ProjectTask)
+  @RequireProjectAccess('manager')
+  async deleteProjectTask(
+    @Args('input') input: DeleteProjectTaskInput,
+    @CurrentUser() user: User,
+  ) {
+    return this.service.delete(input.taskId, user.id);
+  }
+
+  @Query(() => [ProjectFeedEntry], { name: 'projectTaskActivity' })
+  @RequireProjectAccess('member')
+  async activity(@Args('taskId') taskId: string) {
+    return this.service.activity(taskId);
   }
 }

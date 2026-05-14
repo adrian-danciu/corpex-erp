@@ -14,7 +14,9 @@ export class ExpensesResolver {
   @Query(() => [VehicleExpense], { name: 'vehicleExpenses' })
   @UseGuards(JwtAuthGuard, DepartmentGuard)
   @RequireModule('fleet', 'read')
-  async findByVehicle(@Args('vehicleId') vehicleId: string): Promise<VehicleExpense[]> {
+  async findByVehicle(
+    @Args('vehicleId') vehicleId: string,
+  ): Promise<VehicleExpense[]> {
     return this.expensesService.findByVehicle(vehicleId);
   }
 

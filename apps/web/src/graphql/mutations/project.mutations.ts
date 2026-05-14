@@ -130,6 +130,8 @@ export const UPDATE_PROJECT_TASK_MUTATION = gql`
       priority
       assigneeId
       dueDate
+      updatedAt
+      assignee { id firstName lastName }
     }
   }
 `;
@@ -162,6 +164,46 @@ export const DELETE_PROJECT_FEED_ENTRY_MUTATION = gql`
     deleteProjectFeedEntry(input: $input) {
       id
       deletedAt
+    }
+  }
+`;
+
+export const DELETE_PROJECT_TASK_MUTATION = gql`
+  mutation DeleteProjectTask($input: DeleteProjectTaskInput!) {
+    deleteProjectTask(input: $input) {
+      id
+    }
+  }
+`;
+
+export const ADD_PROJECT_TASK_COMMENT_MUTATION = gql`
+  mutation AddProjectTaskComment($input: AddProjectTaskCommentInput!) {
+    addProjectTaskComment(input: $input) {
+      id
+      taskId
+      authorId
+      content
+      createdAt
+      updatedAt
+      author { id firstName lastName }
+    }
+  }
+`;
+
+export const UPDATE_PROJECT_TASK_COMMENT_MUTATION = gql`
+  mutation UpdateProjectTaskComment($input: UpdateProjectTaskCommentInput!) {
+    updateProjectTaskComment(input: $input) {
+      id
+      content
+      updatedAt
+    }
+  }
+`;
+
+export const DELETE_PROJECT_TASK_COMMENT_MUTATION = gql`
+  mutation DeleteProjectTaskComment($input: DeleteProjectTaskCommentInput!) {
+    deleteProjectTaskComment(input: $input) {
+      id
     }
   }
 `;

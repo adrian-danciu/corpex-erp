@@ -25,7 +25,8 @@ export class ProjectMembersService {
       this.prisma.project.findUnique({ where: { id: input.projectId } }),
       this.prisma.user.findUnique({ where: { id: input.userId } }),
     ]);
-    if (!project) throw new NotFoundException(`Project ${input.projectId} not found`);
+    if (!project)
+      throw new NotFoundException(`Project ${input.projectId} not found`);
     if (!user) throw new NotFoundException(`User ${input.userId} not found`);
 
     const existing = await this.prisma.projectMember.findUnique({
@@ -80,7 +81,8 @@ export class ProjectMembersService {
       where: { id: input.memberId },
       include: { user: true },
     });
-    if (!member) throw new NotFoundException(`Member ${input.memberId} not found`);
+    if (!member)
+      throw new NotFoundException(`Member ${input.memberId} not found`);
     if (member.projectId !== input.projectId) {
       throw new BadRequestException('Member does not belong to this project');
     }
@@ -116,7 +118,8 @@ export class ProjectMembersService {
       where: { id: input.memberId },
       include: { user: true },
     });
-    if (!member) throw new NotFoundException(`Member ${input.memberId} not found`);
+    if (!member)
+      throw new NotFoundException(`Member ${input.memberId} not found`);
     if (member.projectId !== input.projectId) {
       throw new BadRequestException('Member does not belong to this project');
     }

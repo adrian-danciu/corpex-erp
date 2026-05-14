@@ -40,9 +40,9 @@ The fleet module follows the same pattern as all other modules:
 
 The projects module is a cross-cutting hub that ties Partners, Stock, Fleet, HR, Tasks and Finance together. A project represents a client-delivery job.
 
-- **6 Prisma models**: `Project`, `ProjectMember`, `ProjectMaterial`, `ProjectVehicle`, `ProjectTask`, `ProjectFeedEntry`
+- **7 Prisma models**: `Project`, `ProjectMember`, `ProjectMaterial`, `ProjectVehicle`, `ProjectTask`, `ProjectTaskComment`, `ProjectFeedEntry`
 - **6 enums**: `ProjectStatus`, `ProjectMemberRole`, `ProjectMaterialStatus`, `ProjectTaskStatus`, `ProjectTaskPriority`, `ProjectFeedKind`
-- **6 service/resolver pairs**: `Projects`, `ProjectMembers`, `ProjectMaterials`, `ProjectVehicles`, `ProjectTasks`, `ProjectFeed`
+- **7 service/resolver pairs**: `Projects`, `ProjectMembers`, `ProjectMaterials`, `ProjectVehicles`, `ProjectTasks`, `ProjectTaskComments`, `ProjectFeed`
 - **Permissions:** new `projects: AccessLevel` key in `permissions.config.ts`. Project-scoped access is enforced via `ProjectAccessGuard` (`member` / `manager` levels) and the `@RequireProjectAccess` decorator.
 - **Cross-module touch points:**
   - `Invoice.projectId` — links an invoice to a project. Plus `projectCostsForInvoice(projectId)` query that aggregates issued materials and tagged vehicle expenses into draft invoice line items.
@@ -53,6 +53,7 @@ The projects module is a cross-cutting hub that ties Partners, Stock, Fleet, HR,
 - **File uploads** (manual feed posts): `POST /uploads/project-feed` REST endpoint (multer, image+PDF, 10MB cap). Files stored under `apps/api/uploads/project-feed/` and served via `useStaticAssets` at `/uploads/`.
 - **Lifecycle:** `PLANNING → ACTIVE → ON_HOLD ⇄ ACTIVE → COMPLETED | CANCELLED`. `COMPLETED` requires no open material allocations; `CANCELLED` releases all open reservations.
 - **Material flow:** `REQUESTED → RESERVED → PARTIALLY_ISSUED → FULLY_ISSUED` (or `CANCELLED` from any pre-issuance state). Reservation is all-or-nothing; issuance can be partial.
+- **Tasks UX:** the Tasks tab is a Jira-style kanban built on `@dnd-kit/react` with optimistic Apollo cache writes (no `refetch()` after a drag). Cards open a right-side `Sheet` (`TaskDetailSheet`) with inline-edit title/description/priority/assignee/due date, status select, an activity timeline that merges `ProjectFeedEntry` rows scoped to the task (via `metadata.taskId`) with flat `ProjectTaskComment` rows, and a comment composer (Cmd/Ctrl+Enter to send). Permission gates: project managers / admins / MANAGEMENT can edit all fields and delete the task; the assignee can change status and comment; other members can only comment; comment edit/delete is author-or-admin. Backend additions: `ProjectTaskComment` model (cascade-delete on task removal), `addProjectTaskComment` / `updateProjectTaskComment` / `deleteProjectTaskComment` / `deleteProjectTask` mutations, and a `projectTaskActivity(taskId)` query that filters the project feed by `metadata.taskId`. Frontend code lives under `apps/web/src/components/projects/tasks/`.
 
 ## Frontend details
 

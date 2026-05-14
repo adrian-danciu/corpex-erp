@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateVehicleInput } from './dto/create-vehicle.input';
 import { UpdateVehicleInput } from './dto/update-vehicle.input';
@@ -21,7 +25,9 @@ export class VehiclesService {
     });
 
     if (existing) {
-      throw new ConflictException('A vehicle with this plate number or chassis number already exists');
+      throw new ConflictException(
+        'A vehicle with this plate number or chassis number already exists',
+      );
     }
 
     return this.prisma.vehicle.create({ data: input });
@@ -30,7 +36,11 @@ export class VehiclesService {
   async findAll(pagination: PaginationInput): Promise<IPaginatedType<Vehicle>> {
     const { skip, take } = pagination;
     const [items, total] = await Promise.all([
-      this.prisma.vehicle.findMany({ skip, take, orderBy: { createdAt: 'desc' } }),
+      this.prisma.vehicle.findMany({
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+      }),
       this.prisma.vehicle.count(),
     ]);
 
@@ -50,8 +60,11 @@ export class VehiclesService {
   }
 
   async update(input: UpdateVehicleInput): Promise<Vehicle> {
-    const vehicle = await this.prisma.vehicle.findUnique({ where: { id: input.id } });
-    if (!vehicle) throw new NotFoundException(`Vehicle with ID ${input.id} not found`);
+    const vehicle = await this.prisma.vehicle.findUnique({
+      where: { id: input.id },
+    });
+    if (!vehicle)
+      throw new NotFoundException(`Vehicle with ID ${input.id} not found`);
 
     const { id, ...data } = input;
     const cleanData = Object.fromEntries(
@@ -63,7 +76,8 @@ export class VehiclesService {
 
   async remove(id: string): Promise<Vehicle> {
     const vehicle = await this.prisma.vehicle.findUnique({ where: { id } });
-    if (!vehicle) throw new NotFoundException(`Vehicle with ID ${id} not found`);
+    if (!vehicle)
+      throw new NotFoundException(`Vehicle with ID ${id} not found`);
     return this.prisma.vehicle.delete({ where: { id } });
   }
 }

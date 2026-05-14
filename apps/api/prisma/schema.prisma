@@ -29,6 +29,7 @@ model User {
   createdProjectTasks   ProjectTask[]        @relation("UserCreatedTasks")
   projectFeedPosts      ProjectFeedEntry[]   @relation("UserProjectPosts")
   notifications         Notification[]       @relation("UserNotifications")
+  projectTaskComments   ProjectTaskComment[] @relation("ProjectTaskCommentAuthor")
 }
 
 model Employee {
@@ -504,6 +505,21 @@ model ProjectTask {
   project     Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
   assignee    User?               @relation("UserAssignedTasks", fields: [assigneeId], references: [id])
   createdBy   User                @relation("UserCreatedTasks", fields: [createdById], references: [id])
+  comments    ProjectTaskComment[]
+}
+
+model ProjectTaskComment {
+  id        String   @id @default(uuid())
+  taskId    String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  task   ProjectTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author User        @relation("ProjectTaskCommentAuthor", fields: [authorId], references: [id])
+
+  @@index([taskId, createdAt])
 }
 
 model ProjectFeedEntry {

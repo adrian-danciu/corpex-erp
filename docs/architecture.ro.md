@@ -40,9 +40,9 @@ Modulul fleet urmeaza acelasi pattern ca toate celelalte module:
 
 Modulul projects este un hub transversal care leaga Partners, Stock, Fleet, HR, Tasks si Finance. Un proiect reprezinta o lucrare livrata catre un client.
 
-- **6 modele Prisma**: `Project`, `ProjectMember`, `ProjectMaterial`, `ProjectVehicle`, `ProjectTask`, `ProjectFeedEntry`
+- **7 modele Prisma**: `Project`, `ProjectMember`, `ProjectMaterial`, `ProjectVehicle`, `ProjectTask`, `ProjectTaskComment`, `ProjectFeedEntry`
 - **6 enum-uri**: `ProjectStatus`, `ProjectMemberRole`, `ProjectMaterialStatus`, `ProjectTaskStatus`, `ProjectTaskPriority`, `ProjectFeedKind`
-- **6 perechi service/resolver**: `Projects`, `ProjectMembers`, `ProjectMaterials`, `ProjectVehicles`, `ProjectTasks`, `ProjectFeed`
+- **7 perechi service/resolver**: `Projects`, `ProjectMembers`, `ProjectMaterials`, `ProjectVehicles`, `ProjectTasks`, `ProjectTaskComments`, `ProjectFeed`
 - **Permisiuni:** cheie noua `projects: AccessLevel` in `permissions.config.ts`. Accesul la nivel de proiect este controlat prin `ProjectAccessGuard` (niveluri `member` / `manager`) si decoratorul `@RequireProjectAccess`.
 - **Punte cu alte module:**
   - `Invoice.projectId` — leaga o factura de un proiect. In plus, query-ul `projectCostsForInvoice(projectId)` agrega materialele eliberate si cheltuielile cu vehiculele atribuite proiectului in linii de factura draft.
@@ -53,6 +53,7 @@ Modulul projects este un hub transversal care leaga Partners, Stock, Fleet, HR, 
 - **Upload de fisiere** (postari manuale in feed): endpoint REST `POST /uploads/project-feed` (multer, image+PDF, limita 10MB). Fisierele sunt stocate in `apps/api/uploads/project-feed/` si servite prin `useStaticAssets` la `/uploads/`.
 - **Ciclu de viata:** `PLANNING → ACTIVE → ON_HOLD ⇄ ACTIVE → COMPLETED | CANCELLED`. `COMPLETED` cere ca nicio alocare de material sa nu fie deschisa; `CANCELLED` elibereaza toate rezervarile deschise.
 - **Flux de materiale:** `REQUESTED → RESERVED → PARTIALLY_ISSUED → FULLY_ISSUED` (sau `CANCELLED` din orice stare anterioara eliberarii). Rezervarea este totul-sau-nimic; eliberarea poate fi partiala.
+- **UX Task-uri:** tab-ul Tasks este un kanban in stil Jira construit pe `@dnd-kit/react` cu scrieri optimiste in cache-ul Apollo (fara `refetch()` dupa un drag). Click pe un card deschide un `Sheet` lateral dreapta (`TaskDetailSheet`) cu editare inline a titlului/descrierii/prioritatii/assignee-ului/datei limita, select de status, un timeline de activitate care imbina intrarile din `ProjectFeedEntry` filtrate dupa task (prin `metadata.taskId`) cu randuri `ProjectTaskComment` plate, plus un composer de comentarii (Cmd/Ctrl+Enter pentru trimitere). Permisiuni: project managers / admin / MANAGEMENT pot edita orice camp si pot sterge task-ul; assignee-ul poate schimba statusul si poate comenta; ceilalti membri pot doar comenta; editarea/stergerea unui comentariu necesita ca actorul sa fie autorul sau admin. Adaugiri backend: modelul `ProjectTaskComment` (cascade-delete cand task-ul este sters), mutatiile `addProjectTaskComment` / `updateProjectTaskComment` / `deleteProjectTaskComment` / `deleteProjectTask` si query-ul `projectTaskActivity(taskId)` care filtreaza feed-ul proiectului dupa `metadata.taskId`. Codul frontend este in `apps/web/src/components/projects/tasks/`.
 
 ## Detalii frontend
 

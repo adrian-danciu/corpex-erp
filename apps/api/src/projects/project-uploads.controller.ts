@@ -8,7 +8,6 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
 import { randomUUID } from 'crypto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 

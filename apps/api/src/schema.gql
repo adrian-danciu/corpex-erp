@@ -8,6 +8,11 @@ input AddProjectMemberInput {
   userId: String!
 }
 
+input AddProjectTaskCommentInput {
+  content: String!
+  taskId: String!
+}
+
 input AllocateProjectMaterialInput {
   notes: String
   productId: String!
@@ -277,6 +282,14 @@ input DeleteFeedEntryInput {
   feedEntryId: String!
 }
 
+input DeleteProjectTaskCommentInput {
+  commentId: String!
+}
+
+input DeleteProjectTaskInput {
+  taskId: String!
+}
+
 """Employee department"""
 enum Department {
   FINANCE
@@ -457,6 +470,7 @@ type LeaveRequest {
   comments: String
   createdAt: DateTime!
   days: Int!
+  directManager: User
   employee: User!
   employeeId: String!
   endDate: DateTime!
@@ -508,6 +522,7 @@ type MileageLog {
 
 type Mutation {
   addProjectMember(input: AddProjectMemberInput!): ProjectMember!
+  addProjectTaskComment(input: AddProjectTaskCommentInput!): ProjectTaskComment!
   allocateProjectMaterial(input: AllocateProjectMaterialInput!): ProjectMaterial!
 
   """Approve or reject a leave request"""
@@ -562,6 +577,8 @@ type Mutation {
   """Delete a partner"""
   deletePartner(id: String!): Partner!
   deleteProjectFeedEntry(input: DeleteFeedEntryInput!): ProjectFeedEntry!
+  deleteProjectTask(input: DeleteProjectTaskInput!): ProjectTask!
+  deleteProjectTaskComment(input: DeleteProjectTaskCommentInput!): ProjectTaskComment!
   deleteVehicle(id: String!): Vehicle!
   deleteVehicleDocument(id: String!): VehicleDocument!
   deleteVehicleExpense(id: String!): VehicleExpense!
@@ -602,6 +619,7 @@ type Mutation {
   updateProject(input: UpdateProjectInput!): Project!
   updateProjectMemberRole(input: UpdateProjectMemberRoleInput!): ProjectMember!
   updateProjectTask(input: UpdateProjectTaskInput!): ProjectTask!
+  updateProjectTaskComment(input: UpdateProjectTaskCommentInput!): ProjectTaskComment!
   updateVehicle(updateVehicleInput: UpdateVehicleInput!): Vehicle!
   updateVehicleDocument(updateVehicleDocumentInput: UpdateVehicleDocumentInput!): VehicleDocument!
   updateVehicleLease(updateVehicleLeaseInput: UpdateVehicleLeaseInput!): VehicleLease!
@@ -883,6 +901,16 @@ type ProjectTask {
   updatedAt: DateTime!
 }
 
+type ProjectTaskComment {
+  author: User
+  authorId: String!
+  content: String!
+  createdAt: DateTime!
+  id: ID!
+  taskId: String!
+  updatedAt: DateTime!
+}
+
 enum ProjectTaskPriority {
   HIGH
   LOW
@@ -916,6 +944,11 @@ input ProjectsFilterInput {
 }
 
 type Query {
+  """
+  All pending leave requests org-wide. Returned to anyone with leaveApprovals so HR can monitor; the UI gates Approve/Reject by direct-manager relationship.
+  """
+  allPendingLeaveRequests: [LeaveRequest!]!
+
   """Get company settings"""
   companySettings: CompanySettings!
 
@@ -1001,6 +1034,8 @@ type Query {
   projectFeed(kind: ProjectFeedKind, projectId: String!): [ProjectFeedEntry!]!
   projectMaterials(projectId: String!): [ProjectMaterial!]!
   projectMembers(projectId: String!): [ProjectMember!]!
+  projectTaskActivity(taskId: String!): [ProjectFeedEntry!]!
+  projectTaskComments(taskId: String!): [ProjectTaskComment!]!
   projectTasks(projectId: String!): [ProjectTask!]!
   projectVehicles(projectId: String!): [ProjectVehicle!]!
   projects(filter: ProjectsFilterInput): [Project!]!
@@ -1197,6 +1232,11 @@ input UpdateProjectMemberRoleInput {
   memberId: String!
   projectId: String!
   role: ProjectMemberRole!
+}
+
+input UpdateProjectTaskCommentInput {
+  commentId: String!
+  content: String!
 }
 
 input UpdateProjectTaskInput {

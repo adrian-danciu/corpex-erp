@@ -19,8 +19,11 @@ export class ExpensesService {
   }
 
   async remove(id: string): Promise<VehicleExpense> {
-    const expense = await this.prisma.vehicleExpense.findUnique({ where: { id } });
-    if (!expense) throw new NotFoundException(`Expense with ID ${id} not found`);
+    const expense = await this.prisma.vehicleExpense.findUnique({
+      where: { id },
+    });
+    if (!expense)
+      throw new NotFoundException(`Expense with ID ${id} not found`);
     return this.prisma.vehicleExpense.delete({ where: { id } });
   }
 }

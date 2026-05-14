@@ -40,15 +40,11 @@ export class NotificationsScheduler {
     });
 
     const thresholds: Record<DocumentType, number> = {
-      ITP:
-        settings?.fleetExpiryThresholdItp ?? DEFAULT_THRESHOLDS.ITP,
-      RCA:
-        settings?.fleetExpiryThresholdRca ?? DEFAULT_THRESHOLDS.RCA,
-      CASCO:
-        settings?.fleetExpiryThresholdCasco ?? DEFAULT_THRESHOLDS.CASCO,
+      ITP: settings?.fleetExpiryThresholdItp ?? DEFAULT_THRESHOLDS.ITP,
+      RCA: settings?.fleetExpiryThresholdRca ?? DEFAULT_THRESHOLDS.RCA,
+      CASCO: settings?.fleetExpiryThresholdCasco ?? DEFAULT_THRESHOLDS.CASCO,
       ROVINIETA:
-        settings?.fleetExpiryThresholdRovinieta ??
-        DEFAULT_THRESHOLDS.ROVINIETA,
+        settings?.fleetExpiryThresholdRovinieta ?? DEFAULT_THRESHOLDS.ROVINIETA,
     };
 
     const today = startOfDayUtc(new Date());
@@ -72,9 +68,13 @@ export class NotificationsScheduler {
       return;
     }
 
-    this.logger.log(`Emitting expiry notifications for ${expiring.length} documents`);
+    this.logger.log(
+      `Emitting expiry notifications for ${expiring.length} documents`,
+    );
 
-    for (const doc of expiring as Array<VehicleDocument & { vehicle: Vehicle }>) {
+    for (const doc of expiring as Array<
+      VehicleDocument & { vehicle: Vehicle }
+    >) {
       try {
         await this.notifications.notifyDocumentExpiring({
           documentId: doc.id,
