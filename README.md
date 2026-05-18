@@ -24,3 +24,6 @@ This project was created using `bun init` in bun v1.3.6. [Bun](https://bun.com) 
 
 Deployment:
 https://corpex-web.onrender.com
+
+DB Diagram:
+https://dbdiagram.io/d/CORPEX-6a0b77d6697f99c167a67415
