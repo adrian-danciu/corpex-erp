@@ -20,7 +20,8 @@ export class MileageService {
 
   async remove(id: string): Promise<MileageLog> {
     const log = await this.prisma.mileageLog.findUnique({ where: { id } });
-    if (!log) throw new NotFoundException(`Mileage log with ID ${id} not found`);
+    if (!log)
+      throw new NotFoundException(`Mileage log with ID ${id} not found`);
     return this.prisma.mileageLog.delete({ where: { id } });
   }
 }

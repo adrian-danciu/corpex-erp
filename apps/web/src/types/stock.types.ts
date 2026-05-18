@@ -4,6 +4,8 @@ export enum StockMovementType {
   IN = "IN",
   OUT = "OUT",
   ADJUSTMENT = "ADJUSTMENT",
+  DEFECT = "DEFECT",
+  SCRAP = "SCRAP",
 }
 
 export interface Warehouse {
@@ -39,6 +41,7 @@ export interface ProductStockBreakdown {
   warehouseId: string;
   quantity: number;
   reservedQty: number;
+  defectiveQty: number;
   availableQty: number;
   warehouse: Warehouse;
 }

@@ -22,15 +22,21 @@ export class VehicleDocumentsService {
   }
 
   async update(input: UpdateVehicleDocumentInput): Promise<VehicleDocument> {
-    const doc = await this.prisma.vehicleDocument.findUnique({ where: { id: input.id } });
-    if (!doc) throw new NotFoundException(`Document with ID ${input.id} not found`);
+    const doc = await this.prisma.vehicleDocument.findUnique({
+      where: { id: input.id },
+    });
+    if (!doc)
+      throw new NotFoundException(`Document with ID ${input.id} not found`);
 
     const { id, ...data } = input;
     const cleanData = Object.fromEntries(
       Object.entries(data).filter(([, v]) => v !== undefined),
     );
 
-    return this.prisma.vehicleDocument.update({ where: { id }, data: cleanData });
+    return this.prisma.vehicleDocument.update({
+      where: { id },
+      data: cleanData,
+    });
   }
 
   async remove(id: string): Promise<VehicleDocument> {
@@ -54,6 +60,9 @@ export class VehicleDocumentsService {
       counts.set(doc.type, (counts.get(doc.type) ?? 0) + 1);
     }
 
-    return Array.from(counts.entries()).map(([type, count]) => ({ type, count }));
+    return Array.from(counts.entries()).map(([type, count]) => ({
+      type,
+      count,
+    }));
   }
 }

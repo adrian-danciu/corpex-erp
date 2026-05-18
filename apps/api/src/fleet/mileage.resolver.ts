@@ -14,7 +14,9 @@ export class MileageResolver {
   @Query(() => [MileageLog], { name: 'mileageLogs' })
   @UseGuards(JwtAuthGuard, DepartmentGuard)
   @RequireModule('fleet', 'read')
-  async findByVehicle(@Args('vehicleId') vehicleId: string): Promise<MileageLog[]> {
+  async findByVehicle(
+    @Args('vehicleId') vehicleId: string,
+  ): Promise<MileageLog[]> {
     return this.mileageService.findByVehicle(vehicleId);
   }
 

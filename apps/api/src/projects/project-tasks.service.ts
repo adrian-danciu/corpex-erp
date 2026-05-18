@@ -190,8 +190,7 @@ export class ProjectTasksService {
     const membership = await this.prisma.projectMember.findFirst({
       where: { projectId: task.projectId, userId: actor.id, leftAt: null },
     });
-    const isPM =
-      membership?.role === ProjectMemberRole.PROJECT_MANAGER;
+    const isPM = membership?.role === ProjectMemberRole.PROJECT_MANAGER;
 
     if (!isAdmin && !isManagement && !isPM && !isAssignee) {
       throw new ForbiddenException(
@@ -244,7 +243,58 @@ export class ProjectTasksService {
         status: { notIn: [ProjectTaskStatus.DONE] },
       },
       include: taskInclude,
-      orderBy: [{ dueDate: 'asc' }, { priority: 'desc' }, { createdAt: 'desc' }],
+      orderBy: [
+        { dueDate: 'asc' },
+        { priority: 'desc' },
+        { createdAt: 'desc' },
+      ],
+    });
+  }
+
+  async delete(taskId: string, actorId: string) {
+    const task = await this.prisma.projectTask.findUnique({
+      where: { id: taskId },
+    });
+    if (!task) throw new NotFoundException('Task not found');
+
+    return this.prisma.$transaction(async (tx) => {
+      await this.feed.recordAutoEntry(
+        {
+          projectId: task.projectId,
+          type: 'TASK_STATUS_CHANGED',
+          content: `Task "${task.title}" was deleted`,
+          authorId: actorId,
+          metadata: { taskId: task.id, deleted: true },
+        },
+        tx,
+      );
+
+      const deleted = await tx.projectTask.delete({
+        where: { id: task.id },
+      });
+      return deleted;
+    });
+  }
+
+  async activity(taskId: string) {
+    const task = await this.prisma.projectTask.findUnique({
+      where: { id: taskId },
+      select: { projectId: true },
+    });
+    if (!task) throw new NotFoundException('Task not found');
+
+    const entries = await this.prisma.projectFeedEntry.findMany({
+      where: {
+        projectId: task.projectId,
+        deletedAt: null,
+      },
+      include: { author: true },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    return entries.filter((e) => {
+      const meta = (e.metadata as Record<string, unknown> | null) ?? null;
+      return meta && meta.taskId === taskId;
     });
   }
 }

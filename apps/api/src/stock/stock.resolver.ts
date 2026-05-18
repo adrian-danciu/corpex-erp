@@ -7,6 +7,10 @@ import { DepartmentGuard } from '../auth/guards/department.guard';
 import { PaginationInput } from '../common/dto/pagination.input';
 import { User } from '../users/entities/user.entity';
 import { CreateProductInput } from './dto/create-product.input';
+import {
+  MarkStockDefectiveInput,
+  ScrapDefectiveStockInput,
+} from './dto/defective-stock.inputs';
 import { UpdateProductInput } from './dto/update-product.input';
 import { CreateStockMovementInput } from './dto/create-stock-movement.input';
 import { CreateWarehouseInput } from './dto/create-warehouse.input';
@@ -117,7 +121,9 @@ export class StockResolver {
   async getProductStockByProduct(
     @Args('productId') productId: string,
   ): Promise<ProductStock[]> {
-    return this.stockService.productStockByProduct(productId) as Promise<ProductStock[]>;
+    return this.stockService.productStockByProduct(productId) as Promise<
+      ProductStock[]
+    >;
   }
 
   @Mutation(() => StockMovement, {
@@ -129,5 +135,28 @@ export class StockResolver {
     @CurrentUser() user: User,
   ): Promise<StockMovement> {
     return this.stockService.createStockMovement(input, user.id);
+  }
+
+  @Mutation(() => StockMovement, {
+    description:
+      'Mark units of a product in a warehouse as defective (does not remove them from stock)',
+  })
+  @RequireModule('stock', 'write')
+  async markStockDefective(
+    @Args('input') input: MarkStockDefectiveInput,
+    @CurrentUser() user: User,
+  ): Promise<StockMovement> {
+    return this.stockService.markDefective(input, user.id);
+  }
+
+  @Mutation(() => StockMovement, {
+    description: 'Permanently scrap defective units from a warehouse',
+  })
+  @RequireModule('stock', 'write')
+  async scrapDefectiveStock(
+    @Args('input') input: ScrapDefectiveStockInput,
+    @CurrentUser() user: User,
+  ): Promise<StockMovement> {
+    return this.stockService.scrapDefective(input, user.id);
   }
 }

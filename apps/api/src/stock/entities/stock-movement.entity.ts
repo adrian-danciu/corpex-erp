@@ -1,4 +1,10 @@
-import { Field, Float, ID, ObjectType, registerEnumType } from '@nestjs/graphql';
+import {
+  Field,
+  Float,
+  ID,
+  ObjectType,
+  registerEnumType,
+} from '@nestjs/graphql';
 import { StockMovementType } from '@prisma/client';
 import { Product } from './product.entity';
 import { Warehouse } from './warehouse.entity';

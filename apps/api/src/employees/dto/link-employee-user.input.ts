@@ -8,4 +8,3 @@ export class LinkEmployeeUserInput {
   @Field()
   userId: string;
 }
-

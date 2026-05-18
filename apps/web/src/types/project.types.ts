@@ -102,6 +102,17 @@ export interface ProjectTask {
   updatedAt: string;
   assignee?: ProjectUser | null;
   createdBy?: ProjectUser;
+  comments?: ProjectTaskComment[];
+}
+
+export interface ProjectTaskComment {
+  id: string;
+  taskId: string;
+  authorId: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  author?: ProjectUser | null;
 }
 
 export interface ProjectFeedEntry {

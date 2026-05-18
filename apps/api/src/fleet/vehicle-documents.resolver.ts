@@ -11,12 +11,16 @@ import { RequireModule } from '../auth/decorators/roles.decorator';
 
 @Resolver(() => VehicleDocument)
 export class VehicleDocumentsResolver {
-  constructor(private readonly vehicleDocumentsService: VehicleDocumentsService) {}
+  constructor(
+    private readonly vehicleDocumentsService: VehicleDocumentsService,
+  ) {}
 
   @Query(() => [VehicleDocument], { name: 'vehicleDocuments' })
   @UseGuards(JwtAuthGuard, DepartmentGuard)
   @RequireModule('fleet', 'read')
-  async findByVehicle(@Args('vehicleId') vehicleId: string): Promise<VehicleDocument[]> {
+  async findByVehicle(
+    @Args('vehicleId') vehicleId: string,
+  ): Promise<VehicleDocument[]> {
     return this.vehicleDocumentsService.findByVehicle(vehicleId);
   }
 
@@ -50,7 +54,9 @@ export class VehicleDocumentsResolver {
   @Mutation(() => VehicleDocument)
   @UseGuards(JwtAuthGuard, DepartmentGuard)
   @RequireModule('fleet', 'write')
-  async deleteVehicleDocument(@Args('id') id: string): Promise<VehicleDocument> {
+  async deleteVehicleDocument(
+    @Args('id') id: string,
+  ): Promise<VehicleDocument> {
     return this.vehicleDocumentsService.remove(id);
   }
 }

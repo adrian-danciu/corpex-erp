@@ -177,7 +177,10 @@ export class ProjectsService {
       if (next === ProjectStatus.ACTIVE && !project.actualStartDate) {
         updates.actualStartDate = now;
       }
-      if (next === ProjectStatus.COMPLETED || next === ProjectStatus.CANCELLED) {
+      if (
+        next === ProjectStatus.COMPLETED ||
+        next === ProjectStatus.CANCELLED
+      ) {
         updates.actualEndDate = now;
       }
 
@@ -264,7 +267,10 @@ export class ProjectsService {
     return project;
   }
 
-  async findAll(filter: ProjectsFilterInput | undefined, currentUserId: string) {
+  async findAll(
+    filter: ProjectsFilterInput | undefined,
+    currentUserId: string,
+  ) {
     const where: Prisma.ProjectWhereInput = {
       status: filter?.status,
       partnerId: filter?.partnerId,

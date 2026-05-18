@@ -25,6 +25,9 @@ import ProductsPage from "./pages/stock/ProductsPage";
 import ProductCreatePage from "./pages/stock/ProductCreatePage";
 import WarehousesPage from "./pages/stock/WarehousesPage";
 import StockMovementsPage from "./pages/stock/StockMovementsPage";
+import PurchaseOrdersPage from "./pages/stock/PurchaseOrdersPage";
+import PurchaseOrderCreatePage from "./pages/stock/PurchaseOrderCreatePage";
+import PurchaseOrderDetailPage from "./pages/stock/PurchaseOrderDetailPage";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Layout from "./components/layout/Layout";
 import DashboardLayout from "./components/layout/DashboardLayout";
@@ -230,6 +233,30 @@ function App() {
             element={
               <ProtectedRoute requiredModule="stock" requiredAccess="read">
                 <DashboardLayout><StockMovementsPage /></DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/stock/purchase-orders"
+            element={
+              <ProtectedRoute requiredModule="stock" requiredAccess="read">
+                <DashboardLayout><PurchaseOrdersPage /></DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/stock/purchase-orders/new"
+            element={
+              <ProtectedRoute requiredModule="stock" requiredAccess="write">
+                <DashboardLayout><PurchaseOrderCreatePage /></DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/stock/purchase-orders/:id"
+            element={
+              <ProtectedRoute requiredModule="stock" requiredAccess="read">
+                <DashboardLayout><PurchaseOrderDetailPage /></DashboardLayout>
               </ProtectedRoute>
             }
           />
