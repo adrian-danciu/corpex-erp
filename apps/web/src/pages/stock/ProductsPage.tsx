@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { useAuthStore } from "@/stores/auth.store";
 import { canAccess } from "@/lib/permissions";
-import { AlertCircle, Pencil, Plus, Search } from "lucide-react";
+import { AlertCircle, PackageX, Pencil, Plus, Search } from "lucide-react";
 import { PageLoading } from "@/components/ui/page-loading";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,8 +24,11 @@ import {
   GET_PRODUCTS_QUERY,
   UPDATE_PRODUCT_MUTATION,
 } from "@/graphql/mutations/stock.mutations";
+import { GET_IN_TRANSIT_SUMMARY_QUERY } from "@/graphql/mutations/purchaseOrders.mutations";
+import { DefectiveStockSheet } from "@/components/stock/DefectiveStockSheet";
 import type { PaginatedResult } from "@/types/pagination.types";
 import type { Product } from "@/types/stock.types";
+import type { InTransitProductSummary } from "@/types/purchaseOrder.types";
 import { useCurrency } from "@/hooks/useCurrency";
 import { UNITS, DEFAULT_UNIT } from "@/lib/units";
 import {
@@ -53,6 +56,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState("");
   const [searchValue, setSearchValue] = useState("");
   const [editing, setEditing] = useState<Product | null>(null);
+  const [defectiveFor, setDefectiveFor] = useState<Product | null>(null);
   const [editError, setEditError] = useState("");
   const { page, pageSize, skip, take, setPage } = usePagination();
   const { formatMoney } = useCurrency();
@@ -66,6 +70,17 @@ export default function ProductsPage() {
     },
     fetchPolicy: "cache-and-network",
   });
+
+  const { data: inTransitData } = useQuery<{
+    inTransitSummary: InTransitProductSummary[];
+  }>(GET_IN_TRANSIT_SUMMARY_QUERY, { fetchPolicy: "cache-and-network" });
+
+  const inTransitMap = new Map<string, number>(
+    (inTransitData?.inTransitSummary ?? []).map((r) => [
+      r.productId,
+      r.qtyInTransit,
+    ]),
+  );
 
   const editForm = useForm<EditProductFormData>();
 
@@ -192,6 +207,7 @@ export default function ProductsPage() {
                     <th className="py-2 pr-4">Category</th>
                     <th className="py-2 pr-4 text-right">Unit price</th>
                     <th className="py-2 pr-4 text-right">Current stock</th>
+                    <th className="py-2 pr-4 text-right">In transit</th>
                     <th className="py-2 pr-4 text-right">Min stock</th>
                     <th className="py-2 pr-4 text-right">Stock value</th>
                     <th className="py-2 w-10"></th>
@@ -223,6 +239,10 @@ export default function ProductsPage() {
                       <td className="py-2 pr-4 text-right">
                         {product.currentStock.toLocaleString()} {product.unit}
                       </td>
+                      <td className="py-2 pr-4 text-right text-amber-700">
+                        {(inTransitMap.get(product.id) ?? 0).toLocaleString()}{" "}
+                        {product.unit}
+                      </td>
                       <td className="py-2 pr-4 text-right">
                         {product.minimumStock.toLocaleString()} {product.unit}
                       </td>
@@ -231,15 +251,27 @@ export default function ProductsPage() {
                       </td>
                       <td className="py-2 text-right">
                         {canWrite && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => setEditing(product)}
-                            aria-label={`Edit ${product.name}`}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-amber-700 hover:text-amber-800 hover:bg-amber-50"
+                              onClick={() => setDefectiveFor(product)}
+                              aria-label={`Manage defective stock for ${product.name}`}
+                              title="Manage defective stock"
+                            >
+                              <PackageX className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => setEditing(product)}
+                              aria-label={`Edit ${product.name}`}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -257,6 +289,17 @@ export default function ProductsPage() {
         pageSize={pageSize}
         onPageChange={setPage}
       />
+
+      {defectiveFor && (
+        <DefectiveStockSheet
+          product={defectiveFor}
+          open={Boolean(defectiveFor)}
+          onClose={() => {
+            setDefectiveFor(null);
+            void refetch();
+          }}
+        />
+      )}
 
       <Dialog
         open={Boolean(editing)}

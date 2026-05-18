@@ -45,6 +45,7 @@ export const GET_PRODUCT_STOCK_BY_PRODUCT_QUERY = gql`
       warehouseId
       quantity
       reservedQty
+      defectiveQty
       availableQty
       warehouse {
         id
@@ -175,6 +176,62 @@ export const CREATE_WAREHOUSE_MUTATION = gql`
       isActive
       createdAt
       updatedAt
+    }
+  }
+`;
+
+export const MARK_STOCK_DEFECTIVE_MUTATION = gql`
+  mutation MarkStockDefective($input: MarkStockDefectiveInput!) {
+    markStockDefective(input: $input) {
+      id
+      type
+      quantity
+      notes
+      createdAt
+      product {
+        id
+        sku
+        name
+        unit
+      }
+      warehouse {
+        id
+        code
+        name
+      }
+      createdBy {
+        id
+        firstName
+        lastName
+      }
+    }
+  }
+`;
+
+export const SCRAP_DEFECTIVE_STOCK_MUTATION = gql`
+  mutation ScrapDefectiveStock($input: ScrapDefectiveStockInput!) {
+    scrapDefectiveStock(input: $input) {
+      id
+      type
+      quantity
+      notes
+      createdAt
+      product {
+        id
+        sku
+        name
+        unit
+      }
+      warehouse {
+        id
+        code
+        name
+      }
+      createdBy {
+        id
+        firstName
+        lastName
+      }
     }
   }
 `;

@@ -19,6 +19,9 @@ export class ProductStock {
   @Field()
   reservedQty: number;
 
+  @Field()
+  defectiveQty: number;
+
   @Field(() => Float)
   availableQty: number;
 

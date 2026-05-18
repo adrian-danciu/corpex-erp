@@ -22,6 +22,7 @@ import {
   Receipt,
   Boxes,
   Car,
+  Truck,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -57,6 +58,7 @@ const menuItems: MenuItem[] = [
       { title: "Products", href: "/stock/products", icon: Package },
       { title: "Warehouses", href: "/stock/warehouses", icon: Building2 },
       { title: "Movements", href: "/stock/movements", icon: Briefcase },
+      { title: "Purchase Orders", href: "/stock/purchase-orders", icon: Truck },
     ],
   },
   { title: "Documents", href: "/documents", icon: FileText },
@@ -126,6 +128,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
       case "/stock/products":
       case "/stock/warehouses":
       case "/stock/movements":
+      case "/stock/purchase-orders":
         return canAccess(user, "stock");
       case "/fleet":
         return canAccess(user, "fleet");
@@ -150,10 +153,16 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
     const Icon = item.icon;
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedMenus[item.href];
-    const isActive =
-      location.pathname === item.href ||
-      (!hasChildren && item.href !== "/dashboard" && location.pathname.startsWith(item.href + "/"));
-    const isParentActive = hasChildren && location.pathname.startsWith(item.href);
+    // Only the leaf route the user is currently on gets highlighted.
+    // - Parents (with children) never highlight themselves; their chevron and expansion convey state.
+    // - Child items use exact-match so "/stock" (Overview) doesn't stay lit while on "/stock/warehouses".
+    // - Other leaf top-level items still match nested URLs (e.g. /projects/abc → Projects).
+    const isActive = isChild
+      ? location.pathname === item.href
+      : !hasChildren &&
+        (location.pathname === item.href ||
+          (item.href !== "/dashboard" &&
+            location.pathname.startsWith(item.href + "/")));
 
     if (hasChildren) {
       const visibleChildren = item.children!.filter(isVisible);
@@ -168,9 +177,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
             }}
             className={cn(
               "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              isParentActive
-                ? "bg-primary text-primary-foreground"
-                : "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
+              "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
               isCollapsed && "justify-center"
             )}
             title={isCollapsed ? item.title : undefined}

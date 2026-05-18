@@ -7,6 +7,7 @@ import {
   GET_STOCK_OVERVIEW_QUERY,
 } from "@/graphql/mutations/stock.mutations";
 import type { Product, StockOverview } from "@/types/stock.types";
+import { InTransitWidget } from "@/components/stock/InTransitWidget";
 
 export default function StockOverviewPage() {
   const { data: overviewData, loading: overviewLoading, error: overviewError } = useQuery<{
@@ -80,41 +81,45 @@ export default function StockOverviewPage() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Low Stock Alerts</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {lowStock.length === 0 ? (
-            <p className="text-sm text-slate-500">No products below minimum stock.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-xs font-medium text-slate-600">
-                    <th className="py-2">SKU</th>
-                    <th className="py-2">Product</th>
-                    <th className="py-2">Current</th>
-                    <th className="py-2">Minimum</th>
-                    <th className="py-2">Unit</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {lowStock.map((product) => (
-                    <tr key={product.id} className="border-b last:border-0">
-                      <td className="py-2 font-mono text-xs">{product.sku}</td>
-                      <td className="py-2">{product.name}</td>
-                      <td className="py-2 text-red-600 font-medium">{product.currentStock}</td>
-                      <td className="py-2">{product.minimumStock}</td>
-                      <td className="py-2">{product.unit}</td>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <InTransitWidget />
+        <Card>
+          <CardHeader>
+            <CardTitle>Low Stock Alerts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {lowStock.length === 0 ? (
+              <p className="text-sm text-slate-500">No products below minimum stock.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-left text-xs font-medium text-slate-600">
+                      <th className="py-2">SKU</th>
+                      <th className="py-2">Product</th>
+                      <th className="py-2">Current</th>
+                      <th className="py-2">Minimum</th>
+                      <th className="py-2">Unit</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  </thead>
+                  <tbody>
+                    {lowStock.map((product) => (
+                      <tr key={product.id} className="border-b last:border-0">
+                        <td className="py-2 font-mono text-xs">{product.sku}</td>
+                        <td className="py-2">{product.name}</td>
+                        <td className="py-2 text-red-600 font-medium">{product.currentStock}</td>
+                        <td className="py-2">{product.minimumStock}</td>
+                        <td className="py-2">{product.unit}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
     </div>
   );
 }

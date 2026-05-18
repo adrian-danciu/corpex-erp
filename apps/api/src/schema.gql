@@ -201,6 +201,22 @@ input CreateProjectTaskInput {
   title: String!
 }
 
+input CreatePurchaseOrderInput {
+  currency: String
+  expectedDate: DateTime
+  lines: [CreatePurchaseOrderLineInput!]!
+  notes: String
+  supplierId: ID!
+  warehouseId: ID!
+}
+
+input CreatePurchaseOrderLineInput {
+  notes: String
+  productId: ID!
+  qtyOrdered: Float!
+  unitCost: Float!
+}
+
 input CreateStockMovementInput {
   notes: String
   productId: String!
@@ -392,6 +408,29 @@ type HrLeaveSummary {
   status: String!
 }
 
+"""
+Per-product in-transit summary used by stock dashboards (one row per product)
+"""
+type InTransitProductSummary {
+  earliestExpectedDate: DateTime
+  openOrderCount: Int!
+  productId: String!
+  productName: String!
+  productSku: String!
+  qtyInTransit: Float!
+}
+
+"""Aggregated in-transit quantity for one product within a warehouse"""
+type InTransitRow {
+  earliestExpectedDate: DateTime
+  orderIds: [ID!]!
+  productId: String!
+  qtyInTransit: Float!
+  supplierId: String!
+  supplierName: String!
+  warehouseId: String
+}
+
 type Invoice {
   createdAt: DateTime!
   createdBy: User!
@@ -511,6 +550,13 @@ input LoginInput {
   password: String!
 }
 
+input MarkStockDefectiveInput {
+  productId: String!
+  quantity: Float!
+  reason: String
+  warehouseId: String!
+}
+
 type MileageLog {
   createdAt: DateTime!
   date: DateTime!
@@ -531,9 +577,11 @@ type Mutation {
 
   """Cancel a leave request"""
   cancelLeaveRequest(leaveRequestId: String!): LeaveRequest!
+  cancelPurchaseOrder(id: ID!, reason: String): PurchaseOrder!
 
   """Change user password"""
   changePassword(changePasswordInput: ChangePasswordInput!): User!
+  confirmPurchaseOrder(id: ID!): PurchaseOrder!
 
   """Create a new employee record"""
   createEmployee(createEmployeeInput: CreateEmployeeInput!): Employee!
@@ -556,6 +604,7 @@ type Mutation {
   createProject(input: CreateProjectInput!): Project!
   createProjectFeedPost(input: CreateFeedPostInput!): ProjectFeedEntry!
   createProjectTask(input: CreateProjectTaskInput!): ProjectTask!
+  createPurchaseOrder(input: CreatePurchaseOrderInput!): PurchaseOrder!
 
   """Register an incoming/outgoing stock movement"""
   createStockMovement(createStockMovementInput: CreateStockMovementInput!): StockMovement!
@@ -579,6 +628,7 @@ type Mutation {
   deleteProjectFeedEntry(input: DeleteFeedEntryInput!): ProjectFeedEntry!
   deleteProjectTask(input: DeleteProjectTaskInput!): ProjectTask!
   deleteProjectTaskComment(input: DeleteProjectTaskCommentInput!): ProjectTaskComment!
+  deletePurchaseOrder(id: ID!): Boolean!
   deleteVehicle(id: String!): Vehicle!
   deleteVehicleDocument(id: String!): VehicleDocument!
   deleteVehicleExpense(id: String!): VehicleExpense!
@@ -590,12 +640,21 @@ type Mutation {
   login(loginInput: LoginInput!): AuthResponse!
   markAllNotificationsRead: Int!
   markNotificationRead(id: String!): Notification!
+
+  """
+  Mark units of a product in a warehouse as defective (does not remove them from stock)
+  """
+  markStockDefective(input: MarkStockDefectiveInput!): StockMovement!
+  recordPurchaseOrderReceipt(input: RecordReceiptInput!): PurchaseOrderReceipt!
   refreshToken(refreshToken: String!): String!
 
   """Delete an employee record"""
   removeEmployee(id: String!): Employee!
   removeProjectMaterial(input: RemoveProjectMaterialInput!): ProjectMaterial!
   removeProjectMember(input: RemoveProjectMemberInput!): ProjectMember!
+
+  """Permanently scrap defective units from a warehouse"""
+  scrapDefectiveStock(input: ScrapDefectiveStockInput!): StockMovement!
   transitionProjectStatus(input: TransitionProjectStatusInput!): Project!
   transitionProjectTask(input: TransitionProjectTaskInput!): ProjectTask!
 
@@ -620,6 +679,7 @@ type Mutation {
   updateProjectMemberRole(input: UpdateProjectMemberRoleInput!): ProjectMember!
   updateProjectTask(input: UpdateProjectTaskInput!): ProjectTask!
   updateProjectTaskComment(input: UpdateProjectTaskCommentInput!): ProjectTaskComment!
+  updatePurchaseOrder(input: UpdatePurchaseOrderInput!): PurchaseOrder!
   updateVehicle(updateVehicleInput: UpdateVehicleInput!): Vehicle!
   updateVehicleDocument(updateVehicleDocumentInput: UpdateVehicleDocumentInput!): VehicleDocument!
   updateVehicleLease(updateVehicleLeaseInput: UpdateVehicleLeaseInput!): VehicleLease!
@@ -682,6 +742,11 @@ type PaginatedPartner {
 
 type PaginatedProduct {
   items: [Product!]!
+  meta: PaginationMeta!
+}
+
+type PaginatedPurchaseOrder {
+  items: [PurchaseOrder!]!
   meta: PaginationMeta!
 }
 
@@ -754,11 +819,18 @@ enum PaymentMethod {
 }
 
 type Product {
+  """
+  Projected available stock: currentStock - reserved across warehouses + in-transit
+  """
+  availableForOrder: Float!
   category: String
   createdAt: DateTime!
   currentStock: Float!
   description: String
   id: ID!
+
+  """Sum of qtyOrdered - qtyReceived across open purchase orders"""
+  inTransitQty(warehouseId: ID): Float!
   isActive: Boolean!
   minimumStock: Float!
   name: String!
@@ -772,7 +844,11 @@ type Product {
 type ProductStock {
   availableQty: Float!
   createdAt: DateTime!
+  defectiveQty: Float!
   id: ID!
+
+  """Outstanding quantity across open POs for this product/warehouse"""
+  inTransitQty: Float!
   product: Product
   productId: String!
   quantity: Float!
@@ -943,6 +1019,92 @@ input ProjectsFilterInput {
   status: ProjectStatus
 }
 
+type PurchaseOrder {
+  cancelReason: String
+  cancelledAt: DateTime
+  createdAt: DateTime!
+  createdBy: User
+  createdById: String!
+  currency: String!
+  expectedDate: DateTime
+
+  """
+  Display number like "PO-000123"
+  """
+  formattedNumber: String!
+  id: ID!
+  lines: [PurchaseOrderLine!]
+  notes: String
+  number: Int!
+  orderDate: DateTime!
+  receipts: [PurchaseOrderReceipt!]
+  series: String!
+  status: PurchaseOrderStatus!
+  subtotal: Float!
+  supplier: Partner
+  supplierId: String!
+  updatedAt: DateTime!
+  warehouse: Warehouse
+  warehouseId: String!
+}
+
+input PurchaseOrderFilterInput {
+  """Matches PO number prefix or supplier name (case-insensitive)"""
+  search: String
+  status: [PurchaseOrderStatus!]
+  supplierId: ID
+  warehouseId: ID
+}
+
+type PurchaseOrderLine {
+  id: ID!
+  notes: String
+  orderId: String!
+  product: Product
+  productId: String!
+  qtyOrdered: Float!
+
+  """qtyOrdered - qtyReceived (never negative)"""
+  qtyOutstanding: Float!
+  qtyReceived: Float!
+  unitCost: Float!
+}
+
+type PurchaseOrderReceipt {
+  createdAt: DateTime!
+  createdBy: User
+  createdById: String!
+
+  """
+  Display number like "NIR-000045"
+  """
+  formattedNumber: String!
+  id: ID!
+  lines: [PurchaseOrderReceiptLine!]
+  nirNumber: Int!
+  nirSeries: String!
+  notes: String
+  orderId: String!
+  receivedDate: DateTime!
+}
+
+type PurchaseOrderReceiptLine {
+  id: ID!
+  orderLine: PurchaseOrderLine
+  orderLineId: String!
+  qtyReceived: Float!
+  receiptId: String!
+}
+
+"""Lifecycle state of a supplier purchase order"""
+enum PurchaseOrderStatus {
+  CANCELLED
+  DRAFT
+  FULLY_RECEIVED
+  ORDERED
+  PARTIALLY_RECEIVED
+}
+
 type Query {
   """
   All pending leave requests org-wide. Returned to anyone with leaveApprovals so HR can monitor; the UI gates Approve/Reject by direct-manager relationship.
@@ -980,6 +1142,8 @@ type Query {
 
   """Aggregated leave requests by status"""
   hrLeaveSummary: [HrLeaveSummary!]!
+  inTransitByProduct(productId: ID!, warehouseId: ID): [InTransitRow!]!
+  inTransitSummary(warehouseId: ID): [InTransitProductSummary!]!
 
   """Get an invoice by ID"""
   invoice(id: String!): Invoice
@@ -1039,6 +1203,8 @@ type Query {
   projectTasks(projectId: String!): [ProjectTask!]!
   projectVehicles(projectId: String!): [ProjectVehicle!]!
   projects(filter: ProjectsFilterInput): [Project!]!
+  purchaseOrder(id: ID!): PurchaseOrder!
+  purchaseOrders(filter: PurchaseOrderFilterInput, pagination: PaginationInput): PaginatedPurchaseOrder!
 
   """Get stock movements by optional filters"""
   stockMovements(filter: StockMovementFilterInput, pagination: PaginationInput): [StockMovement!]!
@@ -1062,6 +1228,18 @@ type Query {
   warehouses(pagination: PaginationInput): PaginatedWarehouse!
 }
 
+input ReceiptLineInput {
+  orderLineId: ID!
+  qtyReceived: Float!
+}
+
+input RecordReceiptInput {
+  lines: [ReceiptLineInput!]!
+  notes: String
+  orderId: ID!
+  receivedDate: DateTime
+}
+
 input RemoveProjectMaterialInput {
   projectId: String!
   projectMaterialId: String!
@@ -1076,6 +1254,13 @@ input RemoveProjectMemberInput {
 enum Role {
   ADMIN
   USER
+}
+
+input ScrapDefectiveStockInput {
+  productId: String!
+  quantity: Float!
+  reason: String
+  warehouseId: String!
 }
 
 type StockMovement {
@@ -1106,8 +1291,10 @@ input StockMovementFilterInput {
 """Type of stock movement"""
 enum StockMovementType {
   ADJUSTMENT
+  DEFECT
   IN
   OUT
+  SCRAP
 }
 
 type StockOverview {
@@ -1246,6 +1433,16 @@ input UpdateProjectTaskInput {
   priority: ProjectTaskPriority
   taskId: String!
   title: String
+}
+
+input UpdatePurchaseOrderInput {
+  currency: String
+  expectedDate: DateTime
+  id: ID!
+  lines: [CreatePurchaseOrderLineInput!]
+  notes: String
+  supplierId: ID
+  warehouseId: ID
 }
 
 input UpdateVehicleDocumentInput {

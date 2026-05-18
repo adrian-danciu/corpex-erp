@@ -26,6 +26,7 @@ import {
   Receipt,
   ChevronDown,
   Boxes,
+  Truck,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useAuthStore } from "@/stores/auth.store";
@@ -107,6 +108,12 @@ const menuItems: MenuItem[] = [
         title: "Movements",
         href: "/stock/movements",
         icon: Briefcase,
+        roles: ["ADMIN", "MANAGER"],
+      },
+      {
+        title: "Purchase Orders",
+        href: "/stock/purchase-orders",
+        icon: Truck,
         roles: ["ADMIN", "MANAGER"],
       },
     ],

@@ -30,6 +30,28 @@ export class StockService {
   ) {}
 
   /**
+   * Recompute `Product.currentStock` as the sellable on-hand sum across
+   * warehouses: SUM(quantity - defectiveQty). Defective units are physically
+   * in the warehouse but not sellable, so they must not count.
+   */
+  private async recomputeProductCurrentStock(
+    productId: string,
+    tx: Prisma.TransactionClient,
+  ): Promise<number> {
+    const agg = await tx.productStock.aggregate({
+      where: { productId },
+      _sum: { quantity: true, defectiveQty: true },
+    });
+    const sellable =
+      (agg._sum.quantity ?? 0) - (agg._sum.defectiveQty ?? 0);
+    await tx.product.update({
+      where: { id: productId },
+      data: { currentStock: sellable },
+    });
+    return sellable;
+  }
+
+  /**
    * Best-effort: if the product's stock is now below its minimum, emit a
    * low-stock notification. The 24h dedup in NotificationsService ensures
    * we don't spam recipients on every subsequent movement.
@@ -173,22 +195,33 @@ export class StockService {
       });
 
       const previousQuantity = currentStock?.quantity ?? 0;
+      const defectiveQty = currentStock?.defectiveQty ?? 0;
+      const sellable = previousQuantity - defectiveQty;
       let nextQuantity = previousQuantity;
 
       if (input.type === StockMovementType.IN) {
         nextQuantity = previousQuantity + input.quantity;
       } else if (input.type === StockMovementType.OUT) {
-        if (previousQuantity < input.quantity) {
+        if (sellable < input.quantity) {
           throw new BadRequestException(
-            `Insufficient stock in warehouse ${warehouse.code}. Available: ${previousQuantity}`,
+            `Insufficient stock in warehouse ${warehouse.code}. Sellable: ${sellable} (on-hand ${previousQuantity}, defective ${defectiveQty})`,
           );
         }
         nextQuantity = previousQuantity - input.quantity;
-      } else {
+      } else if (input.type === StockMovementType.ADJUSTMENT) {
         if (input.quantity < 0) {
           throw new BadRequestException('Adjusted quantity cannot be negative');
         }
+        if (input.quantity < defectiveQty) {
+          throw new BadRequestException(
+            `Cannot adjust below defective quantity (${defectiveQty}). Scrap defective units first.`,
+          );
+        }
         nextQuantity = input.quantity;
+      } else {
+        throw new BadRequestException(
+          `Movement type ${input.type} is not allowed via createStockMovement; use the dedicated mutation`,
+        );
       }
 
       await tx.productStock.upsert({
@@ -206,17 +239,7 @@ export class StockService {
         },
       });
 
-      const aggregate = await tx.productStock.aggregate({
-        where: { productId: input.productId },
-        _sum: { quantity: true },
-      });
-
-      await tx.product.update({
-        where: { id: input.productId },
-        data: {
-          currentStock: aggregate._sum.quantity ?? 0,
-        },
-      });
+      await this.recomputeProductCurrentStock(input.productId, tx);
 
       return tx.stockMovement.create({
         data: {
@@ -346,7 +369,8 @@ export class StockService {
 
       const onHand = stock?.quantity ?? 0;
       const alreadyReserved = stock?.reservedQty ?? 0;
-      const available = onHand - alreadyReserved;
+      const defective = stock?.defectiveQty ?? 0;
+      const available = onHand - alreadyReserved - defective;
 
       if (available < qty) {
         throw new BadRequestException(
@@ -442,9 +466,11 @@ export class StockService {
       ]);
 
       const onHand = stock?.quantity ?? 0;
-      if (onHand < qty) {
+      const defective = stock?.defectiveQty ?? 0;
+      const sellable = onHand - defective;
+      if (sellable < qty) {
         throw new BadRequestException(
-          `Insufficient stock to issue. Requested: ${qty}, On hand: ${onHand}`,
+          `Insufficient stock to issue. Requested: ${qty}, Sellable: ${sellable} (on-hand ${onHand}, defective ${defective})`,
         );
       }
 
@@ -459,15 +485,7 @@ export class StockService {
         data: { quantity: nextQuantity, reservedQty: nextReserved },
       });
 
-      const aggregate = await client.productStock.aggregate({
-        where: { productId },
-        _sum: { quantity: true },
-      });
-
-      await client.product.update({
-        where: { id: productId },
-        data: { currentStock: aggregate._sum.quantity ?? 0 },
-      });
+      await this.recomputeProductCurrentStock(productId, client);
 
       const resolvedUnitCost =
         unitCost ??
@@ -519,5 +537,170 @@ export class StockService {
       lowStockProducts,
       totalStockUnits: unitsAggregate._sum.currentStock ?? 0,
     };
+  }
+
+  /**
+   * Move units from the healthy bucket into the defective bucket for a given
+   * (product, warehouse). Total on-hand stays the same; sellable stock drops.
+   * Defective units can later be returned to supplier or scrapped.
+   */
+  async markDefective(
+    input: {
+      productId: string;
+      warehouseId: string;
+      quantity: number;
+      reason?: string | null;
+    },
+    performedById: string,
+  ): Promise<StockMovement> {
+    if (input.quantity <= 0) {
+      throw new BadRequestException('Quantity must be greater than 0');
+    }
+
+    const [product, warehouse] = await Promise.all([
+      this.prisma.product.findUnique({ where: { id: input.productId } }),
+      this.prisma.warehouse.findUnique({ where: { id: input.warehouseId } }),
+    ]);
+    if (!product) {
+      throw new NotFoundException(`Product ${input.productId} not found`);
+    }
+    if (!warehouse) {
+      throw new NotFoundException(`Warehouse ${input.warehouseId} not found`);
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const stock = await tx.productStock.findUnique({
+        where: {
+          productId_warehouseId: {
+            productId: input.productId,
+            warehouseId: input.warehouseId,
+          },
+        },
+      });
+
+      const onHand = stock?.quantity ?? 0;
+      const reserved = stock?.reservedQty ?? 0;
+      const defective = stock?.defectiveQty ?? 0;
+      const healthyUnreserved = onHand - reserved - defective;
+
+      if (healthyUnreserved < input.quantity) {
+        throw new BadRequestException(
+          `Cannot mark ${input.quantity} as defective. Healthy unreserved units in ${warehouse.code}: ${healthyUnreserved}`,
+        );
+      }
+
+      await tx.productStock.update({
+        where: {
+          productId_warehouseId: {
+            productId: input.productId,
+            warehouseId: input.warehouseId,
+          },
+        },
+        data: { defectiveQty: defective + input.quantity },
+      });
+
+      await this.recomputeProductCurrentStock(input.productId, tx);
+
+      const movement = await tx.stockMovement.create({
+        data: {
+          productId: input.productId,
+          warehouseId: input.warehouseId,
+          type: StockMovementType.DEFECT,
+          quantity: input.quantity,
+          notes: input.reason ?? null,
+          createdById: performedById,
+        },
+        include: {
+          product: true,
+          warehouse: true,
+          createdBy: true,
+        },
+      });
+
+      // Newly defective units may push sellable stock below the minimum.
+      void this.maybeEmitLowStock(input.productId);
+
+      return movement;
+    });
+  }
+
+  /**
+   * Permanently remove units from the defective bucket: decrements both
+   * `defectiveQty` and `quantity` by the same amount. Records a SCRAP movement.
+   */
+  async scrapDefective(
+    input: {
+      productId: string;
+      warehouseId: string;
+      quantity: number;
+      reason?: string | null;
+    },
+    performedById: string,
+  ): Promise<StockMovement> {
+    if (input.quantity <= 0) {
+      throw new BadRequestException('Quantity must be greater than 0');
+    }
+
+    const [product, warehouse] = await Promise.all([
+      this.prisma.product.findUnique({ where: { id: input.productId } }),
+      this.prisma.warehouse.findUnique({ where: { id: input.warehouseId } }),
+    ]);
+    if (!product) {
+      throw new NotFoundException(`Product ${input.productId} not found`);
+    }
+    if (!warehouse) {
+      throw new NotFoundException(`Warehouse ${input.warehouseId} not found`);
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const stock = await tx.productStock.findUnique({
+        where: {
+          productId_warehouseId: {
+            productId: input.productId,
+            warehouseId: input.warehouseId,
+          },
+        },
+      });
+
+      const onHand = stock?.quantity ?? 0;
+      const defective = stock?.defectiveQty ?? 0;
+
+      if (defective < input.quantity) {
+        throw new BadRequestException(
+          `Cannot scrap ${input.quantity} units. Defective stock in ${warehouse.code}: ${defective}`,
+        );
+      }
+
+      await tx.productStock.update({
+        where: {
+          productId_warehouseId: {
+            productId: input.productId,
+            warehouseId: input.warehouseId,
+          },
+        },
+        data: {
+          quantity: onHand - input.quantity,
+          defectiveQty: defective - input.quantity,
+        },
+      });
+
+      await this.recomputeProductCurrentStock(input.productId, tx);
+
+      return tx.stockMovement.create({
+        data: {
+          productId: input.productId,
+          warehouseId: input.warehouseId,
+          type: StockMovementType.SCRAP,
+          quantity: input.quantity,
+          notes: input.reason ?? null,
+          createdById: performedById,
+        },
+        include: {
+          product: true,
+          warehouse: true,
+          createdBy: true,
+        },
+      });
+    });
   }
 }
