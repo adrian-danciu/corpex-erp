@@ -1,0 +1,2 @@
+ALTER TABLE "Employee"
+  ADD COLUMN "isContractor" BOOLEAN NOT NULL DEFAULT false;

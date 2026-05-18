@@ -1,0 +1,227 @@
+# CODEX.md - Corpex ERP Project Context
+
+Fast orientation for Codex sessions. Read this first, then jump into the referenced docs/code when a task needs detail.
+
+## What This Project Is
+
+Corpex ERP is a bachelor-thesis ERP web app for Romanian SMEs. It is an integrated platform for HR, finance, stock/warehouse, fleet, projects, notifications, reporting, and company settings.
+
+The product plan/spec lives mainly in:
+- `docs/CORPEX - Plan lucrare de licenta.pdf`
+- `docs/CORPEX - Prezentare module.pdf`
+- `docs/*.en.md` and `docs/*.ro.md`
+- `docs/superpowers/plans/` and `docs/superpowers/specs/`
+
+Note: local PDF text extraction tools were not available in this environment, so this file is based on the markdown docs, existing `Claude.md`, and the current code/schema. The PDFs should still be treated as the thesis/source-product references when available.
+
+## Stack
+
+- Runtime/package manager: Bun. Prefer Bun commands inside each app.
+- Frontend: `apps/web`, React 19, Vite 7, TypeScript, Apollo Client 4, React Router 7, Zustand, React Hook Form + Zod, Tailwind 4, shadcn/Radix primitives, Lucide icons, Recharts, react-d3-tree, `@react-pdf/renderer`.
+- Backend: `apps/api`, NestJS 11, GraphQL code-first with Apollo Server 5, Prisma 7, Postgres/Neon, JWT auth via Passport, bcrypt, multer uploads, Nest schedule cron jobs.
+- Monorepo style: lightweight. Root package is minimal; `apps/api` and `apps/web` are independent.
+
+## Repo Map
+
+```text
+corpex-erp/
+  apps/
+    api/
+      src/
+        auth/           JWT, guards, department permissions
+        users/          admin-managed users
+        employees/      HR employees, documents, leave requests, approvals
+        finance/        partners, invoices, payments
+        stock/          products, warehouses, movements, purchase orders, defective stock
+        fleet/          vehicles, documents, mileage, leases, expenses
+        projects/       jobs: team, materials, vehicles, tasks, feed, cost rollup
+        notifications/  notification persistence, GraphQL API, daily expiry scheduler
+        payroll/        payroll periods, lines, Romanian tax calculation
+        reporting/      dashboard/report aggregates
+        settings/       singleton company settings
+        common/         pagination DTOs
+        prisma/         PrismaModule/PrismaService
+      prisma/schema.prisma
+      prisma/migrations/
+    web/
+      src/
+        components/ui/       shadcn primitives
+        components/layout/   app shell/sidebar/navbar
+        components/dashboard/
+        components/{fleet,finance,stock,projects,notifications}/
+        pages/{hr,finance,stock,fleet,projects}/
+        graphql/mutations/   legacy name; contains queries and mutations
+        lib/schemas/         Zod schemas
+        lib/permissions.ts   frontend mirror of backend permissions
+        stores/auth.store.ts
+        App.tsx              routes and ProtectedRoute usage
+  docs/
+  Claude.md
+  CODEX.md
+```
+
+## Current Module Status
+
+All main backend modules are registered in `apps/api/src/app.module.ts`. Frontend routes are wired in `apps/web/src/App.tsx`.
+
+| Module | Status | Important Notes |
+|---|---|---|
+| Auth | Implemented | JWT access/refresh tokens, `JwtAuthGuard`, current user decorator, Zustand persistence on web. |
+| Users | Implemented | Admin-only user creation/admin list. |
+| HR | Implemented | Employees, leave requests, approvals, org chart. Leave decisions emit notifications. |
+| Employee Documents | Implemented | Employee document storage/upload, expiry dates, `/documents` page, employee detail panel, expiry reminders. |
+| Finance | Implemented | Partners, invoices, payments, invoice PDF, project cost import. |
+| Stock | Implemented | Warehouses, products, stock movements, purchase orders/NIR, in-transit goods, defective/scrap stock. |
+| Fleet | Implemented | Vehicles, documents, mileage, leases, expenses, expiry summaries and notifications. |
+| Projects | Implemented | Projects are the cross-module hub: members, materials, vehicle assignments, tasks/kanban, comments, feed, invoices/cost rollup. |
+| Notifications | Implemented | In-app notification table/API/dropdown/inbox/toasts, 24h dedup, daily fleet-document scheduler. |
+| Reporting | Implemented | Dashboard/report aggregate queries. |
+| Reporting Exports | Implemented | Report PDF/Excel exports via lazy-loaded frontend export helper. |
+| Payroll | Implemented | Monthly draft generation, Romanian gross-to-net tax calculation, B2B contractor handling, approve/paid lifecycle, draft deletion, PDF/Excel exports. |
+| Settings | Implemented | Singleton company profile/defaults, fleet expiry thresholds, payroll tax rule settings. |
+
+## Backend Patterns
+
+Feature modules usually follow:
+
+```text
+entities/ -> dto/ -> *.service.ts -> *.resolver.ts -> *.module.ts -> AppModule import
+```
+
+Use `apps/api/src/fleet/` or `apps/api/src/stock/` as references for a clean module shape. `apps/api/src/schema.gql` is generated by Nest GraphQL; do not hand-edit it.
+
+Prisma schema is the source of truth for persisted data: `apps/api/prisma/schema.prisma`. After Prisma edits, run migration/generation from `apps/api`.
+
+## Permissions Model
+
+`User.role` is only `USER` or `ADMIN`. `ADMIN` bypasses module restrictions.
+
+Normal access is department-based through `Employee.department`:
+- `HR`
+- `FINANCE`
+- `WAREHOUSE`
+- `FLEET`
+- `MANAGEMENT`
+- `IT`
+
+Backend permissions live in `apps/api/src/auth/permissions.config.ts`. Frontend mirror lives in `apps/web/src/lib/permissions.ts`.
+
+Typical backend guard pattern:
+
+```ts
+@UseGuards(JwtAuthGuard, DepartmentGuard)
+@RequireModule('stock', 'write')
+```
+
+Typical frontend route pattern:
+
+```tsx
+<ProtectedRoute requiredModule="stock" requiredAccess="read">
+```
+
+Projects also have project-scoped RBAC with `@RequireProjectAccess('member' | 'manager')`, plus a guard that can resolve project context from project/task/material/member/feed IDs.
+
+## Cross-Module Rules To Preserve
+
+- Projects connect to partners, stock, fleet, invoices, users, tasks, and feed entries.
+- Project materials reserve and issue stock through `StockService` helpers inside transactions.
+- Defective stock is not sellable. Availability is `quantity - reservedQty - defectiveQty`.
+- `Product.currentStock` represents sellable stock and should not count defective stock.
+- Purchase order receipts update stock in a transaction, write `StockMovement` rows, and advance PO status.
+- In-transit quantities are derived from open/partially received purchase orders, not stored.
+- Vehicle expenses can carry `projectId` so they roll into project cost pools.
+- Notifications are emitted by domain modules; keep recipient resolution centralized in `NotificationsService`.
+- Fleet document expiry notifications run daily at 06:00 UTC via `NotificationsScheduler`.
+- Employee document expiry notifications also run through the scheduler and target HR/MANAGEMENT users.
+- Payroll periods are snapshots. Tax rates, contractor status effects, and line amounts are persisted per generated line; later employee/settings edits do not automatically rewrite old periods.
+- `Employee.salary` is required and represents gross monthly salary in EUR.
+- B2B contractors are flagged with `Employee.isContractor`; payroll does not withhold employee taxes or CAM for them.
+
+## Frontend Patterns
+
+- Use existing shadcn primitives in `apps/web/src/components/ui/`.
+- Tooltip and checkbox primitives are available and used in Payroll/HR flows.
+- Use Lucide icons for button/tool icons.
+- Forms use React Hook Form + Zod schemas from `apps/web/src/lib/schemas/`.
+- Numeric form inputs should use `valueAsNumber: true`.
+- `LoginForm.tsx` is intentionally plain `useState` legacy code.
+- Apollo GraphQL documents live under `apps/web/src/graphql/mutations/` even when they are queries.
+- Auth state lives in `apps/web/src/stores/auth.store.ts`; do not introduce Redux.
+- Module pages are already routed through `App.tsx` and usually wrapped in `DashboardLayout`.
+
+## Important Docs
+
+- `docs/README.en.md` - docs entry point.
+- `docs/structure.en.md` - repo/module layout.
+- `docs/architecture.en.md` - data flow and module architecture. This is the best high-level technical doc.
+- `docs/auth_implementation.md` - JWT/auth details, with some older role examples.
+- `docs/libraries.en.md` - library inventory.
+- `docs/scripts.en.md` - runnable commands.
+- `docs/validation.en.md` - validation patterns.
+- `docs/superpowers/specs/2026-05-09-notifications-system-design.md` - notification system design.
+- `docs/superpowers/specs/2026-05-18-implementation-summary.md` - full summary of document storage, exports, employee document reminders, and payroll work added on 2026-05-18.
+- `docs/superpowers/specs/2026-03-14-fleet-module-design.md` - fleet design.
+- `docs/superpowers/specs/2026-03-15-rbac-design.md` - RBAC redesign.
+
+## Daily Commands
+
+Run from the app folder that owns the `package.json`.
+
+```powershell
+# API
+cd apps/api
+bun install
+bunx prisma generate
+bun run start:dev
+bun run typecheck
+bun run test
+
+# Web
+cd apps/web
+bun install
+bun run dev
+bun run typecheck
+bun run build
+```
+
+Environment files are gitignored:
+
+```text
+apps/api/.env
+  DATABASE_URL=...
+  JWT_SECRET=...
+  PORT=3000
+  CORS_ORIGIN=http://localhost:5173
+
+apps/web/.env
+  VITE_API_URL=http://localhost:3000/graphql
+```
+
+## Verification Habit
+
+For backend changes, prefer at least:
+- `cd apps/api && bun run typecheck`
+- focused tests if the touched service has tests
+
+For frontend changes, prefer at least:
+- `cd apps/web && bun run typecheck`
+- `bun run build` when routes/components/forms changed
+
+## Good First Places To Look
+
+- Backend list/detail CRUD pattern: `apps/api/src/fleet/vehicles.*`
+- Stock transaction-heavy logic: `apps/api/src/stock/stock.service.ts` and `purchase-orders.service.ts`
+- Project cross-module orchestration: `apps/api/src/projects/`
+- Frontend table/list page: `apps/web/src/pages/fleet/VehiclesPage.tsx`
+- Project detail tabs: `apps/web/src/pages/projects/ProjectDetailPage.tsx` and `apps/web/src/components/projects/tabs/`
+- Notification UI: `apps/web/src/components/notifications/` and `apps/web/src/hooks/useNotifications.ts`
+
+## Watchouts
+
+- Do not edit generated `schema.gql` by hand.
+- Keep frontend and backend permission maps aligned.
+- Keep Prisma schema, migrations, GraphQL DTO/entities, frontend types, GraphQL documents, and Zod schemas in sync for model changes.
+- For Nest GraphQL nullable fields, always provide explicit `@Field(() => Type, { nullable: true })` metadata to avoid runtime reflection errors.
+- Do not bypass the stock bucket math when adding stock/project flows.
+- Do not create duplicate notification logic in feature services; call `NotificationsService`.
+- Root `package.json` has no useful scripts; use app-level scripts.

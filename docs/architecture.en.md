@@ -20,10 +20,43 @@
 | `StockModule` | Warehouses, products, stock movements, supplier purchase orders & in-transit goods (NIR receptions), defective-stock handling |
 | `FleetModule` | Vehicles, documents, mileage logs, leases, expenses |
 | `ProjectsModule` | Client-job projects: members, materials (reserve/issue), vehicle assignments, tasks, activity feed, cost rollup |
+| `NotificationsModule` | In-app notifications, bell/inbox support, fleet and employee document expiry scheduler, stock/leave/project-task events |
 | `ReportingModule` | Dashboard metrics (aggregated queries) |
-| `SettingsModule` | Company-wide settings (singleton row) |
+| `SettingsModule` | Company-wide settings (singleton row), fleet expiry thresholds, payroll tax rules |
+| `PayrollModule` | Monthly payroll periods and lines, Romanian gross-to-net calculations, B2B contractor handling |
 
 GraphQL and Prisma are fully wired. `schema.gql` is auto-generated at startup.
+
+## HR document storage
+
+The HR module now stores employee documents and expiry dates.
+
+- **Schema**: `EmployeeDocument` belongs to `Employee` and records type, title, file metadata, optional `expiryDate`, notes, uploader and timestamps.
+- **Upload flow**: employee document files are uploaded through the API and listed in both the dedicated Documents page and the Employee Detail document panel.
+- **Expiry notifications**: documents with upcoming expiry dates create `EMPLOYEE_DOCUMENT_EXPIRING` notifications for HR and Management users.
+- **Frontend**: `/documents` is available as a menu item; employee detail includes an `EmployeeDocumentsPanel`.
+
+## Payroll module architecture
+
+Payroll is a dedicated module for monthly salary calculations.
+
+- **Schema**: `PayrollPeriod` owns `PayrollLine` rows. A period is unique by `(year, month)` and moves through `DRAFT -> APPROVED -> PAID`.
+- **Permissions**: HR, Finance and Management have payroll write access; Warehouse, Fleet and IT have no payroll access. Admin bypasses module restrictions.
+- **Lifecycle**:
+  - `generatePayroll` creates a draft from employees with gross salary greater than `0`.
+  - `updatePayrollLine` can edit bonus, manual deductions and notes while the period is draft.
+  - `approvePayroll` locks a draft.
+  - `markPayrollPaid` marks an approved period paid.
+  - `deletePayrollPeriod` deletes draft periods only.
+- **Currency**: employee salary and payroll are treated as EUR.
+- **Romanian tax rules**: payroll settings live in `CompanySettings` and default to CAS `25%`, CASS `10%`, income tax `10%`, CAM `2.25%`, personal deduction `0`, rule version `RO_2026_STANDARD`.
+- **Snapshot behavior**: generated payroll lines store the tax amounts, rates and rule version used at generation time; later settings/employee edits do not rewrite old periods.
+- **B2B contractors**: `Employee.isContractor` marks B2B contractors. Contractors are included in payroll but CAS/CASS/income tax/CAM are `0`; net equals taxable gross minus manual deductions.
+- **UI**: `/payroll` shows period list, summary cards, editable draft table, tax breakdown tooltips, CAM and total employer cost, PDF/Excel export, approve/paid actions and draft deletion.
+
+## Reporting exports
+
+Reports support client-side PDF and Excel export. The heavy export libraries are isolated in `apps/web/src/lib/report-export.tsx` and lazy-loaded by report/payroll pages.
 
 ## Fleet module architecture
 

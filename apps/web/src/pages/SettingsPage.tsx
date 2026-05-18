@@ -15,6 +15,7 @@ import {
   Save,
   AlertCircle,
   Car,
+  WalletCards,
 } from "lucide-react";
 import {
   GET_COMPANY_SETTINGS_QUERY,
@@ -42,6 +43,12 @@ interface CompanySettingsData {
   fleetExpiryThresholdRca: number;
   fleetExpiryThresholdCasco: number;
   fleetExpiryThresholdRovinieta: number;
+  payrollTaxCasRate: number;
+  payrollTaxCassRate: number;
+  payrollTaxIncomeRate: number;
+  payrollTaxCamRate: number;
+  payrollPersonalDeduction: number;
+  payrollTaxRuleVersion: string;
 }
 
 export default function SettingsPage() {
@@ -85,6 +92,12 @@ export default function SettingsPage() {
     reset: resetFleet,
   } = useForm<Pick<CompanySettingsData, "fleetExpiryThresholdItp" | "fleetExpiryThresholdRca" | "fleetExpiryThresholdCasco" | "fleetExpiryThresholdRovinieta">>();
 
+  const {
+    register: regPayroll,
+    handleSubmit: submitPayroll,
+    reset: resetPayroll,
+  } = useForm<Pick<CompanySettingsData, "payrollTaxCasRate" | "payrollTaxCassRate" | "payrollTaxIncomeRate" | "payrollTaxCamRate" | "payrollPersonalDeduction" | "payrollTaxRuleVersion">>();
+
   // Populate forms when data loads
   useEffect(() => {
     if (data?.companySettings) {
@@ -116,8 +129,16 @@ export default function SettingsPage() {
         fleetExpiryThresholdCasco: s.fleetExpiryThresholdCasco,
         fleetExpiryThresholdRovinieta: s.fleetExpiryThresholdRovinieta,
       });
+      resetPayroll({
+        payrollTaxCasRate: s.payrollTaxCasRate,
+        payrollTaxCassRate: s.payrollTaxCassRate,
+        payrollTaxIncomeRate: s.payrollTaxIncomeRate,
+        payrollTaxCamRate: s.payrollTaxCamRate,
+        payrollPersonalDeduction: s.payrollPersonalDeduction,
+        payrollTaxRuleVersion: s.payrollTaxRuleVersion,
+      });
     }
-  }, [data, resetCompany, resetInvoice, resetHr, resetFleet]);
+  }, [data, resetCompany, resetInvoice, resetHr, resetFleet, resetPayroll]);
 
   const submit = async (values: Record<string, unknown>) => {
     try {
@@ -154,6 +175,16 @@ export default function SettingsPage() {
       ),
     });
 
+  const onPayrollSubmit = (values: Record<string, unknown>) =>
+    submit({
+      payrollTaxCasRate: Number(values.payrollTaxCasRate),
+      payrollTaxCassRate: Number(values.payrollTaxCassRate),
+      payrollTaxIncomeRate: Number(values.payrollTaxIncomeRate),
+      payrollTaxCamRate: Number(values.payrollTaxCamRate),
+      payrollPersonalDeduction: Number(values.payrollPersonalDeduction),
+      payrollTaxRuleVersion: values.payrollTaxRuleVersion,
+    });
+
   if (loading) return <PageLoading message="Loading settings..." />;
 
   if (error) {
@@ -187,6 +218,10 @@ export default function SettingsPage() {
           <TabsTrigger value="hr" className="gap-2">
             <Users className="h-4 w-4" />
             HR
+          </TabsTrigger>
+          <TabsTrigger value="payroll" className="gap-2">
+            <WalletCards className="h-4 w-4" />
+            Payroll
           </TabsTrigger>
           <TabsTrigger value="fleet" className="gap-2">
             <Car className="h-4 w-4" />
@@ -347,6 +382,52 @@ export default function SettingsPage() {
                 <Button type="submit">
                   <Save className="h-4 w-4 mr-2" />
                   Save HR Settings
+                </Button>
+              </CardContent>
+            </Card>
+          </form>
+        </TabsContent>
+
+        <TabsContent value="payroll">
+          <form onSubmit={submitPayroll(onPayrollSubmit)}>
+            <Card>
+              <CardHeader>
+                <CardTitle>Payroll Tax Rules</CardTitle>
+                <CardDescription>
+                  Romanian payroll defaults used when generating new payroll periods. Existing payrolls keep the rates saved on each line.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="payrollTaxCasRate">CAS pension (%)</Label>
+                    <Input id="payrollTaxCasRate" type="number" step="0.01" min="0" {...regPayroll("payrollTaxCasRate", { valueAsNumber: true })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="payrollTaxCassRate">CASS health (%)</Label>
+                    <Input id="payrollTaxCassRate" type="number" step="0.01" min="0" {...regPayroll("payrollTaxCassRate", { valueAsNumber: true })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="payrollTaxIncomeRate">Income tax (%)</Label>
+                    <Input id="payrollTaxIncomeRate" type="number" step="0.01" min="0" {...regPayroll("payrollTaxIncomeRate", { valueAsNumber: true })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="payrollTaxCamRate">CAM employer (%)</Label>
+                    <Input id="payrollTaxCamRate" type="number" step="0.01" min="0" {...regPayroll("payrollTaxCamRate", { valueAsNumber: true })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="payrollPersonalDeduction">Personal deduction (EUR)</Label>
+                    <Input id="payrollPersonalDeduction" type="number" step="0.01" min="0" {...regPayroll("payrollPersonalDeduction", { valueAsNumber: true })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="payrollTaxRuleVersion">Rule version</Label>
+                    <Input id="payrollTaxRuleVersion" placeholder="RO_2026_STANDARD" {...regPayroll("payrollTaxRuleVersion")} />
+                  </div>
+                </div>
+
+                <Button type="submit">
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Payroll Rules
                 </Button>
               </CardContent>
             </Card>

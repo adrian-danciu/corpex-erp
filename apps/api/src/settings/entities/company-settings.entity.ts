@@ -65,6 +65,24 @@ export class CompanySettings {
   @Field(() => Int)
   fleetExpiryThresholdRovinieta: number;
 
+  @Field(() => Float)
+  payrollTaxCasRate: number;
+
+  @Field(() => Float)
+  payrollTaxCassRate: number;
+
+  @Field(() => Float)
+  payrollTaxIncomeRate: number;
+
+  @Field(() => Float)
+  payrollTaxCamRate: number;
+
+  @Field(() => Float)
+  payrollPersonalDeduction: number;
+
+  @Field()
+  payrollTaxRuleVersion: string;
+
   @Field(() => Date)
   updatedAt: Date;
 }

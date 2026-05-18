@@ -1,0 +1,8 @@
+-- AlterTable
+ALTER TABLE "EmployeeDocument" ADD COLUMN "expiryDate" TIMESTAMP(3);
+
+-- AlterEnum
+ALTER TYPE "NotificationType" ADD VALUE IF NOT EXISTS 'EMPLOYEE_DOCUMENT_EXPIRING';
+
+-- AlterEnum
+ALTER TYPE "NotificationEntityType" ADD VALUE IF NOT EXISTS 'EMPLOYEE_DOCUMENT';

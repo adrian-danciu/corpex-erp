@@ -67,6 +67,12 @@ type CompanySettings {
   fleetExpiryThresholdRovinieta: Int!
   id: ID!
   paymentTermsDays: Int!
+  payrollPersonalDeduction: Float!
+  payrollTaxCamRate: Float!
+  payrollTaxCasRate: Float!
+  payrollTaxCassRate: Float!
+  payrollTaxIncomeRate: Float!
+  payrollTaxRuleVersion: String!
   phone: String!
   regCom: String!
   updatedAt: DateTime!
@@ -81,6 +87,18 @@ enum ContractType {
   TEMPORARY
 }
 
+input CreateEmployeeDocumentInput {
+  employeeId: String!
+  expiryDate: DateTime
+  fileName: String!
+  fileUrl: String!
+  mimeType: String!
+  notes: String
+  size: Float!
+  title: String!
+  type: EmployeeDocumentType!
+}
+
 input CreateEmployeeInput {
   address: String!
   annualLeaveDays: Int! = 21
@@ -92,12 +110,13 @@ input CreateEmployeeInput {
   department: Department!
   employmentDate: DateTime!
   firstName: String!
+  isContractor: Boolean! = false
   lastName: String!
   managerId: String
   personalId: String!
   phoneNumber: String!
   position: String!
-  salary: Float
+  salary: Float!
   userId: String
 }
 
@@ -336,6 +355,7 @@ type Employee {
   employmentDate: DateTime!
   firstName: String!
   id: ID!
+  isContractor: Boolean!
   lastName: String!
   manager: Employee
   managerId: String
@@ -343,11 +363,44 @@ type Employee {
   phoneNumber: String!
   position: String!
   remainingLeave: Int!
-  salary: Float
+  salary: Float!
   subordinates: [Employee!]
   updatedAt: DateTime!
   user: User
   userId: String
+}
+
+type EmployeeDocument {
+  createdAt: DateTime!
+  employee: Employee
+  employeeId: String!
+  expiryDate: DateTime
+  fileName: String!
+  fileUrl: String!
+  id: ID!
+  mimeType: String!
+  notes: String
+  size: Int!
+  title: String!
+  type: EmployeeDocumentType!
+  updatedAt: DateTime!
+  uploadedBy: User
+  uploadedById: String!
+}
+
+input EmployeeDocumentFilterInput {
+  employeeId: String
+  type: EmployeeDocumentType
+}
+
+"""Type of document stored in an employee file"""
+enum EmployeeDocumentType {
+  CONTRACT
+  DIPLOMA
+  ID_CARD
+  MEDICAL_CERTIFICATE
+  OTHER
+  TRAINING
 }
 
 type EmployeeReportRow {
@@ -401,6 +454,13 @@ enum FuelType {
   ELECTRIC
   HYBRID
   PETROL
+}
+
+input GeneratePayrollInput {
+  currency: String
+  month: Int!
+  notes: String
+  year: Int!
 }
 
 type HrLeaveSummary {
@@ -573,6 +633,7 @@ type Mutation {
 
   """Approve or reject a leave request"""
   approveOrRejectLeaveRequest(approveLeaveRequestInput: ApproveLeaveRequestInput!): LeaveRequest!
+  approvePayroll(periodId: ID!): PayrollPeriod!
   assignProjectVehicle(input: AssignProjectVehicleInput!): ProjectVehicle!
 
   """Cancel a leave request"""
@@ -585,6 +646,7 @@ type Mutation {
 
   """Create a new employee record"""
   createEmployee(createEmployeeInput: CreateEmployeeInput!): Employee!
+  createEmployeeDocument(input: CreateEmployeeDocumentInput!): EmployeeDocument!
 
   """Create a new invoice"""
   createInvoice(createInvoiceInput: CreateInvoiceInput!): Invoice!
@@ -618,6 +680,7 @@ type Mutation {
 
   """Create a new warehouse"""
   createWarehouse(createWarehouseInput: CreateWarehouseInput!): Warehouse!
+  deleteEmployeeDocument(id: String!): EmployeeDocument!
 
   """Delete an invoice"""
   deleteInvoice(id: String!): Invoice!
@@ -625,6 +688,7 @@ type Mutation {
 
   """Delete a partner"""
   deletePartner(id: String!): Partner!
+  deletePayrollPeriod(periodId: ID!): PayrollPeriod!
   deleteProjectFeedEntry(input: DeleteFeedEntryInput!): ProjectFeedEntry!
   deleteProjectTask(input: DeleteProjectTaskInput!): ProjectTask!
   deleteProjectTaskComment(input: DeleteProjectTaskCommentInput!): ProjectTaskComment!
@@ -634,12 +698,14 @@ type Mutation {
   deleteVehicleExpense(id: String!): VehicleExpense!
   deleteVehicleLease(id: String!): VehicleLease!
   endProjectVehicleAssignment(input: EndProjectVehicleAssignmentInput!): ProjectVehicle!
+  generatePayroll(input: GeneratePayrollInput!): PayrollPeriod!
 
   """Link an existing employee to an existing user account"""
   linkEmployeeToUser(linkEmployeeUserInput: LinkEmployeeUserInput!): Employee!
   login(loginInput: LoginInput!): AuthResponse!
   markAllNotificationsRead: Int!
   markNotificationRead(id: String!): Notification!
+  markPayrollPaid(periodId: ID!): PayrollPeriod!
 
   """
   Mark units of a product in a warehouse as defective (does not remove them from stock)
@@ -669,6 +735,7 @@ type Mutation {
 
   """Update a partner"""
   updatePartner(updatePartnerInput: UpdatePartnerInput!): Partner!
+  updatePayrollLine(input: UpdatePayrollLineInput!): PayrollLine!
 
   """Update an existing product"""
   updateProduct(input: UpdateProductInput!): Product!
@@ -700,6 +767,7 @@ type Notification {
 }
 
 enum NotificationEntityType {
+  EMPLOYEE_DOCUMENT
   LEAVE_REQUEST
   PRODUCT
   PROJECT_TASK
@@ -712,6 +780,7 @@ input NotificationFilterInput {
 }
 
 enum NotificationType {
+  EMPLOYEE_DOCUMENT_EXPIRING
   FLEET_DOCUMENT_EXPIRING
   LEAVE_REQUEST_APPROVED
   LEAVE_REQUEST_REJECTED
@@ -816,6 +885,69 @@ enum PaymentMethod {
   CARD
   CASH
   OTHER
+}
+
+type PayrollLine {
+  bonus: Float!
+  camAmount: Float!
+  camRate: Float!
+  casAmount: Float!
+  casRate: Float!
+  cassAmount: Float!
+  cassRate: Float!
+  createdAt: DateTime!
+  employee: Employee
+  employeeId: String!
+  employerTotalCost: Float!
+  grossSalary: Float!
+  id: ID!
+  incomeTaxAmount: Float!
+  incomeTaxRate: Float!
+  manualDeductions: Float!
+  netAmount: Float!
+  notes: String
+  periodId: String!
+  taxRuleVersion: String!
+  taxableGross: Float!
+  unpaidLeaveDays: Int!
+  unpaidLeaveDeduction: Float!
+  updatedAt: DateTime!
+}
+
+type PayrollPeriod {
+  approvedAt: DateTime
+  approvedBy: User
+  approvedById: String
+  createdAt: DateTime!
+  createdBy: User
+  createdById: String!
+  currency: String!
+  employeeCount: Int!
+  id: ID!
+  lines: [PayrollLine!]
+  month: Int!
+  notes: String
+  paidAt: DateTime
+  paidBy: User
+  paidById: String
+  status: PayrollStatus!
+  totalBonus: Float!
+  totalCas: Float!
+  totalCass: Float!
+  totalEmployerCost: Float!
+  totalGross: Float!
+  totalIncomeTax: Float!
+  totalManualDeductions: Float!
+  totalNet: Float!
+  updatedAt: DateTime!
+  year: Int!
+}
+
+"""Payroll period lifecycle status"""
+enum PayrollStatus {
+  APPROVED
+  DRAFT
+  PAID
 }
 
 type Product {
@@ -1127,6 +1259,7 @@ type Query {
 
   """Get an employee by user ID"""
   employeeByUserId(userId: String!): Employee
+  employeeDocuments(filter: EmployeeDocumentFilterInput): [EmployeeDocument!]!
   employeeReport: [EmployeeReportRow!]!
 
   """Get all employees (paginated)"""
@@ -1179,6 +1312,8 @@ type Query {
 
   """Get all partners (paginated)"""
   partners(pagination: PaginationInput): PaginatedPartner!
+  payrollPeriod(id: ID!): PayrollPeriod!
+  payrollPeriods: [PayrollPeriod!]!
 
   """Get pending leave requests for current user subordinates"""
   pendingLeaveRequestsForManager: [LeaveRequest!]!
@@ -1341,6 +1476,12 @@ input UpdateCompanySettingsInput {
   fleetExpiryThresholdRca: Int
   fleetExpiryThresholdRovinieta: Int
   paymentTermsDays: Int
+  payrollPersonalDeduction: Float
+  payrollTaxCamRate: Float
+  payrollTaxCasRate: Float
+  payrollTaxCassRate: Float
+  payrollTaxIncomeRate: Float
+  payrollTaxRuleVersion: String
   phone: String
   regCom: String
 }
@@ -1357,6 +1498,7 @@ input UpdateEmployeeInput {
   employmentDate: DateTime
   firstName: String
   id: String!
+  isContractor: Boolean
   lastName: String
   managerId: String
   personalId: String
@@ -1387,6 +1529,13 @@ input UpdatePartnerInput {
   partnerType: PartnerType
   phone: String
   regCom: String
+}
+
+input UpdatePayrollLineInput {
+  bonus: Float
+  lineId: String!
+  manualDeductions: Float
+  notes: String
 }
 
 input UpdateProductInput {

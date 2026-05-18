@@ -13,17 +13,20 @@ corpex-erp/
 ## apps/web (frontend)
  - `src/`: codul UI in React.
    - `components/`: Componente partajate si primitive UI.
-     - `ui/`: primitive shadcn/ui (Radix + Tailwind).
+     - `ui/`: primitive shadcn/ui (Radix + Tailwind), inclusiv tooltip si checkbox.
      - `common/`: Componente reutilizabile (Pagination, etc.).
      - `fleet/`: Componente specifice flotei (VehicleStatusBadge, DocumentTypeBadge).
      - `projects/`: Badge status proiect, plus componente de tab in `projects/tabs/` (OverviewTab, TeamTab, MaterialsTab, VehiclesTab, TasksTab, FeedTab, InvoicesTab).
      - `dashboard/`: Widget-uri dashboard (FleetExpiryWidget, MyProjectsWidget, MyTasksWidget, etc.).
    - `pages/`: Pagini organizate pe module.
-     - `hr/`: Angajati, Concedii, Aprobari.
+     - `hr/`: Angajati, Concedii, Aprobari, detalii angajat.
      - `finance/`: Overview, Parteneri, Facturi (editorul de factura include picker de proiect + helper pentru import costuri).
      - `stock/`: Depozite, Produse, Miscari de stoc.
      - `fleet/`: Lista vehicule, creare vehicul, detalii vehicul (formularul de cheltuiala include picker de proiect cu valoare implicita).
      - `projects/`: Lista proiecte, creare si detalii proiect (cu taburi).
+     - `payroll/`: Pagina de generare si detaliu payroll.
+     - `DocumentsPage.tsx`: overview pentru documente angajati.
+     - `ReportsPage.tsx`: rapoarte cu export PDF/Excel.
    - `graphql/mutations/`: Documente Apollo `gql` pentru query-uri si mutatii (toate modulele).
    - `types/`: Interfete TypeScript si enum-uri per modul.
    - `lib/schemas/`: Scheme Zod de validare per modul.
@@ -34,7 +37,7 @@ corpex-erp/
  - `src/`: Aplicatie NestJS.
    - `auth/`: Modul autentificare (JWT, Passport).
    - `users/`: Gestiune utilizatori.
-   - `employees/`: Modul HR (Angajati, Concedii).
+   - `employees/`: Modul HR (Angajati, Documente Angajati, Concedii).
    - `finance/`: Modul Financiar (Parteneri, Facturi, Plati).
    - `stock/`: Modul Stoc (Depozite, Produse, Miscari stoc).
    - `fleet/`: Modul Flota (Vehicule, Documente, Kilometraj, Leasing, Cheltuieli).
@@ -59,8 +62,9 @@ corpex-erp/
    - `common/`: DTO-uri partajate (PaginationInput, factory Paginated).
    - `reporting/`: Modul metrici dashboard.
    - `settings/`: Setari companie (singleton).
+   - `payroll/`: Perioade payroll, linii payroll, calcul taxe romanesti, ciclu draft/aprobat/platit si stergere draft.
  - `src/schema.gql`: Schema GraphQL generata automat.
- - `prisma/schema.prisma`: Schema Prisma (User, Employee, Partner, Invoice, Vehicle, VehicleDocument, MileageLog, VehicleLease, VehicleExpense, Project, ProjectMember, ProjectMaterial, ProjectVehicle, ProjectTask, ProjectFeedEntry, etc.). `Invoice`, `StockMovement` si `VehicleExpense` au camp optional `projectId`. `ProductStock` are `reservedQty`.
+ - `prisma/schema.prisma`: Schema Prisma (User, Employee, EmployeeDocument, PayrollPeriod, PayrollLine, Partner, Invoice, Vehicle, VehicleDocument, MileageLog, VehicleLease, VehicleExpense, Project, ProjectMember, ProjectMaterial, ProjectVehicle, ProjectTask, ProjectFeedEntry, etc.). `Invoice`, `StockMovement` si `VehicleExpense` au camp optional `projectId`. `ProductStock` are `reservedQty`.
  - `prisma.config.ts`: config Prisma cu `DATABASE_URL`.
  - `uploads/` (in .gitignore): stocare runtime pentru atasamente din feed. Servit la `/uploads/` prin `useStaticAssets`.
 
@@ -69,3 +73,4 @@ corpex-erp/
 - `apps/api` expune un endpoint GraphQL (NestJS + Apollo Server).
 - `apps/api` foloseste Prisma + Postgres (Neon serverless) pentru persistenta datelor.
 - Toate modulele urmeaza acelasi pattern: `entities/` → `dto/` → `service` → `resolver` → inregistrat in modul → importat in `AppModule`.
+- Salariul angajatului este obligatoriu si reprezinta salariul brut lunar in EUR. `Employee.isContractor` marcheaza contractorii B2B, pentru care payroll nu aplica taxele salariale si CAM.

@@ -20,10 +20,42 @@
 | `StockModule` | Depozite, produse, miscari stoc, comenzi furnizori si marfa in tranzit (receptii NIR), gestionare stoc defect |
 | `FleetModule` | Vehicule, documente, kilometraj, leasing, cheltuieli |
 | `ProjectsModule` | Proiecte client: membri, materiale (rezervare/eliberare), alocari vehicule, task-uri, feed activitate, rollup costuri |
+| `NotificationsModule` | Notificari in-app, bell/inbox, scheduler pentru expirari documente flota si angajati, evenimente stoc/concedii/task-uri |
 | `ReportingModule` | Metrici dashboard (query-uri agregate) |
-| `SettingsModule` | Setari companie (rand singleton) |
+| `SettingsModule` | Setari companie (rand singleton), praguri expirare flota, reguli taxe payroll |
+| `PayrollModule` | Perioade payroll lunare, linii payroll, calcul brut-net romanesc, suport contractor B2B |
 
 GraphQL si Prisma sunt conectate complet. `schema.gql` este generat automat la pornire.
+
+## Documente angajati
+
+Modulul HR stocheaza acum documente pentru angajati si date de expirare.
+
+- **Schema**: `EmployeeDocument` apartine unui `Employee` si pastreaza tipul, titlul, metadata fisierului, `expiryDate` optional, note, uploader si timestamp-uri.
+- **Upload**: fisierele sunt incarcate prin API si afisate atat in pagina dedicata Documents, cat si in panoul de documente din Employee Detail.
+- **Notificari expirare**: documentele care expira curand emit `EMPLOYEE_DOCUMENT_EXPIRING` catre utilizatorii HR si Management.
+
+## Modulul Payroll
+
+Payroll este un modul dedicat pentru calculul salariilor lunare.
+
+- **Schema**: `PayrollPeriod` contine `PayrollLine`. O perioada este unica pe `(year, month)` si trece prin `DRAFT -> APPROVED -> PAID`.
+- **Permisiuni**: HR, Finance si Management au acces write; Warehouse, Fleet si IT nu au acces payroll. Admin are bypass.
+- **Flux**:
+  - `generatePayroll` creeaza un draft din angajatii cu salariu brut mai mare decat `0`.
+  - `updatePayrollLine` editeaza bonus, deduceri manuale si note doar in draft.
+  - `approvePayroll` blocheaza draftul.
+  - `markPayrollPaid` marcheaza o perioada aprobata ca platita.
+  - `deletePayrollPeriod` sterge doar perioade `DRAFT`.
+- **Moneda**: salariul angajatului si payroll-ul sunt tratate in EUR.
+- **Reguli taxe romanesti**: setarile din `CompanySettings` pornesc cu CAS `25%`, CASS `10%`, impozit venit `10%`, CAM `2.25%`, deducere personala `0`, versiune regula `RO_2026_STANDARD`.
+- **Snapshot**: liniile generate pastreaza sumele, ratele si versiunea de reguli folosite la generare; modificarile ulterioare de setari/angajat nu rescriu perioadele vechi.
+- **Contractori B2B**: `Employee.isContractor` marcheaza contractorii. Acestia apar in payroll, dar CAS/CASS/impozit/CAM sunt `0`; netul este brutul taxabil minus deduceri manuale.
+- **UI**: `/payroll` afiseaza lista de perioade, carduri sumar, tabel draft editabil, tooltip pentru taxe, CAM si cost total angajator, export PDF/Excel, aprobare/plata si stergere draft.
+
+## Exporturi rapoarte
+
+Rapoartele pot fi exportate PDF si Excel. Librariile grele sunt izolate in `apps/web/src/lib/report-export.tsx` si incarcate lazy de paginile de rapoarte/payroll.
 
 ## Arhitectura modulului Fleet
 
@@ -97,6 +129,9 @@ Modulul projects este un hub transversal care leaga Partners, Stock, Fleet, HR, 
 | **Stock** | Overview (cu widget marfa in tranzit), Depozite, Produse (cu coloana "In transit" + sheet stoc defect), Miscari, Comenzi furnizori (lista / creare / detaliu) | Aprovizionare de la furnizori + flux receptie NIR; bucket de stoc defect per depozit cu actiuni report/scrap |
 | **Fleet** | Lista vehicule, Creare, Detalii (5 taburi) | Widget dashboard pentru documente expirate |
 | **Projects** | Lista proiecte, Creare, Detalii (7 taburi: Overview / Echipa / Materiale / Vehicule / Task-uri (kanban) / Feed / Facturi) | Widget-uri dashboard "Proiectele mele" si "Task-uri atribuite mie"; editorul de factura include un buton "Importa costuri din proiect" |
+| **Documente Angajati** | Documents, panou in Employee Detail | Upload documente, expiry date, notificari expirare |
+| **Payroll** | Payroll | Generare draft lunar, taxe romanesti, contractor B2B, export PDF/Excel, aprobare/plata/stergere draft |
+| **Rapoarte** | Reports | Export PDF/Excel |
 
 ## Detalii backend
 

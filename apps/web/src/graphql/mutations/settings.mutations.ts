@@ -24,6 +24,12 @@ export const GET_COMPANY_SETTINGS_QUERY = gql`
       fleetExpiryThresholdRca
       fleetExpiryThresholdCasco
       fleetExpiryThresholdRovinieta
+      payrollTaxCasRate
+      payrollTaxCassRate
+      payrollTaxIncomeRate
+      payrollTaxCamRate
+      payrollPersonalDeduction
+      payrollTaxRuleVersion
       updatedAt
     }
   }
@@ -53,6 +59,12 @@ export const UPDATE_COMPANY_SETTINGS_MUTATION = gql`
       fleetExpiryThresholdRca
       fleetExpiryThresholdCasco
       fleetExpiryThresholdRovinieta
+      payrollTaxCasRate
+      payrollTaxCassRate
+      payrollTaxIncomeRate
+      payrollTaxCamRate
+      payrollPersonalDeduction
+      payrollTaxRuleVersion
       updatedAt
     }
   }

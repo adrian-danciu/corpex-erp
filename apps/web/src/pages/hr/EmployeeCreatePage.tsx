@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -31,9 +32,10 @@ export default function EmployeeCreatePage() {
       position: "",
       department: Department.HR,
       contractType: ContractType.FULL_TIME,
+      isContractor: false,
       employmentDate: "",
       contractEndDate: "",
-      salary: undefined,
+      salary: 0,
       annualLeaveDays: 21,
       managerId: undefined,
     },
@@ -59,7 +61,7 @@ export default function EmployeeCreatePage() {
           createEmployeeInput: {
             ...values,
             contractEndDate: values.contractEndDate || undefined,
-            salary: values.salary ?? undefined,
+            salary: values.salary,
             managerId: values.managerId || undefined,
             country: values.country || "Romania",
           },
@@ -251,6 +253,23 @@ export default function EmployeeCreatePage() {
                 />
               </div>
 
+              <div className="flex items-center gap-3 rounded-md border p-3">
+                <Controller
+                  name="isContractor"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox
+                      id="isContractor"
+                      checked={Boolean(field.value)}
+                      onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+                    />
+                  )}
+                />
+                <Label htmlFor="isContractor" className="cursor-pointer">
+                  B2B contractor
+                </Label>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="employmentDate">Employment Date *</Label>
                 <Input
@@ -270,8 +289,22 @@ export default function EmployeeCreatePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="salary">Salary (optional)</Label>
-                <Input id="salary" type="number" step="0.01" {...register("salary", { valueAsNumber: true })} />
+                <Label htmlFor="salary">Gross Salary (EUR) *</Label>
+                <Input
+                  id="salary"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  {...register("salary", {
+                    required: "Gross salary is required",
+                    valueAsNumber: true,
+                    min: { value: 0.01, message: "Gross salary must be greater than 0" },
+                  })}
+                  className={errors.salary ? "border-red-500" : ""}
+                />
+                {errors.salary && (
+                  <p className="text-sm text-red-500">{errors.salary.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">

@@ -9,18 +9,20 @@ import {
   UPDATE_EMPLOYEE_MUTATION,
   DELETE_EMPLOYEE_MUTATION,
 } from "@/graphql/mutations/employee.mutations";
-import { Department } from "@/types/hr.types";
+import { ContractType, Department } from "@/types/hr.types";
 import { PageLoading } from "@/components/ui/page-loading";
 import type { Employee, UpdateEmployeeInput } from "@/types/hr.types";
 import { PaginatedResult } from "@/types/pagination.types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Edit, Trash2, Users, Calendar, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
+import { EmployeeDocumentsPanel } from "@/components/hr/EmployeeDocumentsPanel";
 
 function LeaveBar({ remaining, total }: { remaining: number; total: number }) {
   const pct = total > 0 ? Math.max(0, Math.min(100, (remaining / total) * 100)) : 0;
@@ -84,7 +86,9 @@ export default function EmployeeDetailPage() {
           city: employee.city,
           position: employee.position,
           department: employee.department,
-          salary: employee.salary ?? undefined,
+          contractType: employee.contractType,
+          isContractor: employee.isContractor,
+          salary: employee.salary,
           annualLeaveDays: employee.annualLeaveDays,
           remainingLeave: employee.remainingLeave,
           managerId: employee.managerId ?? undefined,
@@ -98,7 +102,7 @@ export default function EmployeeDetailPage() {
         variables: {
           updateEmployeeInput: {
             ...values,
-            salary: values.salary || undefined,
+            salary: values.salary,
             managerId: values.managerId || undefined,
           },
         },
@@ -204,6 +208,10 @@ export default function EmployeeDetailPage() {
                 <p className="font-medium">{employee.contractType.replace("_", " ")}</p>
               </div>
               <div>
+                <p className="text-slate-500">Payroll Type</p>
+                <p className="font-medium">{employee.isContractor ? "B2B contractor" : "Employment contract"}</p>
+              </div>
+              <div>
                 <p className="text-slate-500">Employment Date</p>
                 <p className="font-medium">{format(new Date(employee.employmentDate), "dd MMM yyyy")}</p>
               </div>
@@ -221,14 +229,12 @@ export default function EmployeeDetailPage() {
                 <p className="text-slate-500">CNP</p>
                 <p className="font-medium font-mono">{employee.personalId}</p>
               </div>
-              {employee.salary && (
-                <div>
-                  <p className="text-slate-500">Salary</p>
-                  <p className="font-medium">
-                    {employee.salary.toLocaleString("ro-RO", { style: "currency", currency: "RON" })}
-                  </p>
-                </div>
-              )}
+              <div>
+                <p className="text-slate-500">Gross Salary</p>
+                <p className="font-medium">
+                  {employee.salary.toLocaleString("ro-RO", { style: "currency", currency: "EUR" })}
+                </p>
+              </div>
               {employee.manager && (
                 <div>
                   <p className="text-slate-500">Reports To</p>
@@ -280,6 +286,8 @@ export default function EmployeeDetailPage() {
               </CardContent>
             </Card>
           )}
+
+          <EmployeeDocumentsPanel employeeId={employee.id} />
         </div>
 
         {/* Right column - Edit form or read-only details */}
@@ -318,6 +326,43 @@ export default function EmployeeDetailPage() {
                       />
                     </div>
                     <div className="space-y-2">
+                      <Label>Contract Type</Label>
+                      <Controller
+                        name="contractType"
+                        control={control}
+                        render={({ field }) => (
+                          <Select value={field.value ?? ""} onValueChange={(v) => field.onChange(v as ContractType)}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select contract type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value={ContractType.FULL_TIME}>Full time</SelectItem>
+                              <SelectItem value={ContractType.PART_TIME}>Part time</SelectItem>
+                              <SelectItem value={ContractType.INTERNSHIP}>Internship</SelectItem>
+                              <SelectItem value={ContractType.FIXED_TERM}>Fixed term</SelectItem>
+                              <SelectItem value={ContractType.TEMPORARY}>Temporary</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
+                    <div className="flex items-center gap-3 rounded-md border p-3">
+                      <Controller
+                        name="isContractor"
+                        control={control}
+                        render={({ field }) => (
+                          <Checkbox
+                            id="employee-is-contractor"
+                            checked={Boolean(field.value)}
+                            onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+                          />
+                        )}
+                      />
+                      <Label htmlFor="employee-is-contractor" className="cursor-pointer">
+                        B2B contractor
+                      </Label>
+                    </div>
+                    <div className="space-y-2">
                       <Label>Phone Number</Label>
                       <Input {...register("phoneNumber")} />
                     </div>
@@ -330,8 +375,17 @@ export default function EmployeeDetailPage() {
                       <Input {...register("address")} />
                     </div>
                     <div className="space-y-2">
-                      <Label>Salary (optional)</Label>
-                      <Input type="number" step="0.01" {...register("salary", { valueAsNumber: true })} />
+                      <Label>Gross Salary (EUR)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        {...register("salary", {
+                          required: "Gross salary is required",
+                          valueAsNumber: true,
+                          min: { value: 0.01, message: "Gross salary must be greater than 0" },
+                        })}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Annual Leave Days</Label>

@@ -115,6 +115,10 @@ export class NotificationsService {
     ]);
   }
 
+  async getHrWatchers(): Promise<string[]> {
+    return this.usersInDepartments([Department.HR, Department.MANAGEMENT]);
+  }
+
   // ─── Public emission helpers (called by other modules) ─────────────────
 
   async notifyLeaveSubmitted(input: {
@@ -199,6 +203,30 @@ export class NotificationsService {
         title: `${input.documentType} for ${input.plateNumber} expires on ${dateStr}`,
         linkPath: `/fleet/${input.vehicleId}?tab=documents`,
         entityType: NotificationEntityType.VEHICLE_DOCUMENT,
+        entityId: input.documentId,
+      })),
+    );
+  }
+
+  async notifyEmployeeDocumentExpiring(input: {
+    documentId: string;
+    documentType: string;
+    documentTitle: string;
+    employeeName: string;
+    expiryDate: Date;
+  }): Promise<void> {
+    const recipients = await this.getHrWatchers();
+    if (!recipients.length) return;
+
+    const dateStr = input.expiryDate.toISOString().slice(0, 10);
+    await this.emit(
+      recipients.map((recipientId) => ({
+        recipientId,
+        type: NotificationType.EMPLOYEE_DOCUMENT_EXPIRING,
+        title: `${input.documentType} for ${input.employeeName} expires on ${dateStr}`,
+        body: input.documentTitle,
+        linkPath: `/documents?employeeDocumentId=${input.documentId}`,
+        entityType: NotificationEntityType.EMPLOYEE_DOCUMENT,
         entityId: input.documentId,
       })),
     );

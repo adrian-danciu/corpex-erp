@@ -23,6 +23,7 @@ import {
   Boxes,
   Car,
   Truck,
+  WalletCards,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -62,6 +63,7 @@ const menuItems: MenuItem[] = [
     ],
   },
   { title: "Documents", href: "/documents", icon: FileText },
+  { title: "Payroll", href: "/payroll", icon: WalletCards },
   {
     title: "Finance",
     href: "/finance",
@@ -120,6 +122,10 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
         return canAccess(user, "hr");
       case "/hr/approvals":
         return canAccess(user, "leaveApprovals", true);
+      case "/documents":
+        return canAccess(user, "hr");
+      case "/payroll":
+        return canAccess(user, "payroll");
       case "/finance":
       case "/finance/partners":
       case "/finance/invoices":

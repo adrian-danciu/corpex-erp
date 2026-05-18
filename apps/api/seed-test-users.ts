@@ -37,6 +37,7 @@ interface Spec {
   department: Department;
   position: string;
   managerEmail?: string; // resolved later
+  salary: number;
 }
 
 const SPECS: Spec[] = [
@@ -47,6 +48,7 @@ const SPECS: Spec[] = [
     personalId: '1850101400001',
     department: Department.MANAGEMENT,
     position: 'General Manager',
+    salary: 8000,
   },
   {
     email: 'hr@corpex.com',
@@ -56,6 +58,7 @@ const SPECS: Spec[] = [
     department: Department.HR,
     position: 'HR Specialist',
     managerEmail: 'manager@corpex.com',
+    salary: 3200,
   },
   {
     email: 'finance@corpex.com',
@@ -65,6 +68,7 @@ const SPECS: Spec[] = [
     department: Department.FINANCE,
     position: 'Senior Accountant',
     managerEmail: 'manager@corpex.com',
+    salary: 4200,
   },
   {
     email: 'warehouse@corpex.com',
@@ -74,6 +78,7 @@ const SPECS: Spec[] = [
     department: Department.WAREHOUSE,
     position: 'Warehouse Lead',
     managerEmail: 'manager@corpex.com',
+    salary: 3000,
   },
   {
     email: 'fleet@corpex.com',
@@ -83,6 +88,7 @@ const SPECS: Spec[] = [
     department: Department.FLEET,
     position: 'Fleet Coordinator',
     managerEmail: 'manager@corpex.com',
+    salary: 3300,
   },
   {
     email: 'employee@corpex.com',
@@ -92,6 +98,7 @@ const SPECS: Spec[] = [
     department: Department.IT,
     position: 'Software Engineer',
     managerEmail: 'manager@corpex.com',
+    salary: 5000,
   },
 ];
 
@@ -137,6 +144,8 @@ async function ensureUserAndEmployee(spec: Spec, hashedPassword: string) {
     department: spec.department,
     contractType: ContractType.FULL_TIME,
     employmentDate: new Date('2024-01-15'),
+    isContractor: false,
+    salary: spec.salary,
     annualLeaveDays: 21,
     remainingLeave: 21,
   };

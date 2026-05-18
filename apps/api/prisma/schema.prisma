@@ -18,6 +18,10 @@ model User {
   updatedAt             DateTime       @updatedAt
   profilePicture        String?
   employee              Employee?
+  uploadedEmployeeDocuments EmployeeDocument[] @relation("EmployeeDocumentUploader")
+  createdPayrollPeriods PayrollPeriod[] @relation("PayrollPeriodCreator")
+  approvedPayrollPeriods PayrollPeriod[] @relation("PayrollPeriodApprover")
+  paidPayrollPeriods PayrollPeriod[] @relation("PayrollPeriodPayer")
   invoices              Invoice[]      @relation("UserInvoices")
   approvedLeaveRequests LeaveRequest[] @relation("ApproverLeaveRequests")
   leaveRequests         LeaveRequest[] @relation("EmployeeLeaveRequests")
@@ -48,9 +52,10 @@ model Employee {
   position        String
   department      Department
   contractType    ContractType
+  isContractor    Boolean      @default(false)
   employmentDate  DateTime
   contractEndDate DateTime?
-  salary          Float?
+  salary          Float
   annualLeaveDays Int          @default(21)
   remainingLeave  Int          @default(21)
   managerId       String?
@@ -59,6 +64,83 @@ model Employee {
   manager         Employee?    @relation("ManagerSubordinates", fields: [managerId], references: [id])
   subordinates    Employee[]   @relation("ManagerSubordinates")
   user            User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents       EmployeeDocument[]
+  payrollLines    PayrollLine[]
+}
+
+model PayrollPeriod {
+  id           String        @id @default(uuid())
+  year         Int
+  month        Int
+  status       PayrollStatus @default(DRAFT)
+  currency     String        @default("EUR")
+  notes        String?
+  createdById  String
+  approvedById String?
+  approvedAt   DateTime?
+  paidById     String?
+  paidAt       DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  createdBy    User          @relation("PayrollPeriodCreator", fields: [createdById], references: [id])
+  approvedBy   User?         @relation("PayrollPeriodApprover", fields: [approvedById], references: [id])
+  paidBy       User?         @relation("PayrollPeriodPayer", fields: [paidById], references: [id])
+  lines        PayrollLine[]
+
+  @@unique([year, month])
+  @@index([status, year, month])
+}
+
+model PayrollLine {
+  id              String        @id @default(uuid())
+  periodId        String
+  employeeId      String
+  grossSalary     Float         @map("baseSalary")
+  bonus           Float         @default(0)
+  manualDeductions Float        @default(0) @map("deductions")
+  unpaidLeaveDays Int           @default(0)
+  unpaidLeaveDeduction Float    @default(0)
+  taxableGross    Float         @default(0)
+  casRate         Float         @default(25)
+  casAmount       Float         @default(0)
+  cassRate        Float         @default(10)
+  cassAmount      Float         @default(0)
+  incomeTaxRate   Float         @default(10)
+  incomeTaxAmount Float         @default(0)
+  camRate         Float         @default(2.25)
+  camAmount       Float         @default(0)
+  employerTotalCost Float       @default(0)
+  taxRuleVersion  String        @default("RO_2026_STANDARD")
+  netAmount       Float
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  period          PayrollPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  employee        Employee      @relation(fields: [employeeId], references: [id])
+
+  @@unique([periodId, employeeId])
+  @@index([employeeId])
+}
+
+model EmployeeDocument {
+  id           String               @id @default(uuid())
+  employeeId   String
+  type         EmployeeDocumentType
+  title        String
+  fileName     String
+  fileUrl      String
+  mimeType     String
+  size         Int
+  expiryDate   DateTime?
+  notes        String?
+  uploadedById String
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  employee     Employee             @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  uploadedBy   User                 @relation("EmployeeDocumentUploader", fields: [uploadedById], references: [id])
+
+  @@index([employeeId, createdAt])
+  @@index([type])
 }
 
 model LeaveRequest {
@@ -256,6 +338,15 @@ enum ContractType {
   TEMPORARY
 }
 
+enum EmployeeDocumentType {
+  ID_CARD
+  CONTRACT
+  MEDICAL_CERTIFICATE
+  DIPLOMA
+  TRAINING
+  OTHER
+}
+
 enum LeaveType {
   ANNUAL
   MEDICAL
@@ -422,6 +513,12 @@ model CompanySettings {
   fleetExpiryThresholdRca       Int @default(30)
   fleetExpiryThresholdCasco     Int @default(30)
   fleetExpiryThresholdRovinieta Int @default(7)
+  payrollTaxCasRate             Float @default(25)
+  payrollTaxCassRate            Float @default(10)
+  payrollTaxIncomeRate          Float @default(10)
+  payrollTaxCamRate             Float @default(2.25)
+  payrollPersonalDeduction      Float @default(0)
+  payrollTaxRuleVersion         String @default("RO_2026_STANDARD")
   updatedAt             DateTime @updatedAt
 }
 
@@ -611,13 +708,21 @@ enum NotificationType {
   LEAVE_REQUEST_REJECTED
   PROJECT_TASK_ASSIGNED
   FLEET_DOCUMENT_EXPIRING
+  EMPLOYEE_DOCUMENT_EXPIRING
   STOCK_BELOW_MINIMUM
+}
+
+enum PayrollStatus {
+  DRAFT
+  APPROVED
+  PAID
 }
 
 enum NotificationEntityType {
   LEAVE_REQUEST
   PROJECT_TASK
   VEHICLE_DOCUMENT
+  EMPLOYEE_DOCUMENT
   PRODUCT
 }
 

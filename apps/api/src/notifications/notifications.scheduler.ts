@@ -1,6 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { DocumentType, VehicleDocument, Vehicle } from '@prisma/client';
+import {
+  DocumentType,
+  Employee,
+  EmployeeDocument,
+  VehicleDocument,
+  Vehicle,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from './notifications.service';
 
@@ -12,6 +18,7 @@ const DEFAULT_THRESHOLDS: Record<DocumentType, number> = {
   CASCO: 30,
   ROVINIETA: 7,
 };
+const EMPLOYEE_DOCUMENT_EXPIRY_THRESHOLD_DAYS = 30;
 
 @Injectable()
 export class NotificationsScheduler {
@@ -86,6 +93,50 @@ export class NotificationsScheduler {
       } catch (err) {
         this.logger.error(
           `Failed to emit notification for document ${doc.id}`,
+          err,
+        );
+      }
+    }
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_6AM)
+  async scanEmployeeDocumentExpiry(): Promise<void> {
+    this.logger.log('Running daily employee document expiry scan');
+
+    const today = startOfDayUtc(new Date());
+    const horizon = addDays(today, EMPLOYEE_DOCUMENT_EXPIRY_THRESHOLD_DAYS);
+
+    const expiring = await this.prisma.employeeDocument.findMany({
+      where: {
+        expiryDate: { gte: today, lte: horizon },
+      },
+      include: { employee: true },
+    });
+
+    if (!expiring.length) {
+      this.logger.log('No employee documents expiring soon');
+      return;
+    }
+
+    this.logger.log(
+      `Emitting expiry notifications for ${expiring.length} employee documents`,
+    );
+
+    for (const doc of expiring as Array<
+      EmployeeDocument & { employee: Employee }
+    >) {
+      if (!doc.expiryDate) continue;
+      try {
+        await this.notifications.notifyEmployeeDocumentExpiring({
+          documentId: doc.id,
+          documentType: doc.type,
+          documentTitle: doc.title,
+          employeeName: `${doc.employee.firstName} ${doc.employee.lastName}`,
+          expiryDate: doc.expiryDate,
+        });
+      } catch (err) {
+        this.logger.error(
+          `Failed to emit notification for employee document ${doc.id}`,
           err,
         );
       }

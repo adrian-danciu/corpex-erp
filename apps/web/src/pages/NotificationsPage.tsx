@@ -25,6 +25,7 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   LEAVE_REQUEST_REJECTED: "Leave rejected",
   PROJECT_TASK_ASSIGNED: "Task assigned",
   FLEET_DOCUMENT_EXPIRING: "Document expiring",
+  EMPLOYEE_DOCUMENT_EXPIRING: "Employee document expiring",
   STOCK_BELOW_MINIMUM: "Stock low",
 };
 

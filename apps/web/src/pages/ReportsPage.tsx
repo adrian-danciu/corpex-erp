@@ -1,11 +1,12 @@
 import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
-import { AlertCircle, Download } from "lucide-react";
+import { AlertCircle, FileSpreadsheet, FileText } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import type { ExportColumn } from "@/lib/report-export";
 
 const HR_LEAVE_SUMMARY_QUERY = gql`
   query HrLeaveSummary {
@@ -100,19 +101,9 @@ type FleetRow = {
   nearestDocumentType: string | null;
 };
 
-function exportCsv(filename: string, headers: string[], rows: string[][]) {
-  const lines = [headers.join(","), ...rows.map((r) => r.map((cell) => `"${cell}"`).join(","))];
-  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
 export default function ReportsPage() {
   const [leaveFilter, setLeaveFilter] = useState<string>("ALL");
+  const [exporting, setExporting] = useState<string | null>(null);
 
   const { data: hrData, loading: hrLoading, error: hrError } =
     useQuery<{ hrLeaveSummary: HrLeaveSummaryRow[] }>(HR_LEAVE_SUMMARY_QUERY);
@@ -137,6 +128,132 @@ export default function ReportsPage() {
 
   const filteredLeaveRows =
     leaveFilter === "ALL" ? leaveRows : leaveRows.filter((r) => r.status === leaveFilter);
+
+  const employeeExport = {
+    title: "HR Employee Report",
+    filename: "employee-report",
+    columns: [
+      { header: "ID", width: 110 },
+      { header: "First Name", width: 80 },
+      { header: "Last Name", width: 80 },
+      { header: "Position", width: 110 },
+      { header: "Department", width: 80 },
+      { header: "Contract Type", width: 90 },
+      { header: "Employment Date", width: 85 },
+      { header: "Remaining Leave", width: 85 },
+      { header: "Annual Leave", width: 75 },
+    ],
+    rows: employeeRows.map((r) => [
+      r.id,
+      r.firstName,
+      r.lastName,
+      r.position,
+      r.department,
+      r.contractType,
+      new Date(r.employmentDate).toLocaleDateString("ro-RO"),
+      String(r.remainingLeave),
+      String(r.annualLeaveDays),
+    ]),
+  };
+
+  const stockExport = {
+    title: "Stock Inventory Report",
+    filename: "stock-report",
+    columns: [
+      { header: "Product ID", width: 125 },
+      { header: "Product Name", width: 170 },
+      { header: "SKU", width: 90 },
+      { header: "Warehouse", width: 150 },
+      { header: "Quantity", width: 70 },
+    ],
+    rows: stockRows.map((r) => [
+      r.productId,
+      r.productName,
+      r.sku,
+      r.warehouseName,
+      String(r.quantity),
+    ]),
+  };
+
+  const fleetExport = {
+    title: "Fleet Vehicle Status Report",
+    filename: "fleet-report",
+    columns: [
+      { header: "ID", width: 120 },
+      { header: "Plate Number", width: 75 },
+      { header: "Brand", width: 80 },
+      { header: "Model", width: 90 },
+      { header: "Year", width: 45 },
+      { header: "Status", width: 75 },
+      { header: "Nearest Doc Expiry", width: 95 },
+      { header: "Nearest Doc Type", width: 95 },
+    ],
+    rows: fleetRows.map((r) => [
+      r.id,
+      r.plateNumber,
+      r.brand,
+      r.model,
+      String(r.year),
+      r.status,
+      r.nearestDocumentExpiry
+        ? new Date(r.nearestDocumentExpiry).toLocaleDateString("ro-RO")
+        : "",
+      r.nearestDocumentType ?? "",
+    ]),
+  };
+
+  const runExport = async (
+    format: "pdf" | "xlsx",
+    report: {
+      filename: string;
+      title: string;
+      columns: ExportColumn[];
+      rows: string[][];
+    },
+  ) => {
+    const key = `${report.filename}-${format}`;
+    setExporting(key);
+    try {
+      const { exportReport } = await import("@/lib/report-export");
+      await exportReport(format, report.filename, report.title, report.columns, report.rows);
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  const ExportButtons = ({
+    report,
+    disabled,
+  }: {
+    report: {
+      filename: string;
+      title: string;
+      columns: ExportColumn[];
+      rows: string[][];
+    };
+    disabled: boolean;
+  }) => (
+    <div className="flex flex-wrap justify-end gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={disabled || exporting === `${report.filename}-pdf`}
+        onClick={() => void runExport("pdf", report)}
+      >
+        <FileText className="mr-2 h-4 w-4" />
+        {exporting === `${report.filename}-pdf` ? "Generating..." : "PDF"}
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={disabled || exporting === `${report.filename}-xlsx`}
+        onClick={() => void runExport("xlsx", report)}
+      >
+        <FileSpreadsheet className="mr-2 h-4 w-4" />
+        Excel
+      </Button>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -265,25 +382,7 @@ export default function ReportsPage() {
               Full list of employees with contract and status information.
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={employeeRows.length === 0}
-            onClick={() =>
-              exportCsv(
-                "employee-report.csv",
-                ["ID", "First Name", "Last Name", "Position", "Department", "Contract Type", "Employment Date", "Remaining Leave", "Annual Leave"],
-                employeeRows.map((r) => [
-                  r.id, r.firstName, r.lastName, r.position, r.department,
-                  r.contractType, new Date(r.employmentDate).toLocaleDateString("ro-RO"),
-                  String(r.remainingLeave), String(r.annualLeaveDays),
-                ])
-              )
-            }
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Export CSV
-          </Button>
+          <ExportButtons report={employeeExport} disabled={employeeRows.length === 0} />
         </CardHeader>
         <CardContent>
           {employeeLoading ? (
@@ -337,23 +436,7 @@ export default function ReportsPage() {
               Net stock per product per warehouse based on all movements.
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={stockRows.length === 0}
-            onClick={() =>
-              exportCsv(
-                "stock-report.csv",
-                ["Product ID", "Product Name", "SKU", "Warehouse", "Quantity"],
-                stockRows.map((r) => [
-                  r.productId, r.productName, r.sku, r.warehouseName, String(r.quantity),
-                ])
-              )
-            }
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Export CSV
-          </Button>
+          <ExportButtons report={stockExport} disabled={stockRows.length === 0} />
         </CardHeader>
         <CardContent>
           {stockLoading ? (
@@ -403,27 +486,7 @@ export default function ReportsPage() {
               All vehicles with status and nearest document expiry.
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={fleetRows.length === 0}
-            onClick={() =>
-              exportCsv(
-                "fleet-report.csv",
-                ["ID", "Plate Number", "Brand", "Model", "Year", "Status", "Nearest Doc Expiry", "Nearest Doc Type"],
-                fleetRows.map((r) => [
-                  r.id, r.plateNumber, r.brand, r.model, String(r.year), r.status,
-                  r.nearestDocumentExpiry
-                    ? new Date(r.nearestDocumentExpiry).toLocaleDateString("ro-RO")
-                    : "",
-                  r.nearestDocumentType ?? "",
-                ])
-              )
-            }
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Export CSV
-          </Button>
+          <ExportButtons report={fleetExport} disabled={fleetRows.length === 0} />
         </CardHeader>
         <CardContent>
           {fleetLoading ? (

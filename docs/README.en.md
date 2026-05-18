@@ -8,6 +8,7 @@ These docs live under `docs/` and are meant for both developers and AI agents wh
 - Libraries and tooling: `docs/libraries.en.md`
 - Scripts you can run: `docs/scripts.en.md`
 - Validation with Zod: `docs/validation.en.md`
+- Latest implementation summary: `docs/superpowers/specs/2026-05-18-implementation-summary.md`
 
 ## Quick start (local)
 1) Install dependencies per app (Bun is the standard):
@@ -23,3 +24,4 @@ These docs live under `docs/` and are meant for both developers and AI agents wh
 - This repo is a lightweight monorepo with two independent apps (`apps/web`, `apps/api`).
 - Look at `docs/architecture.en.md` for the intended frontend -> API -> DB flow.
 - Several libraries are present in dependencies but are not yet wired in code (see `docs/architecture.en.md`).
+- Current implemented additions include employee document storage, report exports, employee document expiry reminders, and the Payroll module with Romanian tax rules and B2B contractor handling.

@@ -8,6 +8,7 @@ Documentatia este in `docs/` si este gandita pentru dezvoltatori si agenti AI ca
 - Librarii si tooling: `docs/libraries.ro.md`
 - Scripturi care pot fi rulate: `docs/scripts.ro.md`
 - Validare cu Zod: `docs/validation.ro.md`
+- Sumarul ultimei implementari: `docs/superpowers/specs/2026-05-18-implementation-summary.md`
 
 ## Quick start (local)
 1) Instaleaza dependintele pe fiecare app (Bun este standardul):
@@ -22,4 +23,4 @@ Documentatia este in `docs/` si este gandita pentru dezvoltatori si agenti AI ca
 ## Note pentru agenti AI
 - Repo-ul este un monorepo simplu cu doua aplicatii independente (`apps/web`, `apps/api`).
 - Vezi `docs/architecture.ro.md` pentru fluxul frontend -> API -> DB.
-- Exista librarii in dependinte care nu sunt inca conectate in cod (vezi `docs/architecture.ro.md`).
+- Adaugirile curente includ documente angajati, exporturi rapoarte, remindere pentru expirarea documentelor de angajat si modulul Payroll cu reguli romanesti de taxare si suport B2B contractor.

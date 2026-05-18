@@ -1,5 +1,5 @@
 import { InputType, Field, Float, Int, PartialType } from '@nestjs/graphql';
-import { Department } from '@prisma/client';
+import { ContractType, Department } from '@prisma/client';
 import { CreateEmployeeInput } from './create-employee.input';
 
 @InputType()
@@ -21,6 +21,12 @@ export class UpdateEmployeeInput extends PartialType(CreateEmployeeInput) {
 
   @Field(() => Department, { nullable: true })
   department?: Department;
+
+  @Field(() => ContractType, { nullable: true })
+  contractType?: ContractType;
+
+  @Field(() => Boolean, { nullable: true })
+  isContractor?: boolean;
 
   @Field(() => Float, { nullable: true })
   salary?: number;

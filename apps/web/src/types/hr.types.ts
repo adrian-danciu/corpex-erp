@@ -27,6 +27,15 @@ export enum LeaveStatus {
   CANCELLED = "CANCELLED",
 }
 
+export enum EmployeeDocumentType {
+  ID_CARD = "ID_CARD",
+  CONTRACT = "CONTRACT",
+  MEDICAL_CERTIFICATE = "MEDICAL_CERTIFICATE",
+  DIPLOMA = "DIPLOMA",
+  TRAINING = "TRAINING",
+  OTHER = "OTHER",
+}
+
 export interface Employee {
   id: string;
   userId?: string | null;
@@ -42,14 +51,33 @@ export interface Employee {
   position: string;
   department: Department;
   contractType: ContractType;
+  isContractor: boolean;
   employmentDate: string;
   contractEndDate?: string | null;
-  salary?: number | null;
+  salary: number;
   annualLeaveDays: number;
   remainingLeave: number;
   managerId?: string | null;
   manager?: Employee | null;
   subordinates?: Employee[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EmployeeDocument {
+  id: string;
+  employeeId: string;
+  employee?: Employee | null;
+  type: EmployeeDocumentType;
+  title: string;
+  fileName: string;
+  fileUrl: string;
+  mimeType: string;
+  size: number;
+  expiryDate?: string | null;
+  notes?: string | null;
+  uploadedById: string;
+  uploadedBy?: User | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -87,9 +115,10 @@ export interface CreateEmployeeInput {
   position: string;
   department: Department;
   contractType: ContractType;
+  isContractor?: boolean;
   employmentDate: string;
   contractEndDate?: string;
-  salary?: number;
+  salary: number;
   annualLeaveDays?: number;
   managerId?: string;
 }
@@ -101,6 +130,8 @@ export interface UpdateEmployeeInput {
   city?: string;
   position?: string;
   department?: Department;
+  contractType?: ContractType;
+  isContractor?: boolean;
   salary?: number;
   annualLeaveDays?: number;
   remainingLeave?: number;

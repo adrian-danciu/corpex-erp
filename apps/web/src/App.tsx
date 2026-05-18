@@ -32,6 +32,8 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Layout from "./components/layout/Layout";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import ReportsPage from "./pages/ReportsPage";
+import DocumentsPage from "./pages/DocumentsPage";
+import PayrollPage from "./pages/payroll/PayrollPage";
 import VehiclesPage from "./pages/fleet/VehiclesPage";
 import VehicleCreatePage from "./pages/fleet/VehicleCreatePage";
 import VehicleDetailPage from "./pages/fleet/VehicleDetailPage";
@@ -257,6 +259,26 @@ function App() {
             element={
               <ProtectedRoute requiredModule="stock" requiredAccess="read">
                 <DashboardLayout><PurchaseOrderDetailPage /></DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Documents */}
+          <Route
+            path="/documents"
+            element={
+              <ProtectedRoute requiredModule="hr" requiredAccess="read">
+                <DashboardLayout><DocumentsPage /></DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Payroll */}
+          <Route
+            path="/payroll"
+            element={
+              <ProtectedRoute requiredModule="payroll" requiredAccess="read">
+                <DashboardLayout><PayrollPage /></DashboardLayout>
               </ProtectedRoute>
             }
           />

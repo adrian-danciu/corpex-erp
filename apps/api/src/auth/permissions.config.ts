@@ -8,6 +8,7 @@ export interface ModulePermissions {
   leaveRequests: AccessLevel;
   leaveApprovals: boolean;
   finance: AccessLevel;
+  payroll: AccessLevel;
   stock: AccessLevel;
   fleet: AccessLevel;
   projects: AccessLevel;
@@ -21,6 +22,7 @@ export const DEPARTMENT_PERMISSIONS: Record<Department, ModulePermissions> = {
     leaveRequests: 'write',
     leaveApprovals: true,
     finance: 'none',
+    payroll: 'write',
     stock: 'none',
     fleet: 'none',
     projects: 'read',
@@ -32,6 +34,7 @@ export const DEPARTMENT_PERMISSIONS: Record<Department, ModulePermissions> = {
     leaveRequests: 'write',
     leaveApprovals: false,
     finance: 'write',
+    payroll: 'write',
     stock: 'none',
     fleet: 'none',
     projects: 'read',
@@ -43,6 +46,7 @@ export const DEPARTMENT_PERMISSIONS: Record<Department, ModulePermissions> = {
     leaveRequests: 'write',
     leaveApprovals: false,
     finance: 'none',
+    payroll: 'none',
     stock: 'write',
     fleet: 'none',
     projects: 'read',
@@ -54,6 +58,7 @@ export const DEPARTMENT_PERMISSIONS: Record<Department, ModulePermissions> = {
     leaveRequests: 'write',
     leaveApprovals: false,
     finance: 'none',
+    payroll: 'none',
     stock: 'none',
     fleet: 'write',
     projects: 'read',
@@ -65,6 +70,7 @@ export const DEPARTMENT_PERMISSIONS: Record<Department, ModulePermissions> = {
     leaveRequests: 'write',
     leaveApprovals: true,
     finance: 'write',
+    payroll: 'write',
     stock: 'write',
     fleet: 'write',
     projects: 'write',
@@ -76,6 +82,7 @@ export const DEPARTMENT_PERMISSIONS: Record<Department, ModulePermissions> = {
     leaveRequests: 'write',
     leaveApprovals: false,
     finance: 'none',
+    payroll: 'none',
     stock: 'read',
     fleet: 'none',
     projects: 'read',

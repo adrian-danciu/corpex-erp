@@ -4,12 +4,14 @@ export type NotificationType =
   | "LEAVE_REQUEST_REJECTED"
   | "PROJECT_TASK_ASSIGNED"
   | "FLEET_DOCUMENT_EXPIRING"
+  | "EMPLOYEE_DOCUMENT_EXPIRING"
   | "STOCK_BELOW_MINIMUM";
 
 export type NotificationEntityType =
   | "LEAVE_REQUEST"
   | "PROJECT_TASK"
   | "VEHICLE_DOCUMENT"
+  | "EMPLOYEE_DOCUMENT"
   | "PRODUCT";
 
 export interface Notification {

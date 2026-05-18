@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Department } from '@prisma/client';
@@ -21,6 +22,10 @@ export class EmployeesService {
    * @returns Created employee
    */
   async create(createEmployeeInput: CreateEmployeeInput): Promise<Employee> {
+    if (createEmployeeInput.salary <= 0) {
+      throw new BadRequestException('Gross salary must be greater than 0');
+    }
+
     // Check if employee with this personalId already exists
     const existingEmployee = await this.prisma.employee.findUnique({
       where: { personalId: createEmployeeInput.personalId },
@@ -58,6 +63,7 @@ export class EmployeesService {
         position: createEmployeeInput.position,
         department: createEmployeeInput.department,
         contractType: createEmployeeInput.contractType,
+        isContractor: createEmployeeInput.isContractor ?? false,
         employmentDate: createEmployeeInput.employmentDate,
         contractEndDate: createEmployeeInput.contractEndDate,
         salary: createEmployeeInput.salary,
@@ -179,6 +185,13 @@ export class EmployeesService {
       );
     }
 
+    if (
+      updateEmployeeInput.salary !== undefined &&
+      updateEmployeeInput.salary <= 0
+    ) {
+      throw new BadRequestException('Gross salary must be greater than 0');
+    }
+
     return this.prisma.employee.update({
       where: { id: updateEmployeeInput.id },
       data: {
@@ -187,6 +200,8 @@ export class EmployeesService {
         city: updateEmployeeInput.city,
         position: updateEmployeeInput.position,
         department: updateEmployeeInput.department,
+        contractType: updateEmployeeInput.contractType,
+        isContractor: updateEmployeeInput.isContractor,
         salary: updateEmployeeInput.salary,
         annualLeaveDays: updateEmployeeInput.annualLeaveDays,
         remainingLeave: updateEmployeeInput.remainingLeave,

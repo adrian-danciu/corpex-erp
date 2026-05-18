@@ -39,14 +39,17 @@ export class CreateEmployeeInput {
   @Field(() => ContractType)
   contractType: ContractType;
 
+  @Field(() => Boolean, { defaultValue: false })
+  isContractor: boolean;
+
   @Field()
   employmentDate: Date;
 
   @Field({ nullable: true })
   contractEndDate?: Date;
 
-  @Field(() => Float, { nullable: true })
-  salary?: number;
+  @Field(() => Float)
+  salary: number;
 
   @Field(() => Int, { defaultValue: 21 })
   annualLeaveDays: number;

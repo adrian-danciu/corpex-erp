@@ -17,6 +17,7 @@ import { FleetModule } from './fleet/fleet.module';
 import { SettingsModule } from './settings/settings.module';
 import { ProjectsModule } from './projects/projects.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { PayrollModule } from './payroll/payroll.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     SettingsModule,
     ProjectsModule,
     NotificationsModule,
+    PayrollModule,
   ],
   controllers: [AppController],
   providers: [AppService],

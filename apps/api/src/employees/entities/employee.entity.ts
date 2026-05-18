@@ -64,14 +64,17 @@ export class Employee {
   @Field(() => ContractType)
   contractType: ContractType;
 
+  @Field(() => Boolean)
+  isContractor: boolean;
+
   @Field(() => Date)
   employmentDate: Date;
 
   @Field(() => Date, { nullable: true })
   contractEndDate?: Date | null;
 
-  @Field(() => Float, { nullable: true })
-  salary?: number | null;
+  @Field(() => Float)
+  salary: number;
 
   @Field(() => Int)
   annualLeaveDays: number;

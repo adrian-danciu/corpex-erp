@@ -13,17 +13,20 @@ corpex-erp/
 ## apps/web (frontend)
  - `src/`: React UI code.
    - `components/`: Shared components and UI primitives.
-     - `ui/`: shadcn/ui primitives (Radix + Tailwind).
+     - `ui/`: shadcn/ui primitives (Radix + Tailwind), including tooltip and checkbox.
      - `common/`: Shared components (Pagination, etc.).
      - `fleet/`: Fleet-specific components (VehicleStatusBadge, DocumentTypeBadge).
      - `projects/`: Project status badge, plus tab components under `projects/tabs/` (OverviewTab, TeamTab, MaterialsTab, VehiclesTab, TasksTab, FeedTab, InvoicesTab).
      - `dashboard/`: Dashboard widgets (FleetExpiryWidget, MyProjectsWidget, MyTasksWidget, etc.).
    - `pages/`: Page components organized by module.
-     - `hr/`: Employees, Leave Requests, Approvals.
+     - `hr/`: Employees, Leave Requests, Approvals, Employee Detail.
      - `finance/`: Overview, Partners, Invoices (Invoice editor includes a Project picker + cost-import helper).
      - `stock/`: Warehouses, Products, Stock Movements.
      - `fleet/`: Vehicles list, create, and detail pages (Expense form includes a Project picker with smart default).
      - `projects/`: Projects list, create, and detail (tabbed) pages.
+     - `payroll/`: Payroll generation/detail page.
+     - `DocumentsPage.tsx`: Employee document storage overview.
+     - `ReportsPage.tsx`: Reports with PDF/Excel export actions.
    - `graphql/mutations/`: Apollo `gql` query and mutation documents (all modules).
    - `types/`: TypeScript interfaces and enums per module.
    - `lib/schemas/`: Zod validation schemas per module.
@@ -34,7 +37,7 @@ corpex-erp/
  - `src/`: NestJS application.
    - `auth/`: Authentication module (JWT, Passport).
    - `users/`: User management.
-   - `employees/`: HR module (Employees, Leave Requests).
+   - `employees/`: HR module (Employees, Employee Documents, Leave Requests).
    - `finance/`: Finance module (Partners, Invoices, Payments).
    - `stock/`: Stock module (Warehouses, Products, Stock Movements).
    - `fleet/`: Fleet module (Vehicles, Documents, Mileage, Leases, Expenses).
@@ -59,8 +62,9 @@ corpex-erp/
    - `common/`: Shared DTOs (PaginationInput, Paginated factory).
    - `reporting/`: Dashboard metrics module.
    - `settings/`: Company settings (singleton).
+   - `payroll/`: Payroll periods, payroll lines, Romanian tax calculation, draft delete/approve/paid lifecycle.
  - `src/schema.gql`: Auto-generated GraphQL schema.
- - `prisma/schema.prisma`: Prisma schema (User, Employee, Partner, Invoice, Vehicle, VehicleDocument, MileageLog, VehicleLease, VehicleExpense, Project, ProjectMember, ProjectMaterial, ProjectVehicle, ProjectTask, ProjectFeedEntry, etc.). `Invoice`, `StockMovement`, and `VehicleExpense` carry an optional `projectId`. `ProductStock` carries `reservedQty`.
+ - `prisma/schema.prisma`: Prisma schema (User, Employee, EmployeeDocument, PayrollPeriod, PayrollLine, Partner, Invoice, Vehicle, VehicleDocument, MileageLog, VehicleLease, VehicleExpense, Project, ProjectMember, ProjectMaterial, ProjectVehicle, ProjectTask, ProjectFeedEntry, etc.). `Invoice`, `StockMovement`, and `VehicleExpense` carry an optional `projectId`. `ProductStock` carries `reservedQty`.
  - `prisma.config.ts`: Prisma config with `DATABASE_URL`.
  - `uploads/` (gitignored): runtime storage for feed attachments. Served at `/uploads/` via `useStaticAssets`.
 
@@ -69,3 +73,4 @@ corpex-erp/
 - `apps/api` hosts a GraphQL endpoint (NestJS + Apollo Server).
 - `apps/api` uses Prisma + Postgres (Neon serverless) to persist data.
 - All modules follow the same pattern: `entities/` → `dto/` → `service` → `resolver` → registered in the module → imported in `AppModule`.
+- Employee salary is required and represents gross monthly EUR salary. `Employee.isContractor` marks B2B contractors, which payroll treats without employee taxes or CAM.

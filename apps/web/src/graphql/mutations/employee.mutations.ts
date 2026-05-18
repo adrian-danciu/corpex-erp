@@ -23,6 +23,7 @@ export const CREATE_EMPLOYEE_MUTATION = gql`
       position
       department
       contractType
+      isContractor
       employmentDate
       contractEndDate
       salary
@@ -66,6 +67,7 @@ export const UPDATE_EMPLOYEE_MUTATION = gql`
       position
       department
       contractType
+      isContractor
       employmentDate
       contractEndDate
       salary
@@ -118,6 +120,7 @@ export const GET_EMPLOYEES_QUERY = gql`
         position
         department
         contractType
+        isContractor
         employmentDate
         contractEndDate
         salary
@@ -167,6 +170,7 @@ export const GET_EMPLOYEE_QUERY = gql`
       position
       department
       contractType
+      isContractor
       employmentDate
       contractEndDate
       salary
@@ -220,6 +224,7 @@ export const GET_MY_EMPLOYEE_PROFILE_QUERY = gql`
       position
       department
       contractType
+      isContractor
       employmentDate
       contractEndDate
       salary
@@ -272,6 +277,7 @@ export const GET_EMPLOYEES_BY_DEPARTMENT_QUERY = gql`
       position
       department
       contractType
+      isContractor
       employmentDate
       remainingLeave
     }
@@ -295,6 +301,7 @@ export const GET_MY_SUBORDINATES_QUERY = gql`
       position
       department
       contractType
+      isContractor
       employmentDate
       remainingLeave
     }

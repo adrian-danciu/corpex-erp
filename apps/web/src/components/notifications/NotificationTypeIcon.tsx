@@ -6,6 +6,7 @@ import {
   CarFront,
   PackageMinus,
   Bell,
+  FileWarning,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { NotificationType } from "@/types/notifications.types";
@@ -17,6 +18,7 @@ const ICON_MAP: Record<NotificationType, LucideIcon> = {
   LEAVE_REQUEST_REJECTED: CalendarX,
   PROJECT_TASK_ASSIGNED: ClipboardCheck,
   FLEET_DOCUMENT_EXPIRING: CarFront,
+  EMPLOYEE_DOCUMENT_EXPIRING: FileWarning,
   STOCK_BELOW_MINIMUM: PackageMinus,
 };
 
@@ -26,6 +28,7 @@ const COLOR_MAP: Record<NotificationType, string> = {
   LEAVE_REQUEST_REJECTED: "text-rose-600 bg-rose-50",
   PROJECT_TASK_ASSIGNED: "text-violet-600 bg-violet-50",
   FLEET_DOCUMENT_EXPIRING: "text-amber-600 bg-amber-50",
+  EMPLOYEE_DOCUMENT_EXPIRING: "text-amber-600 bg-amber-50",
   STOCK_BELOW_MINIMUM: "text-orange-600 bg-orange-50",
 };
 

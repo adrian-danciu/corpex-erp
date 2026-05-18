@@ -61,4 +61,22 @@ export class UpdateCompanySettingsInput {
 
   @Field(() => Int, { nullable: true })
   fleetExpiryThresholdRovinieta?: number;
+
+  @Field(() => Float, { nullable: true })
+  payrollTaxCasRate?: number;
+
+  @Field(() => Float, { nullable: true })
+  payrollTaxCassRate?: number;
+
+  @Field(() => Float, { nullable: true })
+  payrollTaxIncomeRate?: number;
+
+  @Field(() => Float, { nullable: true })
+  payrollTaxCamRate?: number;
+
+  @Field(() => Float, { nullable: true })
+  payrollPersonalDeduction?: number;
+
+  @Field(() => String, { nullable: true })
+  payrollTaxRuleVersion?: string;
 }
