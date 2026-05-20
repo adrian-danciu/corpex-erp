@@ -352,7 +352,7 @@ export default function ReportsPage() {
                 <thead>
                   <tr className="border-b text-left text-xs font-medium text-slate-600">
                     <th className="py-2">Aging Bucket (days)</th>
-                    <th className="py-2 text-right">Outstanding Amount (RON)</th>
+                    <th className="py-2 text-right">Outstanding Amount (EUR)</th>
                     <th className="py-2 text-right">Invoice Count</th>
                   </tr>
                 </thead>
@@ -361,7 +361,7 @@ export default function ReportsPage() {
                     <tr key={row.label} className="border-b last:border-0">
                       <td className="py-2 font-medium">{row.label}</td>
                       <td className="py-2 text-right">
-                        {row.amount.toLocaleString("ro-RO", { style: "currency", currency: "RON" })}
+                        {row.amount.toLocaleString("ro-RO", { style: "currency", currency: "EUR" })}
                       </td>
                       <td className="py-2 text-right">{row.invoiceCount}</td>
                     </tr>

@@ -13,6 +13,7 @@ import { ProjectMaterial } from './project-material.entity';
 import { ProjectVehicle } from './project-vehicle.entity';
 import { ProjectTask } from './project-task.entity';
 import { ProjectFeedEntry } from './project-feed-entry.entity';
+import { ProjectService } from './project-service.entity';
 
 registerEnumType(ProjectStatus, { name: 'ProjectStatus' });
 
@@ -77,6 +78,9 @@ export class Project {
 
   @Field(() => [ProjectMaterial], { nullable: true })
   materials?: ProjectMaterial[];
+
+  @Field(() => [ProjectService], { nullable: true })
+  services?: ProjectService[];
 
   @Field(() => [ProjectVehicle], { nullable: true })
   vehicles?: ProjectVehicle[];

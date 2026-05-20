@@ -411,7 +411,7 @@ export default function VehicleDetailPage() {
                         <td className="py-3">
                           {lease.monthlyRate.toLocaleString("ro-RO", {
                             style: "currency",
-                            currency: "RON",
+                            currency: "EUR",
                           })}
                         </td>
                         <td className="py-3 text-slate-600">{lease.notes ?? "—"}</td>
@@ -452,7 +452,7 @@ export default function VehicleDetailPage() {
                     Total:{" "}
                     {totalExpenses.toLocaleString("ro-RO", {
                       style: "currency",
-                      currency: "RON",
+                      currency: "EUR",
                     })}
                   </span>
                 )}
@@ -485,7 +485,7 @@ export default function VehicleDetailPage() {
                         <td className="py-3 font-medium">
                           {expense.amount.toLocaleString("ro-RO", {
                             style: "currency",
-                            currency: "RON",
+                            currency: "EUR",
                           })}
                         </td>
                         <td className="py-3 text-slate-600">{expense.description ?? "—"}</td>
@@ -796,7 +796,7 @@ export default function VehicleDetailPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Monthly Rate (RON) *</Label>
+              <Label>Monthly Rate (EUR) *</Label>
               <Input type="number" step="0.01" {...addLeaseForm.register("monthlyRate", { valueAsNumber: true })} />
             </div>
             <div className="space-y-2">
@@ -853,7 +853,7 @@ export default function VehicleDetailPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Monthly Rate (RON)</Label>
+              <Label>Monthly Rate (EUR)</Label>
               <Input type="number" step="0.01" {...editLeaseForm.register("monthlyRate", { valueAsNumber: true })} />
             </div>
             <div className="space-y-2">
@@ -915,7 +915,7 @@ export default function VehicleDetailPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Amount (RON) *</Label>
+              <Label>Amount (EUR) *</Label>
               <Input type="number" step="0.01" {...expenseForm.register("amount", { valueAsNumber: true })} />
               {expenseForm.formState.errors.amount && (
                 <p className="text-xs text-red-600">

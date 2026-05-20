@@ -12,6 +12,7 @@ import type { LeaveRequest } from "@/types/hr.types";
 import { LeaveType, LeaveStatus } from "@/types/hr.types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageLoading } from "@/components/ui/page-loading";
@@ -35,6 +36,7 @@ interface LeaveRequestFormValues {
 
 export default function LeaveRequestsPage() {
   const [showForm, setShowForm] = useState(false);
+  const [leaveRequestToCancel, setLeaveRequestToCancel] = useState<string | null>(null);
   const {
     control,
     handleSubmit,
@@ -98,12 +100,12 @@ export default function LeaveRequestsPage() {
     }
   };
 
-  const handleCancel = (leaveRequestId: string) => {
-    if (confirm("Are you sure you want to cancel this leave request?")) {
-      void cancelLeaveRequest({ variables: { leaveRequestId } }).catch(() => {
-        // toast already shown
-      });
-    }
+  const confirmCancel = () => {
+    if (!leaveRequestToCancel) return;
+    void cancelLeaveRequest({ variables: { leaveRequestId: leaveRequestToCancel } }).catch(() => {
+      // toast already shown
+    });
+    setLeaveRequestToCancel(null);
   };
 
   // Calculate days between dates
@@ -392,7 +394,7 @@ export default function LeaveRequestsPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleCancel(request.id)}
+                        onClick={() => setLeaveRequestToCancel(request.id)}
                         className="text-red-600 hover:text-red-700"
                       >
                         Cancel
@@ -405,6 +407,14 @@ export default function LeaveRequestsPage() {
           )}
         </CardContent>
       </Card>
+      <ConfirmationDialog
+        open={Boolean(leaveRequestToCancel)}
+        onOpenChange={(open) => !open && setLeaveRequestToCancel(null)}
+        title="Cancel leave request?"
+        description="This will cancel the selected leave request and remove it from the approval flow."
+        confirmLabel="Cancel request"
+        onConfirm={confirmCancel}
+      />
     </div>
   );
 }

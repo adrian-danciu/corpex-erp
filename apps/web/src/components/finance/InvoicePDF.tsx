@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   },
 });
 
-function fmt(amount: number, currency = "RON") {
+function fmt(amount: number, currency = "EUR") {
   return `${amount.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
 }
 

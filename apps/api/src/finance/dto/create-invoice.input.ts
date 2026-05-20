@@ -25,7 +25,7 @@ export class CreateInvoiceInput {
   @Field({ nullable: true })
   deliveryDate?: Date;
 
-  @Field({ defaultValue: 'RON' })
+  @Field({ defaultValue: 'EUR' })
   currency: string;
 
   @Field({ nullable: true })
@@ -33,6 +33,12 @@ export class CreateInvoiceInput {
 
   @Field(() => String, { nullable: true })
   projectId?: string;
+
+  @Field(() => String, { nullable: true })
+  purchaseOrderId?: string;
+
+  @Field(() => String, { nullable: true })
+  purchaseReceiptId?: string;
 
   @Field(() => [CreateInvoiceItemInput])
   items: CreateInvoiceItemInput[];

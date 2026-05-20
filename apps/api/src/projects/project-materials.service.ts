@@ -72,9 +72,12 @@ export class ProjectMaterialsService {
     if (!warehouse) throw new NotFoundException('Warehouse not found');
 
     const onHand = productStock?.quantity ?? 0;
-    if (onHand < input.quantity) {
+    const reserved = productStock?.reservedQty ?? 0;
+    const defective = productStock?.defectiveQty ?? 0;
+    const available = onHand - reserved - defective;
+    if (available < input.quantity) {
       throw new BadRequestException(
-        `Insufficient stock: ${onHand} ${product.unit} available in ${warehouse.code}, ${input.quantity} requested`,
+        `Insufficient stock: ${available} ${product.unit} available in ${warehouse.code}, ${input.quantity} requested`,
       );
     }
 

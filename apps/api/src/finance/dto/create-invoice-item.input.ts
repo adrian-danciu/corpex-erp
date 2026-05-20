@@ -1,4 +1,5 @@
 import { InputType, Field, Float } from '@nestjs/graphql';
+import { InvoiceItemSourceType } from '@prisma/client';
 
 @InputType()
 export class CreateInvoiceItemInput {
@@ -16,4 +17,13 @@ export class CreateInvoiceItemInput {
 
   @Field(() => Float, { defaultValue: 19 })
   vatRate: number;
+
+  @Field(() => String, { nullable: true })
+  projectId?: string;
+
+  @Field(() => InvoiceItemSourceType, { nullable: true })
+  sourceType?: InvoiceItemSourceType;
+
+  @Field(() => String, { nullable: true })
+  sourceId?: string;
 }

@@ -1,4 +1,5 @@
 import { ObjectType, Field, ID, Float } from '@nestjs/graphql';
+import { InvoiceItemSourceType } from '@prisma/client';
 
 @ObjectType()
 export class InvoiceItem {
@@ -28,4 +29,13 @@ export class InvoiceItem {
 
   @Field(() => Float)
   vatAmount: number;
+
+  @Field(() => String, { nullable: true })
+  projectId?: string | null;
+
+  @Field(() => InvoiceItemSourceType, { nullable: true })
+  sourceType?: InvoiceItemSourceType | null;
+
+  @Field(() => String, { nullable: true })
+  sourceId?: string | null;
 }

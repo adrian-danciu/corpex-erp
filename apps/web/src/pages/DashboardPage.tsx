@@ -55,8 +55,8 @@ const LEAVE_COLORS: Record<string, string> = {
   CANCELLED: "#94a3b8",
 };
 
-function formatRON(value: number) {
-  return new Intl.NumberFormat("ro-RO", { style: "currency", currency: "RON", maximumFractionDigits: 0 }).format(value);
+function formatEUR(value: number) {
+  return new Intl.NumberFormat("ro-RO", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(value);
 }
 
 function KpiCard({ title, value, sub, icon, accent }: { title: string; value: string | number; sub: string; icon?: React.ReactNode; accent?: string }) {
@@ -160,12 +160,12 @@ export default function DashboardPage() {
             />
             <KpiCard
               title="Total Invoiced"
-              value={formatRON(metrics.totalInvoicedAmount)}
+              value={formatEUR(metrics.totalInvoicedAmount)}
               sub="Sum of all invoice totals"
             />
             <KpiCard
               title="Total Collected"
-              value={formatRON(metrics.totalPaidAmount)}
+              value={formatEUR(metrics.totalPaidAmount)}
               sub="Payments received"
               accent="text-green-700"
             />
@@ -194,7 +194,7 @@ export default function DashboardPage() {
                       <Cell fill="#22c55e" />
                       <Cell fill="#f59e0b" />
                     </Pie>
-                    <Tooltip formatter={(v) => formatRON(Number(v))} />
+                    <Tooltip formatter={(v) => formatEUR(Number(v))} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="flex justify-center gap-4 mt-2 text-xs text-slate-600">
@@ -239,7 +239,7 @@ export default function DashboardPage() {
             {/* Finance: Aging buckets */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Finance – Invoice Aging (RON)</CardTitle>
+                <CardTitle className="text-base">Finance – Invoice Aging (EUR)</CardTitle>
               </CardHeader>
               <CardContent>
                 {agingRows.every((r) => r.amount === 0) ? (
@@ -250,7 +250,7 @@ export default function DashboardPage() {
                       <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                       <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                      <Tooltip formatter={(v) => formatRON(Number(v))} />
+                      <Tooltip formatter={(v) => formatEUR(Number(v))} />
                       <Bar dataKey="amount" fill="#ef4444" radius={[4, 4, 0, 0]} name="Outstanding" />
                     </BarChart>
                   </ResponsiveContainer>

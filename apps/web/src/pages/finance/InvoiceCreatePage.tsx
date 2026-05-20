@@ -23,24 +23,24 @@ import { ArrowLeft, Download, Plus, Trash2, Loader2 } from "lucide-react";
 import type { Partner } from "@/types/finance.types";
 import { PaginatedResult } from "@/types/pagination.types";
 import { GET_PARTNERS_QUERY, CREATE_INVOICE_MUTATION, GET_INVOICES_QUERY } from "@/graphql/mutations/finance.mutations";
+import { GET_PURCHASE_ORDERS_QUERY } from "@/graphql/mutations/purchaseOrders.mutations";
 import {
   GET_PROJECTS_QUERY,
   GET_PROJECT_COSTS_FOR_INVOICE_QUERY,
 } from "@/graphql/mutations/project.queries";
 import type { InvoiceLineDraft, Project } from "@/types/project.types";
-import { useCurrency } from "@/hooks/useCurrency";
+import type { PurchaseOrder } from "@/types/purchaseOrder.types";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("ro-RO", {
     style: "currency",
-    currency: "RON",
+    currency: "EUR",
     minimumFractionDigits: 2,
   }).format(amount);
 }
 
 export default function InvoiceCreatePage() {
   const navigate = useNavigate();
-  const { currency: defaultCurrency } = useCurrency();
   const [searchParams] = useSearchParams();
   const initialProjectId = searchParams.get("projectId") ?? "";
 
@@ -59,6 +59,13 @@ export default function InvoiceCreatePage() {
     { variables: { filter: {} } },
   );
   const projects = projectsData?.projects ?? [];
+  const { data: purchaseOrdersData } = useQuery<{
+    purchaseOrders: PaginatedResult<PurchaseOrder>;
+  }>(GET_PURCHASE_ORDERS_QUERY, {
+    variables: { pagination: { skip: 0, take: 200 }, filter: {} },
+    fetchPolicy: "cache-first",
+  });
+  const purchaseOrders = purchaseOrdersData?.purchaseOrders.items ?? [];
 
   const [fetchProjectCosts, { loading: importingCosts }] = useLazyQuery<{
     projectCostsForInvoice: InvoiceLineDraft[];
@@ -94,14 +101,19 @@ export default function InvoiceCreatePage() {
       issueDate: today,
       dueDate: defaultDueDate,
       deliveryDate: "",
-      currency: defaultCurrency,
+      currency: "EUR",
       notes: "",
       projectId: initialProjectId,
+      purchaseOrderId: "",
+      purchaseReceiptId: "",
       items: [{ description: "", quantity: 1, unit: "buc", unitPrice: 0, vatRate: 19 }],
     },
   });
 
   const selectedProjectId = watch("projectId");
+  const isClientInvoice = watch("isClientInvoice");
+  const selectedPurchaseOrderId = watch("purchaseOrderId");
+  const selectedPurchaseOrder = purchaseOrders.find((po) => po.id === selectedPurchaseOrderId);
 
   // When project changes (or is provided via URL), pre-fill partnerId from the project
   useEffect(() => {
@@ -132,16 +144,19 @@ export default function InvoiceCreatePage() {
 
   const onSubmit = (data: CreateInvoiceFormData) => {
 
-    const { deliveryDate, projectId, ...rest } = data;
+    const { deliveryDate, projectId, purchaseOrderId, purchaseReceiptId, ...rest } = data;
 
     void createInvoice({
       variables: {
         createInvoiceInput: {
           ...rest,
+          currency: "EUR",
           // Send null when delivery date is empty so backend/Prisma
           // don't receive an invalid Date object
           deliveryDate: deliveryDate ? deliveryDate : null,
           projectId: projectId || undefined,
+          purchaseOrderId: purchaseOrderId || undefined,
+          purchaseReceiptId: purchaseReceiptId || undefined,
         },
       },
     }).catch(() => {
@@ -156,7 +171,7 @@ export default function InvoiceCreatePage() {
     });
     const drafts = result.data?.projectCostsForInvoice ?? [];
     if (drafts.length === 0) {
-      toastInfo("No issued materials or vehicle expenses on this project yet.");
+      toastInfo("No unbilled materials, services, or vehicle expenses on this project yet.");
       return;
     }
     // Replace the items array with imported drafts
@@ -167,6 +182,9 @@ export default function InvoiceCreatePage() {
         unit: d.unit,
         unitPrice: d.unitPrice,
         vatRate: d.vatRate,
+        projectId: selectedProjectId,
+        sourceType: d.sourceType,
+        sourceId: d.sourceId,
       })),
     );
   };
@@ -219,22 +237,7 @@ export default function InvoiceCreatePage() {
 
             <div className="space-y-2">
               <Label htmlFor="currency">Currency</Label>
-              <Controller
-                name="currency"
-                control={control}
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="RON">RON</SelectItem>
-                      <SelectItem value="EUR">EUR</SelectItem>
-                      <SelectItem value="USD">USD</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
+              <Input id="currency" value="EUR" disabled />
             </div>
           </CardContent>
         </Card>
@@ -343,6 +346,70 @@ export default function InvoiceCreatePage() {
             </div>
           </CardContent>
         </Card>
+
+        {!isClientInvoice && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Procurement link (optional)</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Purchase order</Label>
+                <Controller
+                  name="purchaseOrderId"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      onValueChange={(value) => {
+                        field.onChange(value === "__none__" ? "" : value);
+                        setValue("purchaseReceiptId", "");
+                      }}
+                      value={field.value || "__none__"}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="No purchase order" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">No purchase order</SelectItem>
+                        {purchaseOrders.map((order) => (
+                          <SelectItem key={order.id} value={order.id}>
+                            {order.formattedNumber} - {order.supplier?.name ?? "Supplier"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>NIR / receipt</Label>
+                <Controller
+                  name="purchaseReceiptId"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      onValueChange={(value) => field.onChange(value === "__none__" ? "" : value)}
+                      value={field.value || "__none__"}
+                      disabled={!selectedPurchaseOrder?.receipts?.length}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="No receipt" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">No receipt</SelectItem>
+                        {(selectedPurchaseOrder?.receipts ?? []).map((receipt) => (
+                          <SelectItem key={receipt.id} value={receipt.id}>
+                            {receipt.formattedNumber}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Dates */}
         <Card>

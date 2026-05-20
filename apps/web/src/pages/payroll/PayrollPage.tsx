@@ -24,6 +24,7 @@ import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
@@ -95,6 +96,7 @@ export default function PayrollPage() {
   const [manualDeductions, setManualDeductions] = useState(0);
   const [lineNotes, setLineNotes] = useState("");
   const [exporting, setExporting] = useState<string | null>(null);
+  const [deleteDraftDialogOpen, setDeleteDraftDialogOpen] = useState(false);
 
   const {
     data: periodsData,
@@ -252,16 +254,12 @@ export default function PayrollPage() {
     });
   };
 
-  const deleteDraft = () => {
+  const confirmDeleteDraft = () => {
     if (!activePeriod || activePeriod.status !== PayrollStatus.DRAFT) return;
-    const confirmed = window.confirm(
-      `Delete the ${periodLabel(activePeriod)} payroll draft? This cannot be undone.`,
-    );
-    if (!confirmed) return;
-
     const nextPeriod = periods.find((period) => period.id !== activePeriod.id);
     setSelectedPeriodId(nextPeriod?.id ?? null);
     void deletePayrollPeriod({ variables: { periodId: activePeriod.id } });
+    setDeleteDraftDialogOpen(false);
   };
 
   const runExport = async (formatType: "pdf" | "xlsx") => {
@@ -426,7 +424,7 @@ export default function PayrollPage() {
                       size="sm"
                       className="gap-2 text-red-600 hover:text-red-700"
                       disabled={deletingPeriod}
-                      onClick={deleteDraft}
+                      onClick={() => setDeleteDraftDialogOpen(true)}
                     >
                       <Trash2 className="h-4 w-4" />
                       {deletingPeriod ? "Deleting..." : "Delete Draft"}
@@ -659,6 +657,19 @@ export default function PayrollPage() {
           </CardContent>
         </Card>
       </div>
+      <ConfirmationDialog
+        open={deleteDraftDialogOpen}
+        onOpenChange={setDeleteDraftDialogOpen}
+        title="Delete payroll draft?"
+        description={
+          activePeriod
+            ? `This permanently deletes the ${periodLabel(activePeriod)} payroll draft. This action cannot be undone.`
+            : "This payroll draft will be permanently deleted."
+        }
+        confirmLabel="Delete draft"
+        loading={deletingPeriod}
+        onConfirm={confirmDeleteDraft}
+      />
     </div>
   );
 }

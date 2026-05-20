@@ -13,6 +13,7 @@ import { useAuthStore } from "@/stores/auth.store";
 import { OverviewTab } from "@/components/projects/tabs/OverviewTab";
 import { TeamTab } from "@/components/projects/tabs/TeamTab";
 import { MaterialsTab } from "@/components/projects/tabs/MaterialsTab";
+import { ServicesTab } from "@/components/projects/tabs/ServicesTab";
 import { VehiclesTab } from "@/components/projects/tabs/VehiclesTab";
 import { TasksTab } from "@/components/projects/tabs/TasksTab";
 import { FeedTab } from "@/components/projects/tabs/FeedTab";
@@ -90,10 +91,11 @@ export default function ProjectDetailPage() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid grid-cols-7">
+        <TabsList className="grid grid-cols-8">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="materials">Materials</TabsTrigger>
+          <TabsTrigger value="services">Services</TabsTrigger>
           <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
           <TabsTrigger value="feed">Feed</TabsTrigger>
@@ -116,6 +118,12 @@ export default function ProjectDetailPage() {
         </TabsContent>
         <TabsContent value="materials">
           <MaterialsTab
+            project={project}
+            isProjectManager={isProjectManager}
+          />
+        </TabsContent>
+        <TabsContent value="services">
+          <ServicesTab
             project={project}
             isProjectManager={isProjectManager}
           />

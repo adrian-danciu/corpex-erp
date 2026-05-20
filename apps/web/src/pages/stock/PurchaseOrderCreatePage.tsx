@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@apollo/client/react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,6 +41,12 @@ import { PurchaseOrderLineEditor } from "@/components/stock/PurchaseOrderLineEdi
 
 export default function PurchaseOrderCreatePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const prefillProductId = searchParams.get("productId") ?? "";
+  const prefillWarehouseId = searchParams.get("warehouseId") ?? "";
+  const prefillQty = Number(searchParams.get("qty") ?? "1") || 1;
+  const prefillUnitCost = Number(searchParams.get("unitCost") ?? "0") || 0;
+  const fromProject = searchParams.get("fromProject");
 
   const { data: partnersData } = useQuery<{
     partners: PaginatedResult<Partner>;
@@ -85,11 +91,18 @@ export default function PurchaseOrderCreatePage() {
     resolver: zodResolver(createPurchaseOrderSchema) as any,
     defaultValues: {
       supplierId: "",
-      warehouseId: "",
+      warehouseId: prefillWarehouseId,
       expectedDate: "",
-      currency: "RON",
-      notes: "",
-      lines: [{ productId: "", qtyOrdered: 1, unitCost: 0, notes: "" }],
+      currency: "EUR",
+      notes: fromProject ? `Created from project ${fromProject} material demand.` : "",
+      lines: [
+        {
+          productId: prefillProductId,
+          qtyOrdered: prefillQty,
+          unitCost: prefillUnitCost,
+          notes: fromProject ? `Project ${fromProject}` : "",
+        },
+      ],
     },
   });
 
@@ -117,7 +130,7 @@ export default function PurchaseOrderCreatePage() {
             expectedDate: values.expectedDate
               ? new Date(values.expectedDate).toISOString()
               : undefined,
-            currency: values.currency || "RON",
+            currency: "EUR",
             notes: values.notes || undefined,
             lines: values.lines.map((l) => ({
               productId: l.productId,
@@ -249,8 +262,8 @@ export default function PurchaseOrderCreatePage() {
                   <Label htmlFor="currency">Currency</Label>
                   <Input
                     id="currency"
-                    {...register("currency")}
-                    placeholder="RON"
+                    value="EUR"
+                    disabled
                   />
                 </div>
               </div>

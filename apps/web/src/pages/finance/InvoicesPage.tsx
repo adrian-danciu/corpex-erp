@@ -14,7 +14,7 @@ import { Pagination } from "@/components/common/Pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { PaginatedResult } from "@/types/pagination.types";
 
-function formatCurrency(amount: number, currency = "RON") {
+function formatCurrency(amount: number, currency = "EUR") {
   return new Intl.NumberFormat("ro-RO", {
     style: "currency",
     currency,

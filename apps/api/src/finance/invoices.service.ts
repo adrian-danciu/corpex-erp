@@ -6,7 +6,7 @@ import { Invoice } from './entities/invoice.entity';
 import { InvoiceLineDraft } from './entities/invoice-line-draft.entity';
 import { PaginationInput } from '../common/dto/pagination.input';
 import { IPaginatedType } from '../common/dto/pagination-result.dto';
-import { ProjectMaterialStatus } from '@prisma/client';
+import { InvoiceItemSourceType, ProjectMaterialStatus, ProjectServiceStatus } from '@prisma/client';
 
 const invoiceInclude = {
   partner: true,
@@ -33,6 +33,9 @@ export class InvoicesService {
         vatRate: item.vatRate,
         amount,
         vatAmount,
+        projectId: item.projectId ?? input.projectId ?? null,
+        sourceType: item.sourceType ?? null,
+        sourceId: item.sourceId ?? null,
       };
     });
 
@@ -50,9 +53,11 @@ export class InvoicesService {
         issueDate: input.issueDate,
         dueDate: input.dueDate,
         deliveryDate: input.deliveryDate,
-        currency: input.currency,
+        currency: 'EUR',
         notes: input.notes,
         projectId: input.projectId ?? null,
+        purchaseOrderId: input.purchaseOrderId ?? null,
+        purchaseReceiptId: input.purchaseReceiptId ?? null,
         subtotal,
         vatTotal,
         total,
@@ -133,7 +138,27 @@ export class InvoicesService {
     });
     const defaultVatRate = settings?.defaultVatRate ?? 19;
 
-    const [materials, vehicleExpenses] = await Promise.all([
+    const billedRows = await this.prisma.invoiceItem.findMany({
+      where: {
+        projectId,
+        sourceType: {
+          in: [
+            InvoiceItemSourceType.PROJECT_MATERIAL,
+            InvoiceItemSourceType.PROJECT_SERVICE,
+            InvoiceItemSourceType.VEHICLE_EXPENSE,
+          ],
+        },
+        invoice: { status: { not: 'CANCELLED' } },
+      },
+      select: { sourceType: true, sourceId: true },
+    });
+    const billed = new Set(
+      billedRows
+        .filter((row) => row.sourceType && row.sourceId)
+        .map((row) => `${row.sourceType}:${row.sourceId}`),
+    );
+
+    const [materials, services, vehicleExpenses] = await Promise.all([
       this.prisma.projectMaterial.findMany({
         where: {
           projectId,
@@ -150,6 +175,14 @@ export class InvoicesService {
           movements: { where: { type: 'OUT' } },
         },
       }),
+      this.prisma.projectService.findMany({
+        where: {
+          projectId,
+          billable: true,
+          status: ProjectServiceStatus.DELIVERED,
+        },
+        orderBy: { createdAt: 'asc' },
+      }),
       this.prisma.vehicleExpense.findMany({
         where: { projectId },
         include: { vehicle: true },
@@ -159,6 +192,9 @@ export class InvoicesService {
     const drafts: InvoiceLineDraft[] = [];
 
     for (const m of materials) {
+      if (billed.has(`${InvoiceItemSourceType.PROJECT_MATERIAL}:${m.id}`)) {
+        continue;
+      }
       const issuedQty = m.movements.reduce((acc, mv) => acc + mv.quantity, 0);
       if (issuedQty <= 0) continue;
       const totalCost = m.movements.reduce(
@@ -166,6 +202,8 @@ export class InvoicesService {
         0,
       );
       const unitPrice = issuedQty > 0 ? totalCost / issuedQty : 0;
+      const amount = issuedQty * unitPrice;
+      const vatAmount = amount * (defaultVatRate / 100);
       drafts.push({
         description: `${m.product.name} (issued from ${m.warehouse.code})`,
         quantity: issuedQty,
@@ -173,10 +211,41 @@ export class InvoicesService {
         unitPrice,
         vatRate: defaultVatRate,
         source: `project-material:${m.id}`,
+        sourceType: InvoiceItemSourceType.PROJECT_MATERIAL,
+        sourceId: m.id,
+        amount,
+        vatAmount,
+        total: amount + vatAmount,
+      });
+    }
+
+    for (const s of services) {
+      if (billed.has(`${InvoiceItemSourceType.PROJECT_SERVICE}:${s.id}`)) {
+        continue;
+      }
+      const amount = s.quantity * s.unitPrice;
+      const vatAmount = amount * (s.vatRate / 100);
+      drafts.push({
+        description: s.description,
+        quantity: s.quantity,
+        unit: s.unit,
+        unitPrice: s.unitPrice,
+        vatRate: s.vatRate,
+        source: `project-service:${s.id}`,
+        sourceType: InvoiceItemSourceType.PROJECT_SERVICE,
+        sourceId: s.id,
+        amount,
+        vatAmount,
+        total: amount + vatAmount,
       });
     }
 
     for (const e of vehicleExpenses) {
+      if (billed.has(`${InvoiceItemSourceType.VEHICLE_EXPENSE}:${e.id}`)) {
+        continue;
+      }
+      const amount = e.amount;
+      const vatAmount = amount * (defaultVatRate / 100);
       drafts.push({
         description: `${e.type} — ${e.vehicle.plateNumber} — ${e.date.toISOString().split('T')[0]}`,
         quantity: 1,
@@ -184,6 +253,11 @@ export class InvoicesService {
         unitPrice: e.amount,
         vatRate: defaultVatRate,
         source: `vehicle-expense:${e.id}`,
+        sourceType: InvoiceItemSourceType.VEHICLE_EXPENSE,
+        sourceId: e.id,
+        amount,
+        vatAmount,
+        total: amount + vatAmount,
       });
     }
 

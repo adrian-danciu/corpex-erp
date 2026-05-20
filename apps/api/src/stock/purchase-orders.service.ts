@@ -162,7 +162,7 @@ export class PurchaseOrdersService {
         supplierId: input.supplierId,
         warehouseId: input.warehouseId,
         expectedDate: input.expectedDate ?? null,
-        currency: input.currency ?? 'RON',
+        currency: 'EUR',
         notes: input.notes ?? null,
         subtotal,
         createdById,
@@ -272,7 +272,7 @@ export class PurchaseOrdersService {
           warehouseId: input.warehouseId ?? undefined,
           expectedDate:
             input.expectedDate === undefined ? undefined : input.expectedDate,
-          currency: input.currency ?? undefined,
+          currency: input.currency === undefined ? undefined : 'EUR',
           notes: input.notes === undefined ? undefined : input.notes,
           subtotal: newSubtotal ?? undefined,
         },

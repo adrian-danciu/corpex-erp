@@ -17,10 +17,11 @@ export class SettingsService {
   }
 
   async updateSettings(input: UpdateCompanySettingsInput) {
+    const data = { ...input, defaultCurrency: 'EUR' };
     return this.prisma.companySettings.upsert({
       where: { id: SINGLETON_ID },
-      update: input,
-      create: { id: SINGLETON_ID, ...input },
+      update: data,
+      create: { id: SINGLETON_ID, ...data },
     });
   }
 }

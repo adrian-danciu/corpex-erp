@@ -139,6 +139,11 @@ export const GET_PURCHASE_ORDERS_QUERY = gql`
             unit
           }
         }
+        receipts {
+          id
+          formattedNumber
+          receivedDate
+        }
       }
       meta {
         total

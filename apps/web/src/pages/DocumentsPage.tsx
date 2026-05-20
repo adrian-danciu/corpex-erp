@@ -24,6 +24,7 @@ import { EmployeeDocumentType } from "@/types/hr.types";
 import type { PaginatedResult } from "@/types/pagination.types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -70,6 +71,7 @@ export default function DocumentsPage() {
   const [notes, setNotes] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState<EmployeeDocument | null>(null);
 
   const documentFilter = useMemo(
     () => ({
@@ -183,11 +185,10 @@ export default function DocumentsPage() {
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (!window.confirm("Delete this document record? The uploaded file will remain on disk.")) {
-      return;
-    }
-    void deleteDocument({ variables: { id } });
+  const confirmDelete = () => {
+    if (!documentToDelete) return;
+    void deleteDocument({ variables: { id: documentToDelete.id } });
+    setDocumentToDelete(null);
   };
 
   const busy = uploading || creating;
@@ -390,7 +391,7 @@ export default function DocumentsPage() {
                             variant="ghost"
                             size="icon"
                             className="text-red-600 hover:text-red-700"
-                            onClick={() => handleDelete(document.id)}
+                            onClick={() => setDocumentToDelete(document)}
                             disabled={deleting}
                             title="Delete document"
                           >
@@ -406,6 +407,15 @@ export default function DocumentsPage() {
           </CardContent>
         </Card>
       </div>
+      <ConfirmationDialog
+        open={Boolean(documentToDelete)}
+        onOpenChange={(open) => !open && setDocumentToDelete(null)}
+        title="Delete document record?"
+        description={`This removes ${documentToDelete?.title ?? "this document"} from the employee file list. The uploaded file will remain on disk.`}
+        confirmLabel="Delete record"
+        loading={deleting}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

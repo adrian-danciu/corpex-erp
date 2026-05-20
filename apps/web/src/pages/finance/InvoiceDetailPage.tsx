@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import {
   Select,
   SelectContent,
@@ -49,8 +50,13 @@ import {
   DELETE_INVOICE_MUTATION,
 } from "@/graphql/mutations/finance.mutations";
 
-function formatCurrency(amount: number, currency = "RON") {
+function formatCurrency(amount: number, currency = "EUR") {
   return new Intl.NumberFormat("ro-RO", { style: "currency", currency, minimumFractionDigits: 2 }).format(amount);
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return "—";
+  return new Date(value).toLocaleDateString("ro-RO");
 }
 
 function PaymentDialog({ invoice, onRecordPayment, loading: paymentLoading }: { invoice: Invoice; onRecordPayment: (data: { amount: number; paymentDate: string; paymentMethod: string; reference: string }) => void; loading?: boolean }) {
@@ -150,6 +156,8 @@ export default function InvoiceDetailPage() {
   );
 
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   if (loading) {
     return <PageLoading message="Loading invoice..." />;
@@ -213,19 +221,31 @@ export default function InvoiceDetailPage() {
   };
 
   const handleMarkAsSent = () => {
-    updateStatus({ variables: { id: invoice.id, status: InvoiceStatus.SENT } });
+    updateStatus({
+      variables: {
+        updateInvoiceStatusInput: {
+          id: invoice.id,
+          status: InvoiceStatus.SENT,
+        },
+      },
+    });
   };
 
-  const handleCancel = () => {
-    if (window.confirm("Are you sure you want to cancel this invoice?")) {
-      updateStatus({ variables: { id: invoice.id, status: InvoiceStatus.CANCELLED } });
-    }
+  const confirmCancel = () => {
+    updateStatus({
+      variables: {
+        updateInvoiceStatusInput: {
+          id: invoice.id,
+          status: InvoiceStatus.CANCELLED,
+        },
+      },
+    });
+    setCancelDialogOpen(false);
   };
 
-  const handleDelete = () => {
-    if (window.confirm("Are you sure you want to delete this invoice?")) {
-      deleteInvoice({ variables: { id: invoice.id } });
-    }
+  const confirmDelete = () => {
+    deleteInvoice({ variables: { id: invoice.id } });
+    setDeleteDialogOpen(false);
   };
 
   return (
@@ -262,7 +282,7 @@ export default function InvoiceDetailPage() {
             <PaymentDialog invoice={invoice} onRecordPayment={handleRecordPayment} loading={paymentLoading} />
           )}
           {invoice.status !== InvoiceStatus.CANCELLED && invoice.status !== InvoiceStatus.PAID && (
-            <Button variant="destructive" className="gap-2" onClick={handleCancel}>
+            <Button variant="destructive" className="gap-2" onClick={() => setCancelDialogOpen(true)}>
               <XCircle className="h-4 w-4" /> Cancel
             </Button>
           )}
@@ -301,7 +321,7 @@ export default function InvoiceDetailPage() {
             <Card>
               <CardContent className="pt-6">
                 <p className="text-sm text-slate-500">Due Date</p>
-                <p className="text-2xl font-bold">{invoice.dueDate}</p>
+                <p className="text-2xl font-bold">{formatDate(invoice.dueDate)}</p>
               </CardContent>
             </Card>
           </div>
@@ -336,16 +356,16 @@ export default function InvoiceDetailPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <p className="text-sm text-slate-500">Issue Date</p>
-                    <p className="font-medium">{invoice.issueDate}</p>
+                    <p className="font-medium">{formatDate(invoice.issueDate)}</p>
                   </div>
                   <div>
                     <p className="text-sm text-slate-500">Due Date</p>
-                    <p className="font-medium">{invoice.dueDate}</p>
+                    <p className="font-medium">{formatDate(invoice.dueDate)}</p>
                   </div>
                   {invoice.deliveryDate && (
                     <div>
                       <p className="text-sm text-slate-500">Delivery Date</p>
-                      <p className="font-medium">{invoice.deliveryDate}</p>
+                      <p className="font-medium">{formatDate(invoice.deliveryDate)}</p>
                     </div>
                   )}
                   <div>
@@ -432,7 +452,7 @@ export default function InvoiceDetailPage() {
 
           {/* Delete */}
           <div className="flex justify-end">
-            <Button variant="outline" className="text-red-600 hover:text-red-700" onClick={handleDelete} disabled={deleting}>
+            <Button variant="outline" className="text-red-600 hover:text-red-700" onClick={() => setDeleteDialogOpen(true)} disabled={deleting}>
               {deleting ? "Deleting..." : "Delete Invoice"}
             </Button>
           </div>
@@ -468,7 +488,7 @@ export default function InvoiceDetailPage() {
                     <tbody className="text-sm">
                       {invoice.payments.map((payment: Payment) => (
                         <tr key={payment.id} className="border-b">
-                          <td className="py-3">{payment.paymentDate}</td>
+                          <td className="py-3">{formatDate(payment.paymentDate)}</td>
                           <td className="py-3 text-right font-medium text-green-700">
                             {formatCurrency(payment.amount, invoice.currency)}
                           </td>
@@ -513,6 +533,23 @@ export default function InvoiceDetailPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      <ConfirmationDialog
+        open={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
+        title="Cancel invoice?"
+        description={`This will mark invoice ${invoice.series}-${String(invoice.number).padStart(4, "0")} as cancelled. It will no longer count as active billing, but its history will remain visible.`}
+        confirmLabel="Cancel invoice"
+        onConfirm={confirmCancel}
+      />
+      <ConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete invoice?"
+        description={`This permanently deletes invoice ${invoice.series}-${String(invoice.number).padStart(4, "0")} and its line items. This action cannot be undone.`}
+        confirmLabel="Delete invoice"
+        loading={deleting}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

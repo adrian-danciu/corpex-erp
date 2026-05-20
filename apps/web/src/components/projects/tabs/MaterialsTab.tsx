@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useLazyQuery, useQuery } from "@apollo/client/react";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { Plus, Trash2 } from "lucide-react";
@@ -63,6 +64,7 @@ interface Props {
 }
 
 export function MaterialsTab({ project, isProjectManager }: Props) {
+  const navigate = useNavigate();
   const { formatMoney } = useCurrency();
   const [allocateOpen, setAllocateOpen] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState<ProjectMaterial | null>(
@@ -74,6 +76,12 @@ export function MaterialsTab({ project, isProjectManager }: Props) {
   const [warehouseId, setWarehouseId] = useState("");
   const [quantity, setQuantity] = useState<string>("");
   const [notes, setNotes] = useState("");
+  const [purchaseDraft, setPurchaseDraft] = useState<{
+    productId: string;
+    warehouseId: string;
+    quantity: number;
+    unitCost: number;
+  } | null>(null);
 
   const variables = { projectId: project.id };
 
@@ -137,6 +145,7 @@ export function MaterialsTab({ project, isProjectManager }: Props) {
     setQuantity("");
     setNotes("");
     setError("");
+    setPurchaseDraft(null);
   };
 
   const [allocateMaterial, { loading: allocating }] = useMutationWithToast(
@@ -181,8 +190,15 @@ export function MaterialsTab({ project, isProjectManager }: Props) {
           warehouses.find((w) => w.id === warehouseId)?.code ?? "this warehouse"
         }`,
       );
+      setPurchaseDraft({
+        productId,
+        warehouseId,
+        quantity: quantityNumber - onHand,
+        unitCost: selectedProduct?.unitPrice ?? 0,
+      });
       return;
     }
+    setPurchaseDraft(null);
     allocateMaterial({
       variables: {
         input: {
@@ -316,8 +332,27 @@ export function MaterialsTab({ project, isProjectManager }: Props) {
           </DialogHeader>
           <div className="space-y-3">
             {error && (
-              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-800 border border-red-200">
-                {error}
+              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-800 border border-red-200 space-y-2">
+                <p>{error}</p>
+                {purchaseDraft && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const params = new URLSearchParams({
+                        productId: purchaseDraft.productId,
+                        warehouseId: purchaseDraft.warehouseId,
+                        qty: String(purchaseDraft.quantity),
+                        unitCost: String(purchaseDraft.unitCost),
+                        fromProject: project.code,
+                      });
+                      navigate(`/stock/purchase-orders/new?${params.toString()}`);
+                    }}
+                  >
+                    Create purchase order draft
+                  </Button>
+                )}
               </div>
             )}
             <div>

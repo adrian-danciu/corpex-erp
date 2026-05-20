@@ -200,7 +200,7 @@ model Invoice {
   vatTotal        Float         @default(0)
   total           Float         @default(0)
   paidAmount      Float         @default(0)
-  currency        String        @default("RON")
+  currency        String        @default("EUR")
   notes           String?
   createdById     String
   createdAt       DateTime      @default(now())
@@ -212,8 +212,14 @@ model Invoice {
   payments        Payment[]
   projectId       String?
   project         Project?      @relation(fields: [projectId], references: [id])
+  purchaseOrderId String?
+  purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
+  purchaseReceiptId String?
+  purchaseReceipt PurchaseOrderReceipt? @relation(fields: [purchaseReceiptId], references: [id])
 
   @@unique([series, number])
+  @@index([purchaseOrderId])
+  @@index([purchaseReceiptId])
 }
 
 model InvoiceItem {
@@ -226,7 +232,14 @@ model InvoiceItem {
   vatRate     Float   @default(19)
   amount      Float
   vatAmount   Float
+  projectId   String?
+  sourceType  InvoiceItemSourceType?
+  sourceId    String?
   invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  project     Project? @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([sourceType, sourceId])
 }
 
 model Payment {
@@ -384,6 +397,13 @@ enum InvoiceStatus {
   CANCELLED
 }
 
+enum InvoiceItemSourceType {
+  PROJECT_MATERIAL
+  PROJECT_SERVICE
+  VEHICLE_EXPENSE
+  MANUAL
+}
+
 enum PaymentMethod {
   BANK_TRANSFER
   CASH
@@ -531,7 +551,7 @@ model Project {
   partner          Partner             @relation(fields: [partnerId], references: [id])
   status           ProjectStatus       @default(PLANNING)
   budget           Float               @default(0)
-  currency         String              @default("RON")
+  currency         String              @default("EUR")
   plannedStartDate DateTime?
   plannedEndDate   DateTime?
   actualStartDate  DateTime?
@@ -548,8 +568,10 @@ model Project {
   tasks            ProjectTask[]
   feed             ProjectFeedEntry[]
   invoices         Invoice[]
+  invoiceItems     InvoiceItem[]
   stockMovements   StockMovement[]
   vehicleExpenses  VehicleExpense[]
+  services         ProjectService[]
 }
 
 model ProjectMember {
@@ -582,6 +604,24 @@ model ProjectMaterial {
   product      Product                @relation("ProductProjectMaterials", fields: [productId], references: [id])
   warehouse    Warehouse              @relation("WarehouseProjectMaterials", fields: [warehouseId], references: [id])
   movements    StockMovement[]        @relation("ProjectMaterialMovements")
+}
+
+model ProjectService {
+  id          String               @id @default(uuid())
+  projectId   String
+  description String
+  quantity    Float
+  unit        String               @default("service")
+  unitPrice   Float
+  vatRate     Float                @default(19)
+  status      ProjectServiceStatus @default(DELIVERED)
+  billable    Boolean              @default(true)
+  notes       String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  project     Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, status, billable])
 }
 
 model ProjectVehicle {
@@ -665,6 +705,12 @@ enum ProjectMaterialStatus {
   CANCELLED
 }
 
+enum ProjectServiceStatus {
+  PLANNED
+  DELIVERED
+  CANCELLED
+}
+
 enum ProjectTaskStatus {
   TODO
   IN_PROGRESS
@@ -735,7 +781,7 @@ model PurchaseOrder {
   status       PurchaseOrderStatus    @default(DRAFT)
   orderDate    DateTime               @default(now())
   expectedDate DateTime?
-  currency     String                 @default("RON")
+  currency     String                 @default("EUR")
   subtotal     Float                  @default(0)
   notes        String?
   cancelledAt  DateTime?
@@ -748,6 +794,7 @@ model PurchaseOrder {
   createdBy    User                   @relation("UserPurchaseOrders", fields: [createdById], references: [id])
   lines        PurchaseOrderLine[]
   receipts     PurchaseOrderReceipt[]
+  invoices     Invoice[]
 
   @@unique([series, number])
   @@index([status, expectedDate])
@@ -780,6 +827,7 @@ model PurchaseOrderReceipt {
   order        PurchaseOrder              @relation(fields: [orderId], references: [id], onDelete: Cascade)
   createdBy    User                       @relation("UserPurchaseReceipts", fields: [createdById], references: [id])
   lines        PurchaseOrderReceiptLine[]
+  invoices     Invoice[]
 
   @@unique([nirSeries, nirNumber])
 }

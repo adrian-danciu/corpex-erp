@@ -52,7 +52,7 @@ export class ProjectsService {
           description: input.description,
           partnerId: input.partnerId,
           budget: input.budget ?? 0,
-          currency: input.currency ?? 'RON',
+          currency: 'EUR',
           plannedStartDate: input.plannedStartDate,
           plannedEndDate: input.plannedEndDate,
           notes: input.notes,
@@ -102,7 +102,7 @@ export class ProjectsService {
           name: input.name ?? undefined,
           description: input.description ?? undefined,
           budget: input.budget ?? undefined,
-          currency: input.currency ?? undefined,
+          currency: input.currency === undefined ? undefined : 'EUR',
           plannedStartDate: input.plannedStartDate ?? undefined,
           plannedEndDate: input.plannedEndDate ?? undefined,
           notes: input.notes ?? undefined,
@@ -305,10 +305,14 @@ export class ProjectsService {
     });
     if (!project) throw new NotFoundException(`Project ${projectId} not found`);
 
-    const [materialAgg, vehicleAgg] = await Promise.all([
+    const [materialAgg, services, vehicleAgg] = await Promise.all([
       this.prisma.stockMovement.findMany({
         where: { projectId, type: 'OUT' },
         select: { quantity: true, unitCost: true },
+      }),
+      this.prisma.projectService.findMany({
+        where: { projectId, billable: true, status: 'DELIVERED' },
+        select: { quantity: true, unitPrice: true },
       }),
       this.prisma.vehicleExpense.aggregate({
         where: { projectId },
@@ -320,13 +324,18 @@ export class ProjectsService {
       (acc, m) => acc + m.quantity * (m.unitCost ?? 0),
       0,
     );
+    const servicesCost = services.reduce(
+      (acc, service) => acc + service.quantity * service.unitPrice,
+      0,
+    );
     const vehicleCost = vehicleAgg._sum.amount ?? 0;
-    const totalActual = materialsCost + vehicleCost;
+    const totalActual = materialsCost + servicesCost + vehicleCost;
 
     return {
       budget: project.budget,
       currency: project.currency,
       materialsCost,
+      servicesCost,
       vehicleCost,
       totalActual,
       remaining: project.budget - totalActual,

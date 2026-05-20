@@ -17,7 +17,7 @@ export const createPurchaseOrderSchema = z.object({
   supplierId: z.string().min(1, "Supplier is required"),
   warehouseId: z.string().min(1, "Warehouse is required"),
   expectedDate: z.string().optional().or(z.literal("")),
-  currency: z.string().default("RON"),
+  currency: z.string().default("EUR"),
   notes: z
     .string()
     .max(1000, "Notes are too long")

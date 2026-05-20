@@ -10,6 +10,8 @@ import { ProjectMembersResolver } from './project-members.resolver';
 import { ProjectMembersService } from './project-members.service';
 import { ProjectTaskCommentsResolver } from './project-task-comments.resolver';
 import { ProjectTaskCommentsService } from './project-task-comments.service';
+import { ProjectServicesResolver } from './project-services.resolver';
+import { ProjectServicesService } from './project-services.service';
 import { ProjectTasksResolver } from './project-tasks.resolver';
 import { ProjectTasksService } from './project-tasks.service';
 import { ProjectVehiclesResolver } from './project-vehicles.resolver';
@@ -30,6 +32,8 @@ import { ProjectAccessGuard } from './guards/project-access.guard';
     ProjectMembersResolver,
     ProjectMaterialsService,
     ProjectMaterialsResolver,
+    ProjectServicesService,
+    ProjectServicesResolver,
     ProjectVehiclesService,
     ProjectVehiclesResolver,
     ProjectTasksService,

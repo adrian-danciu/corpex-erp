@@ -125,7 +125,7 @@ export class PayrollService {
       data: {
         year: input.year,
         month: input.month,
-        currency: input.currency || 'EUR',
+        currency: 'EUR',
         notes: input.notes?.trim() || null,
         createdById: userId,
         lines: {

@@ -56,6 +56,7 @@ export const GET_PROJECT_COST_ROLLUP_QUERY = gql`
     projectCostRollup(projectId: $projectId) {
       budget
       materialsCost
+      servicesCost
       vehicleCost
       totalActual
       remaining
@@ -95,6 +96,25 @@ export const GET_PROJECT_MATERIALS_QUERY = gql`
       updatedAt
       product { id sku name unit unitPrice currentStock }
       warehouse { id code name }
+    }
+  }
+`;
+
+export const GET_PROJECT_SERVICES_QUERY = gql`
+  query GetProjectServices($projectId: String!) {
+    projectServices(projectId: $projectId) {
+      id
+      projectId
+      description
+      quantity
+      unit
+      unitPrice
+      vatRate
+      status
+      billable
+      notes
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -185,6 +205,11 @@ export const GET_PROJECT_COSTS_FOR_INVOICE_QUERY = gql`
       unitPrice
       vatRate
       source
+      sourceType
+      sourceId
+      amount
+      vatAmount
+      total
     }
   }
 `;

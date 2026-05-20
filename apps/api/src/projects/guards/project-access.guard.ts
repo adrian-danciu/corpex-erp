@@ -106,6 +106,17 @@ export class ProjectAccessGuard implements CanActivate {
       return row.projectId;
     }
 
+    const serviceId = this.findStringField(args, 'serviceId');
+    if (serviceId) {
+      const row = await this.prisma.projectService.findUnique({
+        where: { id: serviceId },
+        select: { projectId: true },
+      });
+      if (!row)
+        throw new NotFoundException(`Project service ${serviceId} not found`);
+      return row.projectId;
+    }
+
     const assignmentId = this.findStringField(args, 'assignmentId');
     if (assignmentId) {
       const row = await this.prisma.projectVehicle.findUnique({

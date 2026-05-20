@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@apollo/client/react";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { ArrowLeft, Edit, Trash2, Phone, Mail, MapPin, Building2, CreditCard, AlertCircle } from "lucide-react";
 import { PageLoading } from "@/components/ui/page-loading";
 import PartnerTypeBadge from "@/components/finance/PartnerTypeBadge";
@@ -12,6 +14,7 @@ import { GET_PARTNER_QUERY, GET_PARTNERS_QUERY, DELETE_PARTNER_MUTATION } from "
 export default function PartnerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const { data, loading, error } = useQuery<{ partner: Partner | null }>(GET_PARTNER_QUERY, {
     variables: { id },
@@ -27,10 +30,9 @@ export default function PartnerDetailPage() {
     },
   );
 
-  const handleDelete = () => {
-    if (window.confirm(`Are you sure you want to delete this partner?`)) {
-      void deletePartner({ variables: { id } }).catch(() => {});
-    }
+  const confirmDelete = () => {
+    void deletePartner({ variables: { id } }).catch(() => {});
+    setDeleteDialogOpen(false);
   };
 
   if (loading) {
@@ -84,7 +86,7 @@ export default function PartnerDetailPage() {
             <Edit className="h-4 w-4" />
             Edit
           </Button>
-          <Button variant="destructive" className="gap-2" onClick={handleDelete} disabled={deleting}>
+          <Button variant="destructive" className="gap-2" onClick={() => setDeleteDialogOpen(true)} disabled={deleting}>
             <Trash2 className="h-4 w-4" />
             {deleting ? "Deleting..." : "Delete"}
           </Button>
@@ -205,6 +207,15 @@ export default function PartnerDetailPage() {
           </div>
         </CardContent>
       </Card>
+      <ConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete partner?"
+        description={`This permanently deletes ${partner.name}. This action cannot be undone.`}
+        confirmLabel="Delete partner"
+        loading={deleting}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

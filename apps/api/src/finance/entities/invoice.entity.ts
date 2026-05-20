@@ -6,7 +6,7 @@ import {
   Int,
   registerEnumType,
 } from '@nestjs/graphql';
-import { InvoiceType, InvoiceStatus } from '@prisma/client';
+import { InvoiceItemSourceType, InvoiceType, InvoiceStatus } from '@prisma/client';
 import { Partner } from './partner.entity';
 import { InvoiceItem } from './invoice-item.entity';
 import { Payment } from './payment.entity';
@@ -20,6 +20,11 @@ registerEnumType(InvoiceType, {
 registerEnumType(InvoiceStatus, {
   name: 'InvoiceStatus',
   description: 'Status of an invoice',
+});
+
+registerEnumType(InvoiceItemSourceType, {
+  name: 'InvoiceItemSourceType',
+  description: 'Origin of an invoice line item',
 });
 
 @ObjectType()
@@ -95,6 +100,12 @@ export class Invoice {
 
   @Field(() => String, { nullable: true })
   projectId?: string | null;
+
+  @Field(() => String, { nullable: true })
+  purchaseOrderId?: string | null;
+
+  @Field(() => String, { nullable: true })
+  purchaseReceiptId?: string | null;
 
   @Field(() => Date)
   createdAt: Date;

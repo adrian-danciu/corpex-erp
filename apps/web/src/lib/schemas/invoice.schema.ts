@@ -18,6 +18,11 @@ export const invoiceItemSchema = z.object({
   unit: z.string().min(1, "Unit is required").default("buc"),
   unitPrice: z.coerce.number().min(0, "Unit price must be 0 or greater"),
   vatRate: z.coerce.number().min(0).max(100).default(19),
+  projectId: z.string().optional(),
+  sourceType: z
+    .enum(["PROJECT_MATERIAL", "PROJECT_SERVICE", "VEHICLE_EXPENSE", "MANUAL"])
+    .optional(),
+  sourceId: z.string().optional(),
 });
 
 export type InvoiceItemFormData = z.infer<typeof invoiceItemSchema>;
@@ -39,11 +44,15 @@ export const createInvoiceSchema = z.object({
 
   deliveryDate: z.string().optional().or(z.literal("")),
 
-  currency: z.string().default("RON"),
+  currency: z.string().default("EUR"),
 
   notes: z.string().max(1000, "Notes are too long").optional().or(z.literal("")),
 
   projectId: z.string().optional().or(z.literal("")),
+
+  purchaseOrderId: z.string().optional().or(z.literal("")),
+
+  purchaseReceiptId: z.string().optional().or(z.literal("")),
 
   items: z.array(invoiceItemSchema).min(1, "At least one item is required"),
 });

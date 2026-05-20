@@ -23,6 +23,12 @@ export enum ProjectMaterialStatus {
   CANCELLED = "CANCELLED",
 }
 
+export enum ProjectServiceStatus {
+  PLANNED = "PLANNED",
+  DELIVERED = "DELIVERED",
+  CANCELLED = "CANCELLED",
+}
+
 export enum ProjectTaskStatus {
   TODO = "TODO",
   IN_PROGRESS = "IN_PROGRESS",
@@ -74,6 +80,21 @@ export interface ProjectMaterial {
   updatedAt: string;
   product?: Product;
   warehouse?: Warehouse;
+}
+
+export interface ProjectService {
+  id: string;
+  projectId: string;
+  description: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  vatRate: number;
+  status: ProjectServiceStatus;
+  billable: boolean;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ProjectVehicleAssignment {
@@ -150,6 +171,7 @@ export interface Project {
   updatedAt: string;
   members?: ProjectMember[];
   materials?: ProjectMaterial[];
+  services?: ProjectService[];
   vehicles?: ProjectVehicleAssignment[];
   tasks?: ProjectTask[];
   feed?: ProjectFeedEntry[];
@@ -158,6 +180,7 @@ export interface Project {
 export interface ProjectCostRollup {
   budget: number;
   materialsCost: number;
+  servicesCost: number;
   vehicleCost: number;
   totalActual: number;
   remaining: number;
@@ -171,4 +194,9 @@ export interface InvoiceLineDraft {
   unitPrice: number;
   vatRate: number;
   source: string;
+  sourceType: "PROJECT_MATERIAL" | "PROJECT_SERVICE" | "VEHICLE_EXPENSE";
+  sourceId: string;
+  amount: number;
+  vatAmount: number;
+  total: number;
 }

@@ -14,10 +14,8 @@ export function formatMoney(
  * Returns the app currency (always EUR) and a `formatMoney` helper.
  *
  * Behavior:
- *  - Records that have their own `currency` field (Project, Invoice) display
- *    in their stated currency — pass it as the second arg to `formatMoney`.
- *  - Records without a currency field (product prices, stock value, vehicle
- *    expenses) display in EUR by default.
+ *  - All money values display in EUR. Currency fields are kept in records for
+ *    compatibility, but app-level creation flows always submit EUR.
  */
 export function useCurrency() {
   return { currency: DEFAULT_CURRENCY, formatMoney };

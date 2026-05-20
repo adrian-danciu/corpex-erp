@@ -87,6 +87,42 @@ export const REMOVE_PROJECT_MATERIAL_MUTATION = gql`
   }
 `;
 
+export const CREATE_PROJECT_SERVICE_MUTATION = gql`
+  mutation CreateProjectService($input: CreateProjectServiceInput!) {
+    createProjectService(input: $input) {
+      id
+      description
+      quantity
+      unit
+      unitPrice
+      vatRate
+      status
+      billable
+      notes
+    }
+  }
+`;
+
+export const UPDATE_PROJECT_SERVICE_MUTATION = gql`
+  mutation UpdateProjectService($input: UpdateProjectServiceInput!) {
+    updateProjectService(input: $input) {
+      id
+      status
+      billable
+    }
+  }
+`;
+
+export const DELETE_PROJECT_SERVICE_MUTATION = gql`
+  mutation DeleteProjectService($input: DeleteProjectServiceInput!) {
+    deleteProjectService(input: $input) {
+      id
+      status
+      billable
+    }
+  }
+`;
+
 export const ASSIGN_PROJECT_VEHICLE_MUTATION = gql`
   mutation AssignProjectVehicle($input: AssignProjectVehicleInput!) {
     assignProjectVehicle(input: $input) {

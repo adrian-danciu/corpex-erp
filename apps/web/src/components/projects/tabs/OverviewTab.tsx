@@ -185,7 +185,7 @@ export function OverviewTab({ project, isProjectManager, onChange }: Props) {
           <CardTitle>Budget vs actual</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
             <div>
               <div className="text-slate-500">Budget</div>
               <div className="text-xl font-semibold text-slate-900">
@@ -196,6 +196,13 @@ export function OverviewTab({ project, isProjectManager, onChange }: Props) {
               <div className="text-slate-500">Materials</div>
               <div className="text-xl font-semibold text-slate-900">
                 {(rollup?.materialsCost ?? 0).toLocaleString()}{" "}
+                {project.currency}
+              </div>
+            </div>
+            <div>
+              <div className="text-slate-500">Services</div>
+              <div className="text-xl font-semibold text-slate-900">
+                {(rollup?.servicesCost ?? 0).toLocaleString()}{" "}
                 {project.currency}
               </div>
             </div>

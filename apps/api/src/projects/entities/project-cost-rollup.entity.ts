@@ -12,6 +12,9 @@ export class ProjectCostRollup {
   vehicleCost: number;
 
   @Field(() => Float)
+  servicesCost: number;
+
+  @Field(() => Float)
   totalActual: number;
 
   @Field(() => Float)

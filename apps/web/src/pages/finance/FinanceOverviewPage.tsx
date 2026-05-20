@@ -19,7 +19,7 @@ import type { Invoice } from "@/types/finance.types";
 import { GET_INVOICES_QUERY } from "@/graphql/mutations/finance.mutations";
 import { PaginatedResult } from "@/types/pagination.types";
 
-function formatCurrency(amount: number, currency = "RON") {
+function formatCurrency(amount: number, currency = "EUR") {
   return new Intl.NumberFormat("ro-RO", {
     style: "currency",
     currency,

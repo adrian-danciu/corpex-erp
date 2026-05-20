@@ -135,7 +135,7 @@ async function main() {
         isClientInvoice: true,
         issueDate: new Date('2026-01-28'),
         dueDate: new Date('2026-02-28'),
-        currency: 'RON',
+        currency: 'EUR',
         createdById: financeUser.id,
         items: [
           { description: 'Consulting services - January 2026', quantity: 40, unit: 'ore', unitPrice: 120, vatRate: 19 },
@@ -150,7 +150,7 @@ async function main() {
         isClientInvoice: true,
         issueDate: new Date('2026-01-25'),
         dueDate: new Date('2026-02-25'),
-        currency: 'RON',
+        currency: 'EUR',
         createdById: financeUser.id,
         items: [
           { description: 'Logistics management - January', quantity: 1, unit: 'buc', unitPrice: 8500, vatRate: 19 },
@@ -165,7 +165,7 @@ async function main() {
         isClientInvoice: true,
         issueDate: new Date('2026-01-20'),
         dueDate: new Date('2026-01-30'),
-        currency: 'RON',
+        currency: 'EUR',
         createdById: financeUser.id,
         items: [
           { description: 'IT Support - January 2026', quantity: 20, unit: 'ore', unitPrice: 134.45, vatRate: 19 },
@@ -179,7 +179,7 @@ async function main() {
         isClientInvoice: true,
         issueDate: new Date('2026-01-15'),
         dueDate: new Date('2026-02-15'),
-        currency: 'RON',
+        currency: 'EUR',
         createdById: financeUser.id,
         items: [
           { description: 'Manufacturing equipment maintenance', quantity: 1, unit: 'buc', unitPrice: 5000, vatRate: 19 },
@@ -194,7 +194,7 @@ async function main() {
         isClientInvoice: true,
         issueDate: new Date('2026-01-10'),
         dueDate: new Date('2026-02-10'),
-        currency: 'RON',
+        currency: 'EUR',
         createdById: financeUser.id,
         items: [
           { description: 'Office supplies - February', quantity: 1, unit: 'buc', unitPrice: 1344.54, vatRate: 19 },
@@ -236,7 +236,7 @@ async function main() {
         },
       });
 
-      console.log(`Created invoice: ${invoice.series}-${invoice.number} (${data.status}, total: ${total.toFixed(2)} RON)`);
+      console.log(`Created invoice: ${invoice.series}-${invoice.number} (${data.status}, total: ${total.toFixed(2)} EUR)`);
     }
   }
 

@@ -128,6 +128,8 @@ export const GET_INVOICES_QUERY = gql`
         paidAmount
         currency
         projectId
+        purchaseOrderId
+        purchaseReceiptId
         createdAt
       }
       meta {
@@ -171,6 +173,9 @@ export const GET_INVOICE_QUERY = gql`
       paidAmount
       currency
       notes
+      projectId
+      purchaseOrderId
+      purchaseReceiptId
       createdBy {
         id
         firstName
@@ -185,6 +190,9 @@ export const GET_INVOICE_QUERY = gql`
         vatRate
         amount
         vatAmount
+        projectId
+        sourceType
+        sourceId
       }
       payments {
         id
@@ -221,8 +229,8 @@ export const CREATE_INVOICE_MUTATION = gql`
 `;
 
 export const UPDATE_INVOICE_STATUS_MUTATION = gql`
-  mutation UpdateInvoiceStatus($id: String!, $status: InvoiceStatus!) {
-    updateInvoiceStatus(id: $id, status: $status) {
+  mutation UpdateInvoiceStatus($updateInvoiceStatusInput: UpdateInvoiceStatusInput!) {
+    updateInvoiceStatus(updateInvoiceStatusInput: $updateInvoiceStatusInput) {
       id
       status
       updatedAt

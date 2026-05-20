@@ -128,7 +128,7 @@ input CreateFeedPostInput {
 }
 
 input CreateInvoiceInput {
-  currency: String! = "RON"
+  currency: String! = "EUR"
   deliveryDate: DateTime
   dueDate: DateTime!
   invoiceType: InvoiceType!
@@ -138,12 +138,17 @@ input CreateInvoiceInput {
   notes: String
   partnerId: String!
   projectId: String
+  purchaseOrderId: String
+  purchaseReceiptId: String
   series: String! = "CORP"
 }
 
 input CreateInvoiceItemInput {
   description: String!
+  projectId: String
   quantity: Float!
+  sourceId: String
+  sourceType: InvoiceItemSourceType
   unit: String! = "buc"
   unitPrice: Float!
   vatRate: Float! = 19
@@ -209,6 +214,18 @@ input CreateProjectInput {
   partnerId: String!
   plannedEndDate: DateTime
   plannedStartDate: DateTime
+}
+
+input CreateProjectServiceInput {
+  billable: Boolean! = true
+  description: String!
+  notes: String
+  projectId: String!
+  quantity: Float!
+  status: ProjectServiceStatus
+  unit: String! = "service"
+  unitPrice: Float!
+  vatRate: Float! = 19
 }
 
 input CreateProjectTaskInput {
@@ -315,6 +332,11 @@ scalar DateTime
 
 input DeleteFeedEntryInput {
   feedEntryId: String!
+}
+
+input DeleteProjectServiceInput {
+  projectId: String!
+  serviceId: String!
 }
 
 input DeleteProjectTaskCommentInput {
@@ -510,6 +532,8 @@ type Invoice {
   partnerId: String!
   payments: [Payment!]!
   projectId: String
+  purchaseOrderId: String
+  purchaseReceiptId: String
   series: String!
   status: InvoiceStatus!
   subtotal: Float!
@@ -525,19 +549,35 @@ type InvoiceItem {
   description: String!
   id: ID!
   invoiceId: String!
+  projectId: String
   quantity: Float!
+  sourceId: String
+  sourceType: InvoiceItemSourceType
   unit: String!
   unitPrice: Float!
   vatAmount: Float!
   vatRate: Float!
 }
 
+"""Origin of an invoice line item"""
+enum InvoiceItemSourceType {
+  MANUAL
+  PROJECT_MATERIAL
+  PROJECT_SERVICE
+  VEHICLE_EXPENSE
+}
+
 type InvoiceLineDraft {
+  amount: Float!
   description: String!
   quantity: Float!
   source: String!
+  sourceId: String!
+  sourceType: InvoiceItemSourceType!
+  total: Float!
   unit: String!
   unitPrice: Float!
+  vatAmount: Float!
   vatRate: Float!
 }
 
@@ -665,6 +705,7 @@ type Mutation {
   createProduct(createProductInput: CreateProductInput!): Product!
   createProject(input: CreateProjectInput!): Project!
   createProjectFeedPost(input: CreateFeedPostInput!): ProjectFeedEntry!
+  createProjectService(input: CreateProjectServiceInput!): ProjectService!
   createProjectTask(input: CreateProjectTaskInput!): ProjectTask!
   createPurchaseOrder(input: CreatePurchaseOrderInput!): PurchaseOrder!
 
@@ -690,6 +731,7 @@ type Mutation {
   deletePartner(id: String!): Partner!
   deletePayrollPeriod(periodId: ID!): PayrollPeriod!
   deleteProjectFeedEntry(input: DeleteFeedEntryInput!): ProjectFeedEntry!
+  deleteProjectService(input: DeleteProjectServiceInput!): ProjectService!
   deleteProjectTask(input: DeleteProjectTaskInput!): ProjectTask!
   deleteProjectTaskComment(input: DeleteProjectTaskCommentInput!): ProjectTaskComment!
   deletePurchaseOrder(id: ID!): Boolean!
@@ -744,6 +786,7 @@ type Mutation {
   updateProfilePicture(updateProfilePictureInput: UpdateProfilePictureInput!): User!
   updateProject(input: UpdateProjectInput!): Project!
   updateProjectMemberRole(input: UpdateProjectMemberRoleInput!): ProjectMember!
+  updateProjectService(input: UpdateProjectServiceInput!): ProjectService!
   updateProjectTask(input: UpdateProjectTaskInput!): ProjectTask!
   updateProjectTaskComment(input: UpdateProjectTaskCommentInput!): ProjectTaskComment!
   updatePurchaseOrder(input: UpdatePurchaseOrderInput!): PurchaseOrder!
@@ -1010,6 +1053,7 @@ type Project {
   partnerId: String!
   plannedEndDate: DateTime
   plannedStartDate: DateTime
+  services: [ProjectService!]
   status: ProjectStatus!
   tasks: [ProjectTask!]
   updatedAt: DateTime!
@@ -1021,6 +1065,7 @@ type ProjectCostRollup {
   currency: String!
   materialsCost: Float!
   remaining: Float!
+  servicesCost: Float!
   totalActual: Float!
   vehicleCost: Float!
 }
@@ -1082,6 +1127,27 @@ type ProjectMember {
 enum ProjectMemberRole {
   MEMBER
   PROJECT_MANAGER
+}
+
+type ProjectService {
+  billable: Boolean!
+  createdAt: DateTime!
+  description: String!
+  id: ID!
+  notes: String
+  projectId: String!
+  quantity: Float!
+  status: ProjectServiceStatus!
+  unit: String!
+  unitPrice: Float!
+  updatedAt: DateTime!
+  vatRate: Float!
+}
+
+enum ProjectServiceStatus {
+  CANCELLED
+  DELIVERED
+  PLANNED
 }
 
 enum ProjectStatus {
@@ -1333,6 +1399,7 @@ type Query {
   projectFeed(kind: ProjectFeedKind, projectId: String!): [ProjectFeedEntry!]!
   projectMaterials(projectId: String!): [ProjectMaterial!]!
   projectMembers(projectId: String!): [ProjectMember!]!
+  projectServices(projectId: String!): [ProjectService!]!
   projectTaskActivity(taskId: String!): [ProjectFeedEntry!]!
   projectTaskComments(taskId: String!): [ProjectTaskComment!]!
   projectTasks(projectId: String!): [ProjectTask!]!
@@ -1568,6 +1635,13 @@ input UpdateProjectMemberRoleInput {
   memberId: String!
   projectId: String!
   role: ProjectMemberRole!
+}
+
+input UpdateProjectServiceInput {
+  billable: Boolean
+  projectId: String!
+  serviceId: String!
+  status: ProjectServiceStatus
 }
 
 input UpdateProjectTaskCommentInput {

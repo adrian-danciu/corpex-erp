@@ -16,6 +16,7 @@ import { PaginatedResult } from "@/types/pagination.types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -46,6 +47,7 @@ export default function EmployeeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const { data, loading, error, refetch } = useQuery<{ employee: Employee | null }>(GET_EMPLOYEE_QUERY, {
     variables: { id },
@@ -112,10 +114,9 @@ export default function EmployeeDetailPage() {
     }
   };
 
-  const handleDelete = () => {
-    if (window.confirm("Are you sure you want to delete this employee record? This action cannot be undone.")) {
-      void deleteEmployee({ variables: { id } });
-    }
+  const confirmDelete = () => {
+    void deleteEmployee({ variables: { id } });
+    setDeleteDialogOpen(false);
   };
 
   if (loading) {
@@ -170,7 +171,7 @@ export default function EmployeeDetailPage() {
               <Button
                 variant="outline"
                 className="gap-2 text-red-600 hover:text-red-700"
-                onClick={handleDelete}
+                onClick={() => setDeleteDialogOpen(true)}
                 disabled={deleting}
               >
                 <Trash2 className="h-4 w-4" />
@@ -480,6 +481,15 @@ export default function EmployeeDetailPage() {
           )}
         </div>
       </div>
+      <ConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete employee?"
+        description={`This permanently deletes ${employee.firstName} ${employee.lastName}'s employee record. This action cannot be undone.`}
+        confirmLabel="Delete employee"
+        loading={deleting}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

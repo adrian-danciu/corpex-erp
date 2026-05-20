@@ -77,7 +77,7 @@ export default function ProjectCreatePage() {
             description: formData.description || undefined,
             partnerId: formData.partnerId,
             budget: formData.budget,
-            currency: formData.currency || "RON",
+            currency: "EUR",
             plannedStartDate: formData.plannedStartDate
               ? new Date(formData.plannedStartDate)
               : undefined,
@@ -195,7 +195,7 @@ export default function ProjectCreatePage() {
               </div>
               <div>
                 <Label htmlFor="currency">Currency</Label>
-                <Input id="currency" {...register("currency")} />
+                <Input id="currency" value="EUR" disabled />
               </div>
               <div></div>
             </div>
