@@ -12,6 +12,7 @@ export const EMPLOYEE_SUMMARY_FRAGMENT = gql`
       lastName
       email
       role
+      mustChangePassword
     }
     personalId
     dateOfBirth

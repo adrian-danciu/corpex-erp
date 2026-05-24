@@ -11,6 +11,7 @@ export const LOGIN_MUTATION = gql`
         lastName
         email
         role
+        mustChangePassword
       }
     }
   }
@@ -30,6 +31,7 @@ export const ME_QUERY = gql`
       lastName
       email
       role
+      mustChangePassword
       createdAt
       updatedAt
     }

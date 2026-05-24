@@ -31,6 +31,9 @@ export class User {
   role: Role;
 
   @Field()
+  mustChangePassword: boolean;
+
+  @Field()
   createdAt: Date;
 
   @Field()

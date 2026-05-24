@@ -8,6 +8,7 @@ export const CHANGE_PASSWORD_MUTATION = gql`
       firstName
       lastName
       role
+      mustChangePassword
     }
   }
 `;
@@ -25,6 +26,7 @@ export const UPDATE_PROFILE_PICTURE_MUTATION = gql`
       lastName
       profilePicture
       role
+      mustChangePassword
     }
   }
 `;

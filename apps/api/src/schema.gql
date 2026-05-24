@@ -393,6 +393,15 @@ type Employee {
   userId: String
 }
 
+type EmployeeAccountGenerationResult {
+  created: Boolean!
+  email: String
+  employeeId: String!
+  employeeName: String
+  initialPassword: String
+  message: String!
+}
+
 type EmployeeDocument {
   createdAt: DateTime!
   employee: Employee
@@ -741,6 +750,12 @@ type Mutation {
   deleteVehicleExpense(id: String!): VehicleExpense!
   deleteVehicleLease(id: String!): VehicleLease!
   endProjectVehicleAssignment(input: EndProjectVehicleAssignmentInput!): ProjectVehicle!
+
+  """Generate a user account from an employee record"""
+  generateEmployeeAccount(employeeId: String!): EmployeeAccountGenerationResult!
+
+  """Generate user accounts for multiple employee records"""
+  generateEmployeeAccounts(employeeIds: [String!]!): [EmployeeAccountGenerationResult!]!
   generatePayroll(input: GeneratePayrollInput!): PayrollPeriod!
 
   """Link an existing employee to an existing user account"""
@@ -1704,6 +1719,7 @@ type User {
   firstName: String!
   id: ID!
   lastName: String!
+  mustChangePassword: Boolean!
   profilePicture: String
   role: Role!
   updatedAt: DateTime!

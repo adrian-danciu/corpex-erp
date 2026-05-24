@@ -78,7 +78,7 @@ export const DEPARTMENT_PERMISSIONS: Record<Department, ModulePermissions> = {
     dashboard: true,
   },
   [Department.IT]: {
-    hr: 'none',
+    hr: 'read',
     leaveRequests: 'write',
     leaveApprovals: false,
     finance: 'none',

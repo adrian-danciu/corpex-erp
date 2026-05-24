@@ -60,7 +60,7 @@ const menuItems: MenuItem[] = [
     title: "Employees",
     href: "/hr/employees",
     icon: UserCheck,
-    roles: ["ADMIN", "HR", "MANAGER"],
+    roles: ["ADMIN", "HR", "IT", "MANAGER"],
   },
   {
     title: "Leave Requests",
@@ -174,7 +174,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const isVisible = (item: MenuItem) => {
     if (item.roles.length === 0) return true;
-    return user && item.roles.includes(user.role);
+    return (
+      user &&
+      (item.roles.includes(user.role) ||
+        (user.department ? item.roles.includes(user.department) : false))
+    );
   };
 
   const visibleMenuItems = menuItems.filter(isVisible);

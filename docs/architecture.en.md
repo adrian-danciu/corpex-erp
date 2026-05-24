@@ -36,6 +36,15 @@ The HR module now stores employee documents and expiry dates.
 - **Expiry notifications**: documents with upcoming expiry dates create `EMPLOYEE_DOCUMENT_EXPIRING` notifications for HR and Management users.
 - **Frontend**: `/documents` is available as a menu item; employee detail includes an `EmployeeDocumentsPanel`.
 
+## Employee-driven account generation
+
+Account creation is now employee-first. HR creates the employee record, then HR/IT/Admin can generate the linked user account from Employee Detail or bulk-generate accounts from the Employees table.
+
+- **Generated credentials**: email uses the normalized employee name under `@corpex.com` (`ana.smith@corpex.com`). If the email already exists, a numeric suffix is appended (`ana.smith2@corpex.com`).
+- **Temporary password**: generated from the same local part and current year (`ana.smith.2026`) and shown once in the UI result table.
+- **First-login policy**: generated accounts set `User.mustChangePassword = true`; the frontend redirects those users to `/change-password` until they successfully change the temporary password.
+- **Permissions model**: generated employee accounts use `User.role = USER`; module access continues to come from the linked `Employee.department`. IT has HR read access so it can create accounts without being able to edit employee records.
+
 ## Payroll module architecture
 
 Payroll is a dedicated module for monthly salary calculations.

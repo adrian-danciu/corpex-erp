@@ -54,7 +54,7 @@ export default function LoginForm() {
       void apolloClient.refetchQueries({
         include: [MY_NOTIFICATIONS_QUERY, MY_UNREAD_COUNT_QUERY],
       });
-      navigate("/dashboard");
+      navigate(enrichedUser.mustChangePassword ? "/change-password" : "/dashboard");
     },
     onError: (error) => {
       console.error("Login error:", error);

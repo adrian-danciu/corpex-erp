@@ -9,6 +9,7 @@ import {
   UPDATE_EMPLOYEE_MUTATION,
   DELETE_EMPLOYEE_MUTATION,
 } from "@/graphql/mutations/employee.mutations";
+import { GENERATE_EMPLOYEE_ACCOUNT_MUTATION } from "@/graphql/mutations/user.mutations";
 import { ContractType, Department } from "@/types/hr.types";
 import { PageLoading } from "@/components/ui/page-loading";
 import type { Employee, UpdateEmployeeInput } from "@/types/hr.types";
@@ -21,9 +22,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Edit, Trash2, Users, Calendar, AlertCircle } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Users, Calendar, AlertCircle, KeyRound } from "lucide-react";
 import { format } from "date-fns";
 import { EmployeeDocumentsPanel } from "@/components/hr/EmployeeDocumentsPanel";
+
+interface EmployeeAccountGenerationResult {
+  employeeId: string;
+  employeeName: string | null;
+  email: string | null;
+  initialPassword: string | null;
+  created: boolean;
+  message: string;
+}
 
 function LeaveBar({ remaining, total }: { remaining: number; total: number }) {
   const pct = total > 0 ? Math.max(0, Math.min(100, (remaining / total) * 100)) : 0;
@@ -48,6 +58,8 @@ export default function EmployeeDetailPage() {
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [generatedAccount, setGeneratedAccount] =
+    useState<EmployeeAccountGenerationResult | null>(null);
 
   const { data, loading, error, refetch } = useQuery<{ employee: Employee | null }>(GET_EMPLOYEE_QUERY, {
     variables: { id },
@@ -76,6 +88,17 @@ export default function EmployeeDetailPage() {
       onCompleted: () => navigate("/hr/employees"),
     },
   );
+
+  const [generateEmployeeAccount, { loading: generatingAccount }] =
+    useMutationWithToast<{
+      generateEmployeeAccount: EmployeeAccountGenerationResult;
+    }>(GENERATE_EMPLOYEE_ACCOUNT_MUTATION, {
+      successMessage: "Account created",
+      onCompleted: (result) => {
+        setGeneratedAccount(result.generateEmployeeAccount);
+        void refetch();
+      },
+    });
 
   const employee = data?.employee;
 
@@ -117,6 +140,11 @@ export default function EmployeeDetailPage() {
   const confirmDelete = () => {
     void deleteEmployee({ variables: { id } });
     setDeleteDialogOpen(false);
+  };
+
+  const handleGenerateAccount = () => {
+    if (!employee) return;
+    void generateEmployeeAccount({ variables: { employeeId: employee.id } });
   };
 
   if (loading) {
@@ -250,6 +278,48 @@ export default function EmployeeDetailPage() {
                 <div>
                   <p className="text-slate-500">Account</p>
                   <p className="font-medium text-xs">{employee.user.email}</p>
+                </div>
+              )}
+              {!employee.user && (
+                <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
+                  <p className="font-medium text-amber-900">No account linked</p>
+                  <p className="mt-1 text-xs text-amber-800">
+                    Generate an account from this employee record when they need
+                    application access.
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="mt-3 gap-2"
+                    onClick={handleGenerateAccount}
+                    disabled={generatingAccount}
+                  >
+                    <KeyRound className="h-4 w-4" />
+                    {generatingAccount ? "Creating..." : "Create account"}
+                  </Button>
+                </div>
+              )}
+              {generatedAccount?.created && (
+                <div className="rounded-md border border-green-200 bg-green-50 p-3">
+                  <p className="font-medium text-green-900">
+                    Temporary credentials
+                  </p>
+                  <div className="mt-2 space-y-1 text-xs text-green-900">
+                    <p>
+                      Email:{" "}
+                      <span className="font-mono">{generatedAccount.email}</span>
+                    </p>
+                    <p>
+                      Password:{" "}
+                      <span className="font-mono">
+                        {generatedAccount.initialPassword}
+                      </span>
+                    </p>
+                  </div>
+                  <p className="mt-2 text-xs text-green-800">
+                    The employee will be asked to change this password on first
+                    sign-in.
+                  </p>
                 </div>
               )}
             </CardContent>

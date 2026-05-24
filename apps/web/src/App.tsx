@@ -15,6 +15,7 @@ const UserCreatePage = lazy(() => import("./pages/UserCreatePage"));
 const UsersAdminPage = lazy(() => import("./pages/UsersAdminPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const ChangePasswordPage = lazy(() => import("./pages/ChangePasswordPage"));
 const EmployeesPage = lazy(() => import("./pages/hr/EmployeesPage"));
 const EmployeeCreatePage = lazy(() => import("./pages/hr/EmployeeCreatePage"));
 const EmployeeDetailPage = lazy(() => import("./pages/hr/EmployeeDetailPage"));
@@ -131,6 +132,10 @@ function App() {
 
           <Route path="/dashboard" element={<ProtectedPage component={DashboardPage} />} />
           <Route path="/profile" element={<ProtectedPage component={ProfilePage} />} />
+          <Route
+            path="/change-password"
+            element={<ProtectedPage component={ChangePasswordPage} />}
+          />
 
           <Route
             path="/it/user-create"

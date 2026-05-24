@@ -11,8 +11,35 @@ export const CREATE_USER_MUTATION = gql`
       lastName
       email
       role
+      mustChangePassword
       createdAt
       updatedAt
+    }
+  }
+`;
+
+export const GENERATE_EMPLOYEE_ACCOUNT_MUTATION = gql`
+  mutation GenerateEmployeeAccount($employeeId: String!) {
+    generateEmployeeAccount(employeeId: $employeeId) {
+      employeeId
+      employeeName
+      email
+      initialPassword
+      created
+      message
+    }
+  }
+`;
+
+export const GENERATE_EMPLOYEE_ACCOUNTS_MUTATION = gql`
+  mutation GenerateEmployeeAccounts($employeeIds: [String!]!) {
+    generateEmployeeAccounts(employeeIds: $employeeIds) {
+      employeeId
+      employeeName
+      email
+      initialPassword
+      created
+      message
     }
   }
 `;

@@ -15,6 +15,7 @@ model User {
   createdAt             DateTime       @default(now())
   firstName             String
   lastName              String
+  mustChangePassword    Boolean        @default(false)
   updatedAt             DateTime       @updatedAt
   profilePicture        String?
   employee              Employee?

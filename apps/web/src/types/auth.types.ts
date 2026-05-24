@@ -19,6 +19,7 @@ export interface User {
   email: string;
   profilePicture?: string;
   role: UserRole;
+  mustChangePassword: boolean;
   department?: Department | null;
   position?: string | null;
   createdAt?: string;

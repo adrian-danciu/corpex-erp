@@ -35,6 +35,15 @@ Modulul HR stocheaza acum documente pentru angajati si date de expirare.
 - **Upload**: fisierele sunt incarcate prin API si afisate atat in pagina dedicata Documents, cat si in panoul de documente din Employee Detail.
 - **Notificari expirare**: documentele care expira curand emit `EMPLOYEE_DOCUMENT_EXPIRING` catre utilizatorii HR si Management.
 
+## Generare conturi din angajati
+
+Crearea conturilor este acum employee-first. HR creeaza intai angajatul, apoi HR/IT/Admin pot genera contul de utilizator legat din Employee Detail sau in bulk din tabela Employees.
+
+- **Credentiale generate**: email-ul foloseste numele normalizat sub `@corpex.com` (`ana.smith@corpex.com`). Daca exista deja, se adauga un sufix numeric (`ana.smith2@corpex.com`).
+- **Parola temporara**: se genereaza din local part-ul emailului si anul curent (`ana.smith.2026`) si este afisata o singura data in tabelul de rezultate.
+- **Prima logare**: conturile generate seteaza `User.mustChangePassword = true`; frontend-ul redirectioneaza acesti utilizatori la `/change-password` pana schimba parola temporara.
+- **Model permisiuni**: conturile generate au `User.role = USER`; accesul pe module continua sa vina din `Employee.department`. IT are acces HR read ca sa poata crea conturi fara sa editeze fise de angajat.
+
 ## Modulul Payroll
 
 Payroll este un modul dedicat pentru calculul salariilor lunare.
