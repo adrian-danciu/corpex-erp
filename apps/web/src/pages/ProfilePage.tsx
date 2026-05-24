@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import type { User as UserType } from "@/types/auth.types";
 import { useAuthStore } from "@/stores/auth.store";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,7 +33,7 @@ export default function ProfilePage() {
     register: registerPassword,
     handleSubmit: handleSubmitPassword,
     reset: resetPasswordForm,
-    watch: watchPassword,
+    control: passwordControl,
     formState: { errors: passwordErrors },
   } = useForm<PasswordFormValues>({
     defaultValues: {
@@ -54,7 +54,7 @@ export default function ProfilePage() {
     },
   });
 
-  const newPassword = watchPassword("newPassword");
+  const newPassword = useWatch({ control: passwordControl, name: "newPassword" });
 
   // Mutations
   const [changePasswordMutation, { loading: changingPassword }] =

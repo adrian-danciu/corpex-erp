@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { ArrowLeft } from "lucide-react";
@@ -41,7 +41,7 @@ export default function ProductCreatePage() {
     register,
     handleSubmit,
     setValue,
-    watch,
+    control,
     formState: { errors },
   } = useForm<ProductFormData>({
     defaultValues: {
@@ -54,6 +54,8 @@ export default function ProductCreatePage() {
       unitPrice: 0,
     },
   });
+
+  const selectedUnit = useWatch({ control, name: "unit" });
 
   const onSubmit = async (values: ProductFormData) => {
     try {
@@ -119,7 +121,7 @@ export default function ProductCreatePage() {
               <div className="space-y-2">
                 <Label htmlFor="unit">Unit</Label>
                 <Select
-                  value={watch("unit") || DEFAULT_UNIT}
+                  value={selectedUnit || DEFAULT_UNIT}
                   onValueChange={(v) =>
                     setValue("unit", v, { shouldDirty: true })
                   }

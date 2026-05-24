@@ -1,6 +1,6 @@
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -37,7 +37,6 @@ export default function UserCreateForm({
   initialRole,
   onUserCreated,
 }: UserCreateFormProps) {
-  const [generatedEmail, setGeneratedEmail] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
 
@@ -50,7 +49,6 @@ export default function UserCreateForm({
   const {
     register,
     handleSubmit,
-    watch,
     control,
     reset,
     formState: { errors },
@@ -64,18 +62,11 @@ export default function UserCreateForm({
   });
 
   // Watch firstName and lastName for email generation
-  const firstName = watch("firstName");
-  const lastName = watch("lastName");
+  const firstName = useWatch({ control, name: "firstName" });
+  const lastName = useWatch({ control, name: "lastName" });
 
-  // Auto-generate email when name changes
-  useEffect(() => {
-    if (firstName && lastName) {
-      const email = generateEmail(firstName, lastName);
-      setGeneratedEmail(email);
-    } else {
-      setGeneratedEmail("");
-    }
-  }, [firstName, lastName]);
+  const generatedEmail =
+    firstName && lastName ? generateEmail(firstName, lastName) : "";
 
   const onSubmit = async (data: CreateUserFormData) => {
     try {
@@ -114,7 +105,6 @@ export default function UserCreateForm({
 
       // Reset form
       reset();
-      setGeneratedEmail("");
 
     } catch (error) {
       console.error("Error creating user:", error);

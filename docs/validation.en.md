@@ -5,12 +5,18 @@ This project uses Zod schemas for frontend validation, integrated with React Hoo
 ## Where schemas live
 - Central exports: `apps/web/src/lib/schemas/index.ts`
 - Auth schemas: `apps/web/src/lib/schemas/auth.schema.ts`
+- Feature schemas: `fleet.schema.ts`, `invoice.schema.ts`, `partner.schema.ts`, `project.schema.ts`, `purchaseOrder.schema.ts`, `user.schema.ts`
 
 ## Current schemas
-Defined in `apps/web/src/lib/schemas/auth.schema.ts`:
 - `loginSchema` -> `LoginFormData`
 - `passwordResetRequestSchema` -> `PasswordResetRequestData` (future)
 - `passwordResetSchema` -> `PasswordResetData` (future, includes password confirmation)
+- Fleet forms for vehicle, document, mileage, lease and expense workflows.
+- Invoice create form and invoice line draft validation.
+- Partner create/edit forms.
+- Project create/update, member, material, vehicle, task and feed forms.
+- Purchase order create/update/line/receipt forms.
+- User create form.
 
 ## How validation is wired
 Example from `apps/web/src/components/auth/LoginForm.tsx`:
@@ -24,6 +30,7 @@ Example from `apps/web/src/components/auth/LoginForm.tsx`:
 - Zod error messages are defined in the schema (e.g., `"Email is required"`).
 - React Hook Form exposes them on `errors.<field>.message`.
 - The UI uses conditional classes and inline text to show errors.
+- For watched form values used during render, prefer `useWatch({ control, name })` over calling `watch("field")` directly in JSX/render logic. This keeps React Hook Form subscriptions explicit and avoids React hooks lint noise.
 
 ## Adding a new schema (pattern)
 1) Create a file in `apps/web/src/lib/schemas/` (e.g., `user.schema.ts`).
@@ -34,5 +41,5 @@ Example from `apps/web/src/components/auth/LoginForm.tsx`:
 4) In the form, use `zodResolver(userSchema)` and the inferred type in `useForm<...>()`.
 
 ## Notes for AI agents
-- Only the login schema is currently used in UI code.
-- Password reset schemas are defined but not yet hooked into components.
+- Most feature forms now use Zod schemas and React Hook Form. Login remains a legacy plain-state form by design; see `docs/auth_implementation.md`.
+- Keep schemas feature-specific until a validation rule is reused by multiple modules.

@@ -8,7 +8,7 @@ Documentatia este in `docs/` si este gandita pentru dezvoltatori si agenti AI ca
 - Librarii si tooling: `docs/libraries.ro.md`
 - Scripturi care pot fi rulate: `docs/scripts.ro.md`
 - Validare cu Zod: `docs/validation.ro.md`
-- Sumarul ultimei implementari: `docs/superpowers/specs/2026-05-18-implementation-summary.md`
+- Planul/istoricul curent de optimizare: `docs/superpowers/plans/2026-05-23-codebase-optimization.md`
 
 ## Quick start (local)
 1) Instaleaza dependintele pe fiecare app (Bun este standardul):
@@ -23,4 +23,6 @@ Documentatia este in `docs/` si este gandita pentru dezvoltatori si agenti AI ca
 ## Note pentru agenti AI
 - Repo-ul este un monorepo simplu cu doua aplicatii independente (`apps/web`, `apps/api`).
 - Vezi `docs/architecture.ro.md` pentru fluxul frontend -> API -> DB.
-- Adaugirile curente includ documente angajati, exporturi rapoarte, remindere pentru expirarea documentelor de angajat si modulul Payroll cu reguli romanesti de taxare si suport B2B contractor.
+- `AGENTS.md` este cel mai rapid fisier de context operational pentru sesiuni de coding.
+- Adaugirile curente includ documente angajati, exporturi rapoarte, remindere pentru expirarea documentelor de angajat, comenzi furnizori cu marfa in tranzit, stoc defect, facturare costuri proiect si modulul Payroll cu reguli romanesti de taxare si suport B2B contractor.
+- Directia curenta de cleanup: utilitare comune pentru formatari/download, filtre de lista in URL, hook-uri controller locale pe feature, split pentru paginile supradimensionate, helpere backend comune pentru paginare si teste de service inainte de refactorizari mari.

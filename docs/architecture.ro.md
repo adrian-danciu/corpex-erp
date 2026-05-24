@@ -57,6 +57,17 @@ Payroll este un modul dedicat pentru calculul salariilor lunare.
 
 Rapoartele pot fi exportate PDF si Excel. Librariile grele sunt izolate in `apps/web/src/lib/report-export.tsx` si incarcate lazy de paginile de rapoarte/payroll.
 
+## Arhitectura refactorizarii frontend
+
+Cleanup-ul recent a mutat comportamentul repetat din pagini in utilitare comune si controllere locale pe feature, pastrand routing-ul si data loading-ul usor de urmarit.
+
+- **Utilitare comune**: `apps/web/src/lib/formatters.ts` centralizeaza formatari pentru bani/date/cantitati/bytes cu default-uri romanesti. `apps/web/src/lib/download.ts` centralizeaza download-uri de blob/URL.
+- **Hook-uri partajate**: `useUrlFilters` tine filtrele de lista in URL search params; `useDisclosure` gestioneaza open/close pentru dialoguri simple; `useMutationWithToast` pastreaza feedback-ul mutatiilor consistent.
+- **Hook-uri controller locale**: `useVehicleDetailController`, `usePayrollController` si `useMaterialAllocation` tin state-ul de workflow si mutation handlers pentru ecrane dense. Nu muta campurile de formular in Zustand; React Hook Form ramane owner-ul state-ului de formular.
+- **Split pe workflow**: taburile de vehicle detail sunt in `pages/fleet/components/`, subview-urile payroll in `pages/payroll/components/`, controalele de tabel/export rapoarte in `pages/reports/components/`, iar subcomponentele pentru task/material/service proiect in `components/projects/`.
+- **React Hook Form watchers**: cand o valoare urmarita este folosita in render, prefera `useWatch({ control, name })` in loc de `watch("field")` direct.
+- **Nota build**: code-splitting-ul pe rute tine entry-ul aplicatiei sub pragul Vite de 500 kB. Exporturile PDF si XLSX sunt incarcate prin dynamic imports la nivel de actiune, cu chunk-uri separate `pdf-export` si `xlsx-export`. Vendorii de vizualizare sunt impartiti pe scop (`charts-vendor`, `org-chart-vendor`, `kanban-vendor`). Vite inca raporteaza chunk-ul PDF lazy ca mare deoarece `@react-pdf/renderer` este greu.
+
 ## Arhitectura modulului Fleet
 
 Modulul fleet urmeaza acelasi pattern ca toate celelalte module:
@@ -117,7 +128,7 @@ Modulul projects este un hub transversal care leaga Partners, Stock, Fleet, HR, 
 - Primitivele UI sunt in `apps/web/src/components/ui` (shadcn/ui: Radix + Tailwind).
 - Formularele folosesc React Hook Form + Zod. Campurile numerice folosesc `valueAsNumber: true`.
 - State global este gestionat cu Zustand (`auth.store.ts`).
-- Toate documentele GraphQL (query-uri + mutatii) sunt in `apps/web/src/graphql/mutations/`.
+- Documentele GraphQL sunt migrate treptat spre `graphql/queries/`, `graphql/mutations/` si `graphql/fragments/`. Unele fisiere legacy `*.mutations.ts` inca au query-uri si mutatii mixte pentru compatibilitate.
 
 ### Module implementate
 

@@ -58,6 +58,17 @@ Payroll is a dedicated module for monthly salary calculations.
 
 Reports support client-side PDF and Excel export. The heavy export libraries are isolated in `apps/web/src/lib/report-export.tsx` and lazy-loaded by report/payroll pages.
 
+## Frontend refactor architecture
+
+Recent cleanup moved repeated page behavior into shared utilities and feature-local controllers while keeping routing/data loading easy to follow.
+
+- **Shared utilities**: `apps/web/src/lib/formatters.ts` centralizes money/date/quantity/byte formatting with Romanian defaults. `apps/web/src/lib/download.ts` centralizes blob/URL downloads.
+- **Shared hooks**: `useUrlFilters` stores shareable list filters in URL search params; `useDisclosure` handles simple open/close dialog state; `useMutationWithToast` keeps mutation feedback consistent.
+- **Feature controller hooks**: `useVehicleDetailController`, `usePayrollController` and `useMaterialAllocation` own grouped workflow state and mutation handlers for dense screens. Avoid moving form fields into Zustand; React Hook Form remains the form state owner.
+- **Split pages by workflow**: vehicle detail tabs live under `pages/fleet/components/`, payroll subviews live under `pages/payroll/components/`, report table/export controls live under `pages/reports/components/`, and project task/material/service subcomponents live under `components/projects/`.
+- **React Hook Form watchers**: when a watched form value is used in render logic, prefer `useWatch({ control, name })` over direct `watch("field")`.
+- **Build note**: route-level code-splitting keeps the app entry under Vite's 500 kB warning line. PDF and XLSX exports are loaded by action-level dynamic imports, with separate `pdf-export` and `xlsx-export` chunks. Visualization vendors are split by purpose (`charts-vendor`, `org-chart-vendor`, `kanban-vendor`). Vite still reports the lazy PDF chunk as large because `@react-pdf/renderer` is heavy.
+
 ## Fleet module architecture
 
 The fleet module follows the same pattern as all other modules:
@@ -118,7 +129,7 @@ The projects module is a cross-cutting hub that ties Partners, Stock, Fleet, HR,
 - UI primitives live in `apps/web/src/components/ui` (shadcn/ui: Radix + Tailwind).
 - Forms are built with React Hook Form + Zod. Numeric inputs use `valueAsNumber: true`.
 - Global state is handled with Zustand (`auth.store.ts`).
-- All GraphQL documents (queries + mutations) live in `apps/web/src/graphql/mutations/`.
+- GraphQL documents are being migrated toward `graphql/queries/`, `graphql/mutations/`, and `graphql/fragments/`. Some legacy `*.mutations.ts` files still contain mixed query/mutation documents for compatibility.
 
 ### Implemented modules
 

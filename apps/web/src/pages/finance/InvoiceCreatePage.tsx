@@ -1,9 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useLazyQuery } from "@apollo/client/react";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { toastInfo } from "@/lib/toast";
-import { useForm, useFieldArray, Controller } from "react-hook-form";
+import { useForm, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createInvoiceSchema, type CreateInvoiceFormData } from "@/lib/schemas/invoice.schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,7 +58,10 @@ export default function InvoiceCreatePage() {
     GET_PROJECTS_QUERY,
     { variables: { filter: {} } },
   );
-  const projects = projectsData?.projects ?? [];
+  const projects = useMemo(
+    () => projectsData?.projects ?? [],
+    [projectsData?.projects],
+  );
   const { data: purchaseOrdersData } = useQuery<{
     purchaseOrders: PaginatedResult<PurchaseOrder>;
   }>(GET_PURCHASE_ORDERS_QUERY, {
@@ -80,14 +83,21 @@ export default function InvoiceCreatePage() {
     },
   );
 
-  const today = new Date().toISOString().split("T")[0];
-  const defaultDueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+  const [{ today, defaultDueDate }] = useState(() => {
+    const issueDate = new Date();
+    const dueDate = new Date(issueDate);
+    dueDate.setDate(dueDate.getDate() + 30);
+
+    return {
+      today: issueDate.toISOString().split("T")[0],
+      defaultDueDate: dueDate.toISOString().split("T")[0],
+    };
+  });
 
   const {
     register,
     handleSubmit,
     control,
-    watch,
     setValue,
     formState: { errors },
   } = useForm<CreateInvoiceFormData>({
@@ -110,9 +120,9 @@ export default function InvoiceCreatePage() {
     },
   });
 
-  const selectedProjectId = watch("projectId");
-  const isClientInvoice = watch("isClientInvoice");
-  const selectedPurchaseOrderId = watch("purchaseOrderId");
+  const selectedProjectId = useWatch({ control, name: "projectId" });
+  const isClientInvoice = useWatch({ control, name: "isClientInvoice" });
+  const selectedPurchaseOrderId = useWatch({ control, name: "purchaseOrderId" });
   const selectedPurchaseOrder = purchaseOrders.find((po) => po.id === selectedPurchaseOrderId);
 
   // When project changes (or is provided via URL), pre-fill partnerId from the project
@@ -129,7 +139,7 @@ export default function InvoiceCreatePage() {
     name: "items",
   });
 
-  const watchedItems = watch("items");
+  const watchedItems = useWatch({ control, name: "items" }) ?? [];
 
   // Calculate totals
   const itemTotals = watchedItems.map((item) => {

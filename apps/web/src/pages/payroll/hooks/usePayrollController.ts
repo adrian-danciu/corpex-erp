@@ -11,7 +11,7 @@ import {
 } from "@/graphql/mutations/payroll.mutations";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { useDisclosure } from "@/hooks/useDisclosure";
-import type { ExportColumn } from "@/lib/report-export";
+import type { ExportColumn } from "@/lib/report-export.types";
 import type { PayrollLine, PayrollPeriod } from "@/types/payroll.types";
 import { PayrollStatus } from "@/types/payroll.types";
 

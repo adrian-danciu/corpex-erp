@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@apollo/client/react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import {
   GET_MY_LEAVE_REQUESTS_QUERY,
@@ -40,7 +40,6 @@ export default function LeaveRequestsPage() {
   const {
     control,
     handleSubmit,
-    watch,
     setValue,
     reset,
     formState: { errors },
@@ -54,8 +53,9 @@ export default function LeaveRequestsPage() {
     },
   });
 
-  const watchStartDate = watch("startDate");
-  const watchEndDate = watch("endDate");
+  const watchStartDate = useWatch({ control, name: "startDate" });
+  const watchEndDate = useWatch({ control, name: "endDate" });
+  const watchDays = useWatch({ control, name: "days" });
 
   const { data: leaveRequestsData, loading, error, refetch } = useQuery<{ myLeaveRequests: LeaveRequest[] }>(GET_MY_LEAVE_REQUESTS_QUERY);
   const { data: profileData } = useQuery<{ myEmployeeProfile: { remainingLeave: number; annualLeaveDays: number } | null }>(GET_MY_EMPLOYEE_PROFILE_QUERY);
@@ -269,7 +269,7 @@ export default function LeaveRequestsPage() {
                   <Input
                     id="days"
                     type="number"
-                    value={watch("days")}
+                    value={watchDays}
                     readOnly
                     className="bg-slate-50"
                   />

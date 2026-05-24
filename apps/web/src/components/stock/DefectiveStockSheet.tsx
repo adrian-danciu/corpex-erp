@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@apollo/client/react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { AlertTriangle, PackageX, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,7 +68,7 @@ export function DefectiveStockSheet({ product, open, onClose }: Props) {
     register,
     handleSubmit,
     reset,
-    watch,
+    control,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
@@ -77,12 +77,12 @@ export function DefectiveStockSheet({ product, open, onClose }: Props) {
 
   useEffect(() => {
     if (open) {
-      setMode("report");
       reset({ warehouseId: "", quantity: 0, reason: "" });
     }
   }, [open, product.id, reset]);
 
-  const selectedId = watch("warehouseId");
+  const selectedId = useWatch({ control, name: "warehouseId" });
+  const quantity = useWatch({ control, name: "quantity" });
   const selected = stocks.find((s) => s.warehouseId === selectedId);
 
   const reportableCap = selected
@@ -114,6 +114,11 @@ export function DefectiveStockSheet({ product, open, onClose }: Props) {
     { successMessage: "Defective units scrapped", ...refetchOptions },
   );
 
+  const handleClose = () => {
+    setMode("report");
+    onClose();
+  };
+
   const onSubmit = async (values: FormValues) => {
     const qty = Number(values.quantity);
     if (!values.warehouseId || qty <= 0) return;
@@ -141,11 +146,11 @@ export function DefectiveStockSheet({ product, open, onClose }: Props) {
   const submitDisabled =
     isSubmitting ||
     !selected ||
-    Number(watch("quantity")) <= 0 ||
-    Number(watch("quantity")) > cap;
+    Number(quantity) <= 0 ||
+    Number(quantity) > cap;
 
   return (
-    <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
+    <Sheet open={open} onOpenChange={(o) => !o && handleClose()}>
       <SheetContent
         side="right"
         className="w-full sm:max-w-[640px] p-0 gap-0 flex flex-col"
@@ -289,7 +294,7 @@ export function DefectiveStockSheet({ product, open, onClose }: Props) {
                   inputMode="decimal"
                   disabled={!selected}
                   className={
-                    errors.quantity || Number(watch("quantity")) > cap
+                    errors.quantity || Number(quantity) > cap
                       ? "border-red-500"
                       : ""
                   }
@@ -323,7 +328,7 @@ export function DefectiveStockSheet({ product, open, onClose }: Props) {
           </div>
 
           <SheetFooter className="border-t border-slate-200 px-6 py-3 mt-0 flex-row justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={handleClose}>
               Close
             </Button>
             <Button

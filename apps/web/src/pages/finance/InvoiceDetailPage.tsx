@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { pdf } from "@react-pdf/renderer";
-import { InvoicePDF } from "@/components/finance/InvoicePDF";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@apollo/client/react";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
@@ -187,6 +185,10 @@ export default function InvoiceDetailPage() {
   const handlePrint = async () => {
     setPdfLoading(true);
     try {
+      const [{ pdf }, { InvoicePDF }] = await Promise.all([
+        import("@react-pdf/renderer"),
+        import("@/components/finance/InvoicePDF"),
+      ]);
       const blob = await pdf(<InvoicePDF invoice={invoice} />).toBlob();
       downloadBlob(
         blob,

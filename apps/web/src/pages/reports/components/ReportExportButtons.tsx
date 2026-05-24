@@ -1,6 +1,6 @@
 import { FileSpreadsheet, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { ExportColumn } from "@/lib/report-export";
+import type { ExportColumn } from "@/lib/report-export.types";
 
 export interface ReportExportDefinition {
   filename: string;

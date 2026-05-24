@@ -1,48 +1,118 @@
+import { lazy, Suspense, type ComponentType, type ReactNode } from "react";
 import { ApolloProvider } from "@apollo/client/react";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
 import { apolloClient } from "./lib/apollo-client";
 import LoginPage from "./pages/LoginPage";
-import UserCreatePage from "./pages/UserCreatePage";
-import UsersAdminPage from "./pages/UsersAdminPage";
-import DashboardPage from "./pages/DashboardPage";
-import ProfilePage from "./pages/ProfilePage";
-import EmployeesPage from "./pages/hr/EmployeesPage";
-import EmployeeCreatePage from "./pages/hr/EmployeeCreatePage";
-import EmployeeDetailPage from "./pages/hr/EmployeeDetailPage";
-import LeaveRequestsPage from "./pages/hr/LeaveRequestsPage";
-import ApprovalsPage from "./pages/hr/ApprovalsPage";
-import OrgChartPage from "./pages/hr/OrgChartPage";
-import FinanceOverviewPage from "./pages/finance/FinanceOverviewPage";
-import PartnersPage from "./pages/finance/PartnersPage";
-import PartnerCreatePage from "./pages/finance/PartnerCreatePage";
-import PartnerDetailPage from "./pages/finance/PartnerDetailPage";
-import InvoicesPage from "./pages/finance/InvoicesPage";
-import InvoiceCreatePage from "./pages/finance/InvoiceCreatePage";
-import InvoiceDetailPage from "./pages/finance/InvoiceDetailPage";
-import StockOverviewPage from "./pages/stock/StockOverviewPage";
-import ProductsPage from "./pages/stock/ProductsPage";
-import ProductCreatePage from "./pages/stock/ProductCreatePage";
-import WarehousesPage from "./pages/stock/WarehousesPage";
-import StockMovementsPage from "./pages/stock/StockMovementsPage";
-import PurchaseOrdersPage from "./pages/stock/PurchaseOrdersPage";
-import PurchaseOrderCreatePage from "./pages/stock/PurchaseOrderCreatePage";
-import PurchaseOrderDetailPage from "./pages/stock/PurchaseOrderDetailPage";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Layout from "./components/layout/Layout";
 import DashboardLayout from "./components/layout/DashboardLayout";
-import ReportsPage from "./pages/ReportsPage";
-import DocumentsPage from "./pages/DocumentsPage";
-import PayrollPage from "./pages/payroll/PayrollPage";
-import VehiclesPage from "./pages/fleet/VehiclesPage";
-import VehicleCreatePage from "./pages/fleet/VehicleCreatePage";
-import VehicleDetailPage from "./pages/fleet/VehicleDetailPage";
-import SettingsPage from "./pages/SettingsPage";
-import ProjectsPage from "./pages/projects/ProjectsPage";
-import ProjectCreatePage from "./pages/projects/ProjectCreatePage";
-import ProjectDetailPage from "./pages/projects/ProjectDetailPage";
-import NotificationsPage from "./pages/NotificationsPage";
+import { PageLoading } from "@/components/ui/page-loading";
 import { Toaster } from "@/components/ui/sonner";
+import type { ModulePermissions } from "@/lib/permissions";
+
+const UserCreatePage = lazy(() => import("./pages/UserCreatePage"));
+const UsersAdminPage = lazy(() => import("./pages/UsersAdminPage"));
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const EmployeesPage = lazy(() => import("./pages/hr/EmployeesPage"));
+const EmployeeCreatePage = lazy(() => import("./pages/hr/EmployeeCreatePage"));
+const EmployeeDetailPage = lazy(() => import("./pages/hr/EmployeeDetailPage"));
+const LeaveRequestsPage = lazy(() => import("./pages/hr/LeaveRequestsPage"));
+const ApprovalsPage = lazy(() => import("./pages/hr/ApprovalsPage"));
+const OrgChartPage = lazy(() => import("./pages/hr/OrgChartPage"));
+const FinanceOverviewPage = lazy(
+  () => import("./pages/finance/FinanceOverviewPage"),
+);
+const PartnersPage = lazy(() => import("./pages/finance/PartnersPage"));
+const PartnerCreatePage = lazy(
+  () => import("./pages/finance/PartnerCreatePage"),
+);
+const PartnerDetailPage = lazy(
+  () => import("./pages/finance/PartnerDetailPage"),
+);
+const InvoicesPage = lazy(() => import("./pages/finance/InvoicesPage"));
+const InvoiceCreatePage = lazy(
+  () => import("./pages/finance/InvoiceCreatePage"),
+);
+const InvoiceDetailPage = lazy(
+  () => import("./pages/finance/InvoiceDetailPage"),
+);
+const StockOverviewPage = lazy(
+  () => import("./pages/stock/StockOverviewPage"),
+);
+const ProductsPage = lazy(() => import("./pages/stock/ProductsPage"));
+const ProductCreatePage = lazy(
+  () => import("./pages/stock/ProductCreatePage"),
+);
+const WarehousesPage = lazy(() => import("./pages/stock/WarehousesPage"));
+const StockMovementsPage = lazy(
+  () => import("./pages/stock/StockMovementsPage"),
+);
+const PurchaseOrdersPage = lazy(
+  () => import("./pages/stock/PurchaseOrdersPage"),
+);
+const PurchaseOrderCreatePage = lazy(
+  () => import("./pages/stock/PurchaseOrderCreatePage"),
+);
+const PurchaseOrderDetailPage = lazy(
+  () => import("./pages/stock/PurchaseOrderDetailPage"),
+);
+const ReportsPage = lazy(() => import("./pages/ReportsPage"));
+const DocumentsPage = lazy(() => import("./pages/DocumentsPage"));
+const PayrollPage = lazy(() => import("./pages/payroll/PayrollPage"));
+const VehiclesPage = lazy(() => import("./pages/fleet/VehiclesPage"));
+const VehicleCreatePage = lazy(
+  () => import("./pages/fleet/VehicleCreatePage"),
+);
+const VehicleDetailPage = lazy(
+  () => import("./pages/fleet/VehicleDetailPage"),
+);
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const ProjectsPage = lazy(() => import("./pages/projects/ProjectsPage"));
+const ProjectCreatePage = lazy(
+  () => import("./pages/projects/ProjectCreatePage"),
+);
+const ProjectDetailPage = lazy(
+  () => import("./pages/projects/ProjectDetailPage"),
+);
+const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
+
+type ProtectedPageProps = {
+  component: ComponentType;
+  requiredRole?: string[];
+  requiredModule?: keyof ModulePermissions;
+  requiredAccess?: "read" | "write";
+};
+
+function LazyDashboard({ children }: { children: ReactNode }) {
+  return (
+    <DashboardLayout>
+      <Suspense fallback={<PageLoading message="Loading page..." />}>
+        {children}
+      </Suspense>
+    </DashboardLayout>
+  );
+}
+
+function ProtectedPage({
+  component: Page,
+  requiredRole,
+  requiredModule,
+  requiredAccess,
+}: ProtectedPageProps) {
+  return (
+    <ProtectedRoute
+      requiredRole={requiredRole}
+      requiredModule={requiredModule}
+      requiredAccess={requiredAccess}
+    >
+      <LazyDashboard>
+        <Page />
+      </LazyDashboard>
+    </ProtectedRoute>
+  );
+}
 
 function App() {
   return (
@@ -50,318 +120,323 @@ function App() {
       <Toaster richColors closeButton position="bottom-right" />
       <BrowserRouter>
         <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<Layout><LoginPage /></Layout>} />
-
-          {/* Protected routes */}
           <Route
-            path="/dashboard"
+            path="/"
             element={
-              <ProtectedRoute>
-                <DashboardLayout><DashboardPage /></DashboardLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <DashboardLayout><ProfilePage /></DashboardLayout>
-              </ProtectedRoute>
+              <Layout>
+                <LoginPage />
+              </Layout>
             }
           />
 
-          {/* Admin-only */}
+          <Route path="/dashboard" element={<ProtectedPage component={DashboardPage} />} />
+          <Route path="/profile" element={<ProtectedPage component={ProfilePage} />} />
+
           <Route
             path="/it/user-create"
             element={
-              <ProtectedRoute requiredRole={["ADMIN"]}>
-                <DashboardLayout><UserCreatePage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage component={UserCreatePage} requiredRole={["ADMIN"]} />
             }
           />
           <Route
             path="/users"
             element={
-              <ProtectedRoute requiredRole={["ADMIN"]}>
-                <DashboardLayout><UsersAdminPage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage component={UsersAdminPage} requiredRole={["ADMIN"]} />
             }
           />
 
-          {/* HR Module */}
           <Route
             path="/hr/employees"
             element={
-              <ProtectedRoute requiredModule="hr" requiredAccess="read">
-                <DashboardLayout><EmployeesPage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={EmployeesPage}
+                requiredModule="hr"
+                requiredAccess="read"
+              />
             }
           />
           <Route
             path="/hr/employees/new"
             element={
-              <ProtectedRoute requiredModule="hr" requiredAccess="write">
-                <DashboardLayout><EmployeeCreatePage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={EmployeeCreatePage}
+                requiredModule="hr"
+                requiredAccess="write"
+              />
             }
           />
           <Route
             path="/hr/employees/:id"
             element={
-              <ProtectedRoute requiredModule="hr" requiredAccess="read">
-                <DashboardLayout><EmployeeDetailPage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={EmployeeDetailPage}
+                requiredModule="hr"
+                requiredAccess="read"
+              />
             }
           />
-          <Route
-            path="/hr/org-chart"
-            element={
-              <ProtectedRoute>
-                <DashboardLayout><OrgChartPage /></DashboardLayout>
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/hr/org-chart" element={<ProtectedPage component={OrgChartPage} />} />
           <Route
             path="/hr/leave-requests"
-            element={
-              <ProtectedRoute>
-                <DashboardLayout><LeaveRequestsPage /></DashboardLayout>
-              </ProtectedRoute>
-            }
+            element={<ProtectedPage component={LeaveRequestsPage} />}
           />
           <Route
             path="/hr/approvals"
             element={
-              <ProtectedRoute requiredModule="leaveApprovals">
-                <DashboardLayout><ApprovalsPage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={ApprovalsPage}
+                requiredModule="leaveApprovals"
+              />
             }
           />
 
-          {/* Finance Module */}
           <Route
             path="/finance"
             element={
-              <ProtectedRoute requiredModule="finance" requiredAccess="read">
-                <DashboardLayout><FinanceOverviewPage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={FinanceOverviewPage}
+                requiredModule="finance"
+                requiredAccess="read"
+              />
             }
           />
           <Route
             path="/finance/partners"
             element={
-              <ProtectedRoute requiredModule="finance" requiredAccess="read">
-                <DashboardLayout><PartnersPage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={PartnersPage}
+                requiredModule="finance"
+                requiredAccess="read"
+              />
             }
           />
           <Route
             path="/finance/partners/new"
             element={
-              <ProtectedRoute requiredModule="finance" requiredAccess="write">
-                <DashboardLayout><PartnerCreatePage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={PartnerCreatePage}
+                requiredModule="finance"
+                requiredAccess="write"
+              />
             }
           />
           <Route
             path="/finance/partners/:id"
             element={
-              <ProtectedRoute requiredModule="finance" requiredAccess="read">
-                <DashboardLayout><PartnerDetailPage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={PartnerDetailPage}
+                requiredModule="finance"
+                requiredAccess="read"
+              />
             }
           />
           <Route
             path="/finance/invoices"
             element={
-              <ProtectedRoute requiredModule="finance" requiredAccess="read">
-                <DashboardLayout><InvoicesPage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={InvoicesPage}
+                requiredModule="finance"
+                requiredAccess="read"
+              />
             }
           />
           <Route
             path="/finance/invoices/new"
             element={
-              <ProtectedRoute requiredModule="finance" requiredAccess="write">
-                <DashboardLayout><InvoiceCreatePage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={InvoiceCreatePage}
+                requiredModule="finance"
+                requiredAccess="write"
+              />
             }
           />
           <Route
             path="/finance/invoices/:id"
             element={
-              <ProtectedRoute requiredModule="finance" requiredAccess="read">
-                <DashboardLayout><InvoiceDetailPage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={InvoiceDetailPage}
+                requiredModule="finance"
+                requiredAccess="read"
+              />
             }
           />
 
-          {/* Stock Module */}
           <Route
             path="/stock"
             element={
-              <ProtectedRoute requiredModule="stock" requiredAccess="read">
-                <DashboardLayout><StockOverviewPage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={StockOverviewPage}
+                requiredModule="stock"
+                requiredAccess="read"
+              />
             }
           />
           <Route
             path="/stock/products"
             element={
-              <ProtectedRoute requiredModule="stock" requiredAccess="read">
-                <DashboardLayout><ProductsPage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={ProductsPage}
+                requiredModule="stock"
+                requiredAccess="read"
+              />
             }
           />
           <Route
             path="/stock/products/new"
             element={
-              <ProtectedRoute requiredModule="stock" requiredAccess="write">
-                <DashboardLayout><ProductCreatePage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={ProductCreatePage}
+                requiredModule="stock"
+                requiredAccess="write"
+              />
             }
           />
           <Route
             path="/stock/warehouses"
             element={
-              <ProtectedRoute requiredModule="stock" requiredAccess="read">
-                <DashboardLayout><WarehousesPage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={WarehousesPage}
+                requiredModule="stock"
+                requiredAccess="read"
+              />
             }
           />
           <Route
             path="/stock/movements"
             element={
-              <ProtectedRoute requiredModule="stock" requiredAccess="read">
-                <DashboardLayout><StockMovementsPage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={StockMovementsPage}
+                requiredModule="stock"
+                requiredAccess="read"
+              />
             }
           />
           <Route
             path="/stock/purchase-orders"
             element={
-              <ProtectedRoute requiredModule="stock" requiredAccess="read">
-                <DashboardLayout><PurchaseOrdersPage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={PurchaseOrdersPage}
+                requiredModule="stock"
+                requiredAccess="read"
+              />
             }
           />
           <Route
             path="/stock/purchase-orders/new"
             element={
-              <ProtectedRoute requiredModule="stock" requiredAccess="write">
-                <DashboardLayout><PurchaseOrderCreatePage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={PurchaseOrderCreatePage}
+                requiredModule="stock"
+                requiredAccess="write"
+              />
             }
           />
           <Route
             path="/stock/purchase-orders/:id"
             element={
-              <ProtectedRoute requiredModule="stock" requiredAccess="read">
-                <DashboardLayout><PurchaseOrderDetailPage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={PurchaseOrderDetailPage}
+                requiredModule="stock"
+                requiredAccess="read"
+              />
             }
           />
 
-          {/* Documents */}
           <Route
             path="/documents"
             element={
-              <ProtectedRoute requiredModule="hr" requiredAccess="read">
-                <DashboardLayout><DocumentsPage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={DocumentsPage}
+                requiredModule="hr"
+                requiredAccess="read"
+              />
             }
           />
-
-          {/* Payroll */}
           <Route
             path="/payroll"
             element={
-              <ProtectedRoute requiredModule="payroll" requiredAccess="read">
-                <DashboardLayout><PayrollPage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={PayrollPage}
+                requiredModule="payroll"
+                requiredAccess="read"
+              />
             }
           />
-
-          {/* Reports */}
           <Route
             path="/reports"
-            element={
-              <ProtectedRoute requiredModule="reports">
-                <DashboardLayout><ReportsPage /></DashboardLayout>
-              </ProtectedRoute>
-            }
+            element={<ProtectedPage component={ReportsPage} requiredModule="reports" />}
           />
 
-          {/* Fleet Module */}
           <Route
             path="/fleet"
             element={
-              <ProtectedRoute requiredModule="fleet" requiredAccess="read">
-                <DashboardLayout><VehiclesPage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={VehiclesPage}
+                requiredModule="fleet"
+                requiredAccess="read"
+              />
             }
           />
           <Route
             path="/fleet/create"
             element={
-              <ProtectedRoute requiredModule="fleet" requiredAccess="write">
-                <DashboardLayout><VehicleCreatePage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={VehicleCreatePage}
+                requiredModule="fleet"
+                requiredAccess="write"
+              />
             }
           />
           <Route
             path="/fleet/:id"
             element={
-              <ProtectedRoute requiredModule="fleet" requiredAccess="read">
-                <DashboardLayout><VehicleDetailPage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={VehicleDetailPage}
+                requiredModule="fleet"
+                requiredAccess="read"
+              />
             }
           />
 
-          {/* Projects Module */}
           <Route
             path="/projects"
             element={
-              <ProtectedRoute requiredModule="projects" requiredAccess="read">
-                <DashboardLayout><ProjectsPage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={ProjectsPage}
+                requiredModule="projects"
+                requiredAccess="read"
+              />
             }
           />
           <Route
             path="/projects/new"
             element={
-              <ProtectedRoute requiredModule="projects" requiredAccess="write">
-                <DashboardLayout><ProjectCreatePage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={ProjectCreatePage}
+                requiredModule="projects"
+                requiredAccess="write"
+              />
             }
           />
           <Route
             path="/projects/:id"
             element={
-              <ProtectedRoute requiredModule="projects" requiredAccess="read">
-                <DashboardLayout><ProjectDetailPage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage
+                component={ProjectDetailPage}
+                requiredModule="projects"
+                requiredAccess="read"
+              />
             }
           />
 
-          {/* Notifications inbox (any logged-in user) */}
           <Route
             path="/notifications"
-            element={
-              <ProtectedRoute>
-                <DashboardLayout><NotificationsPage /></DashboardLayout>
-              </ProtectedRoute>
-            }
+            element={<ProtectedPage component={NotificationsPage} />}
           />
-
-          {/* Settings */}
           <Route
             path="/settings"
             element={
-              <ProtectedRoute requiredRole={["ADMIN"]}>
-                <DashboardLayout><SettingsPage /></DashboardLayout>
-              </ProtectedRoute>
+              <ProtectedPage component={SettingsPage} requiredRole={["ADMIN"]} />
             }
           />
 

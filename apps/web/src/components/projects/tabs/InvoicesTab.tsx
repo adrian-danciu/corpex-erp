@@ -98,7 +98,10 @@ export function InvoicesTab({ project }: Props) {
 
   const linked =
     data?.invoices.items.filter((inv) => inv.projectId === project.id) ?? [];
-  const drafts = projectCostsData?.projectCostsForInvoice ?? [];
+  const drafts = useMemo(
+    () => projectCostsData?.projectCostsForInvoice ?? [],
+    [projectCostsData?.projectCostsForInvoice],
+  );
   const selectedDrafts = useMemo(
     () => drafts.filter((draft) => selectedSources.has(draft.source)),
     [drafts, selectedSources],

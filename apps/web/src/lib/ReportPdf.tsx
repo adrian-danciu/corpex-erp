@@ -1,5 +1,5 @@
 import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
-import type { ExportColumn } from "@/lib/report-export";
+import type { ExportColumn } from "@/lib/report-export.types";
 
 const pdfStyles = StyleSheet.create({
   page: {

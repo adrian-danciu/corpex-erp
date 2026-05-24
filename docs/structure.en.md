@@ -13,24 +13,29 @@ corpex-erp/
 ## apps/web (frontend)
  - `src/`: React UI code.
    - `components/`: Shared components and UI primitives.
-     - `ui/`: shadcn/ui primitives (Radix + Tailwind), including tooltip and checkbox.
+     - `ui/`: shadcn/ui primitives (Radix + Tailwind): buttons, cards, dialogs, sheets, tables, selects, tooltip, toast, etc.
      - `common/`: Shared components (Pagination, etc.).
      - `fleet/`: Fleet-specific components (VehicleStatusBadge, DocumentTypeBadge).
      - `projects/`: Project status badge, plus tab components under `projects/tabs/` (OverviewTab, TeamTab, MaterialsTab, VehiclesTab, TasksTab, FeedTab, InvoicesTab).
+       - `projects/tabs/materials/`: Material allocation table/dialog split out from the Materials tab.
+       - `projects/tabs/services/`: Service table/dialog split out from the Services tab.
+       - `projects/tasks/detail/`: Focused task detail sheet panels and delete confirmation.
      - `dashboard/`: Dashboard widgets (FleetExpiryWidget, MyProjectsWidget, MyTasksWidget, etc.).
    - `pages/`: Page components organized by module.
      - `hr/`: Employees, Leave Requests, Approvals, Employee Detail.
      - `finance/`: Overview, Partners, Invoices (Invoice editor includes a Project picker + cost-import helper).
      - `stock/`: Warehouses, Products, Stock Movements.
-     - `fleet/`: Vehicles list, create, and detail pages (Expense form includes a Project picker with smart default).
+     - `fleet/`: Vehicles list, create, and detail pages. Detail tabs/dialogs live in `pages/fleet/components/`; page workflow state lives in `pages/fleet/hooks/useVehicleDetailController.ts`.
      - `projects/`: Projects list, create, and detail (tabbed) pages.
-     - `payroll/`: Payroll generation/detail page.
+     - `payroll/`: Payroll generation/detail page with local `components/`, `hooks/usePayrollController.ts`, and `utils.ts`.
      - `DocumentsPage.tsx`: Employee document storage overview.
-     - `ReportsPage.tsx`: Reports with PDF/Excel export actions.
+     - `ReportsPage.tsx`: Reports with PDF/Excel export actions; reusable pieces live under `pages/reports/components/`.
    - `graphql/mutations/`: Apollo `gql` mutation documents, plus legacy mixed query/mutation files that have not been migrated yet.
    - `graphql/queries/`: Apollo query documents for migrated modules (fleet first).
    - `graphql/fragments/`: Shared GraphQL fragments for repeated selections (fleet, finance, employee, project task).
    - `types/`: TypeScript interfaces and enums per module.
+   - `hooks/`: Shared hooks (`usePagination`, `useUrlFilters`, `useDisclosure`, `useMutationWithToast`, `useCurrency`, notifications).
+   - `lib/`: Shared utilities (`formatters.ts`, `download.ts`, Apollo client, permission mirror, constants, schemas).
    - `lib/schemas/`: Zod validation schemas per module.
    - `stores/`: Global state stores (Zustand).
  - `vite.config.ts`: Vite build config.
@@ -70,7 +75,7 @@ corpex-erp/
    - `settings/`: Company settings (singleton).
    - `payroll/`: Payroll periods, payroll lines, Romanian tax calculation, draft delete/approve/paid lifecycle.
  - `src/schema.gql`: Auto-generated GraphQL schema.
- - `prisma/schema.prisma`: Prisma schema (User, Employee, EmployeeDocument, PayrollPeriod, PayrollLine, Partner, Invoice, Vehicle, VehicleDocument, MileageLog, VehicleLease, VehicleExpense, Project, ProjectMember, ProjectMaterial, ProjectVehicle, ProjectTask, ProjectFeedEntry, etc.). `Invoice`, `StockMovement`, and `VehicleExpense` carry an optional `projectId`. `ProductStock` carries `reservedQty`.
+ - `prisma/schema.prisma`: Prisma schema (User, Employee, EmployeeDocument, PayrollPeriod, PayrollLine, Partner, Invoice, Vehicle, VehicleDocument, MileageLog, VehicleLease, VehicleExpense, Project, ProjectMember, ProjectMaterial, ProjectVehicle, ProjectTask, ProjectFeedEntry, PurchaseOrder, PurchaseOrderReceipt, etc.). `Invoice`, `StockMovement`, and `VehicleExpense` carry an optional `projectId`. `ProductStock` carries `reservedQty` and `defectiveQty`.
  - `prisma.config.ts`: Prisma config with `DATABASE_URL`.
  - `uploads/` (gitignored): runtime storage for feed attachments. Served at `/uploads/` via `useStaticAssets`.
 
@@ -80,3 +85,4 @@ corpex-erp/
 - `apps/api` uses Prisma + Postgres (Neon serverless) to persist data.
 - All modules follow the same pattern: `entities/` → `dto/` → `service` → `resolver` → registered in the module → imported in `AppModule`.
 - Employee salary is required and represents gross monthly EUR salary. `Employee.isContractor` marks B2B contractors, which payroll treats without employee taxes or CAM.
+- Refactored frontend pages should stay thin: keep data loading/routing at page level, workflow state in a feature-local hook, and repeated UI in focused components.

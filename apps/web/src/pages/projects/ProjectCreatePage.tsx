@@ -1,6 +1,6 @@
 import { useQuery } from "@apollo/client/react";
 import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { ArrowLeft } from "lucide-react";
@@ -45,7 +45,7 @@ export default function ProjectCreatePage() {
     register,
     handleSubmit,
     setValue,
-    watch,
+    control,
     formState: { errors },
   } = useForm<CreateProjectFormData>({
     resolver: zodResolver(createProjectSchema),
@@ -54,7 +54,7 @@ export default function ProjectCreatePage() {
     },
   });
 
-  const partnerId = watch("partnerId");
+  const partnerId = useWatch({ control, name: "partnerId" });
 
   const [createProject, { loading: isCreating }] =
     useMutationWithToast<CreateProjectMutationResult>(CREATE_PROJECT_MUTATION, {

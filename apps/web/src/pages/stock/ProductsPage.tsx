@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@apollo/client/react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { useAuthStore } from "@/stores/auth.store";
 import { canAccess } from "@/lib/permissions";
@@ -93,6 +93,11 @@ export default function ProductsPage() {
   );
 
   const editForm = useForm<EditProductFormData>();
+  const editUnit = useWatch({ control: editForm.control, name: "unit" });
+  const editIsActive = useWatch({
+    control: editForm.control,
+    name: "isActive",
+  });
 
   useEffect(() => {
     if (editing) {
@@ -105,9 +110,13 @@ export default function ProductsPage() {
         unitPrice: editing.unitPrice,
         isActive: editing.isActive,
       });
-      setEditError("");
     }
   }, [editing, editForm]);
+
+  const startEditing = (product: Product) => {
+    setEditError("");
+    setEditing(product);
+  };
 
   const [updateProduct, { loading: saving }] = useMutationWithToast(
     UPDATE_PRODUCT_MUTATION,
@@ -270,7 +279,7 @@ export default function ProductsPage() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
-                            onClick={() => setEditing(product)}
+                            onClick={() => startEditing(product)}
                             aria-label={`Edit ${product.name}`}
                           >
                             <Pencil className="h-4 w-4" />
@@ -347,7 +356,7 @@ export default function ProductsPage() {
                 <div>
                   <Label htmlFor="edit-unit">Unit</Label>
                   <Select
-                    value={editForm.watch("unit") || DEFAULT_UNIT}
+                    value={editUnit || DEFAULT_UNIT}
                     onValueChange={(v) =>
                       editForm.setValue("unit", v, { shouldDirty: true })
                     }
@@ -405,7 +414,7 @@ export default function ProductsPage() {
               </div>
               <label className="flex items-center gap-2 text-sm text-slate-700">
                 <Checkbox
-                  checked={editForm.watch("isActive")}
+                  checked={editIsActive}
                   onCheckedChange={(checked) =>
                     editForm.setValue("isActive", checked === true, {
                       shouldDirty: true,
