@@ -33,6 +33,9 @@ export class CreatePartnerInput {
   @Field(() => PartnerType)
   partnerType: PartnerType;
 
+  @Field({ defaultValue: true })
+  isActive?: boolean;
+
   @Field({ nullable: true })
   bankName?: string;
 

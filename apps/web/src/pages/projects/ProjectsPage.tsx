@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useQuery } from "@apollo/client/react";
 import { useNavigate } from "react-router-dom";
 import { FolderKanban, Plus } from "lucide-react";
@@ -28,6 +27,7 @@ import type { Project } from "@/types/project.types";
 import { ProjectStatus } from "@/types/project.types";
 import { useAuthStore } from "@/stores/auth.store";
 import { canAccess } from "@/lib/permissions";
+import { useUrlFilters } from "@/hooks/useUrlFilters";
 
 const ALL_STATUSES = "ALL" as const;
 
@@ -36,11 +36,13 @@ export default function ProjectsPage() {
   const { user } = useAuthStore();
   const canCreate = canAccess(user, "projects", "write");
 
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<typeof ALL_STATUSES | ProjectStatus>(
-    ALL_STATUSES,
-  );
-  const [onlyMine, setOnlyMine] = useState(false);
+  const { getFilter, setFilter } = useUrlFilters();
+  const search = getFilter("search");
+  const rawStatus = getFilter("status", ALL_STATUSES);
+  const status = Object.values(ProjectStatus).includes(rawStatus as ProjectStatus)
+    ? (rawStatus as ProjectStatus)
+    : ALL_STATUSES;
+  const onlyMine = getFilter("onlyMine") === "true";
 
   const { data, loading, error } = useQuery<{ projects: Project[] }>(
     GET_PROJECTS_QUERY,
@@ -97,12 +99,14 @@ export default function ProjectsPage() {
             <Input
               placeholder="Search by name or code..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) =>
+                setFilter("search", e.target.value, { replace: true })
+              }
             />
             <Select
               value={status}
               onValueChange={(v) =>
-                setStatus(v as typeof ALL_STATUSES | ProjectStatus)
+                setFilter("status", v === ALL_STATUSES ? null : v)
               }
             >
               <SelectTrigger>
@@ -120,7 +124,9 @@ export default function ProjectsPage() {
             <label className="flex items-center gap-2 text-sm text-slate-700">
               <Checkbox
                 checked={onlyMine}
-                onCheckedChange={(checked) => setOnlyMine(checked === true)}
+                onCheckedChange={(checked) =>
+                  setFilter("onlyMine", checked === true ? "true" : null)
+                }
               />
               My projects only
             </label>

@@ -6,7 +6,11 @@ import {
   Int,
   registerEnumType,
 } from '@nestjs/graphql';
-import { InvoiceItemSourceType, InvoiceType, InvoiceStatus } from '@prisma/client';
+import {
+  InvoiceItemSourceType,
+  InvoiceType,
+  InvoiceStatus,
+} from '@prisma/client';
 import { Partner } from './partner.entity';
 import { InvoiceItem } from './invoice-item.entity';
 import { Payment } from './payment.entity';

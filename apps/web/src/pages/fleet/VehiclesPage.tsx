@@ -3,10 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { Plus, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Pagination } from "@/components/common/Pagination";
 import { VehicleStatusBadge } from "@/components/fleet/VehicleStatusBadge";
 import { usePagination } from "@/hooks/usePagination";
-import { GET_VEHICLES_QUERY } from "@/graphql/mutations/fleet.queries";
+import { GET_VEHICLES_QUERY } from "@/graphql/queries/fleet.queries";
 import type { Vehicle } from "@/types/fleet.types";
 import type { PaginatedResult } from "@/types/pagination.types";
 import { PageLoading } from "@/components/ui/page-loading";
@@ -64,46 +72,44 @@ export default function VehiclesPage() {
               </Button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[800px]">
-                <thead>
-                  <tr className="border-b text-left text-sm font-medium text-slate-600">
-                    <th className="pb-3">Plate Number</th>
-                    <th className="pb-3">Vehicle</th>
-                    <th className="pb-3">Year</th>
-                    <th className="pb-3">Fuel Type</th>
-                    <th className="pb-3">Status</th>
-                    <th className="pb-3">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="text-sm">
-                  {vehicles.map((vehicle) => (
-                    <tr key={vehicle.id} className="border-b hover:bg-slate-50">
-                      <td className="py-4 font-medium text-slate-900">{vehicle.plateNumber}</td>
-                      <td className="py-4 text-slate-700">
+            <Table className="min-w-[800px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Plate Number</TableHead>
+                  <TableHead>Vehicle</TableHead>
+                  <TableHead>Year</TableHead>
+                  <TableHead>Fuel Type</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {vehicles.map((vehicle) => (
+                  <TableRow key={vehicle.id}>
+                    <TableCell className="font-medium text-slate-900">{vehicle.plateNumber}</TableCell>
+                    <TableCell className="text-slate-700">
                         {vehicle.brand} {vehicle.model}
-                      </td>
-                      <td className="py-4 text-slate-700">{vehicle.year}</td>
-                      <td className="py-4 text-slate-600 capitalize">
+                    </TableCell>
+                    <TableCell className="text-slate-700">{vehicle.year}</TableCell>
+                    <TableCell className="text-slate-600 capitalize">
                         {vehicle.fuelType.toLowerCase()}
-                      </td>
-                      <td className="py-4">
-                        <VehicleStatusBadge status={vehicle.status} />
-                      </td>
-                      <td className="py-4">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigate(`/fleet/${vehicle.id}`)}
-                        >
-                          View Details
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    </TableCell>
+                    <TableCell>
+                      <VehicleStatusBadge status={vehicle.status} />
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/fleet/${vehicle.id}`)}
+                      >
+                        View Details
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

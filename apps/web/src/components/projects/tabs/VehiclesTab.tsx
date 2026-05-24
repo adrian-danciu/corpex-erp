@@ -39,7 +39,7 @@ import {
   ASSIGN_PROJECT_VEHICLE_MUTATION,
   END_PROJECT_VEHICLE_ASSIGNMENT_MUTATION,
 } from "@/graphql/mutations/project.mutations";
-import { GET_VEHICLES_QUERY } from "@/graphql/mutations/fleet.queries";
+import { GET_VEHICLES_QUERY } from "@/graphql/queries/fleet.queries";
 import type {
   Project,
   ProjectVehicleAssignment,

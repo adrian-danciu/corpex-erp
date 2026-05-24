@@ -173,6 +173,7 @@ model Partner {
   phone              String?
   contactPerson      String?
   partnerType        PartnerType
+  isActive           Boolean     @default(true)
   bankName           String?
   bankAccount        String?
   notes              String?

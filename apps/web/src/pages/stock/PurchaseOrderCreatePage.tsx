@@ -73,8 +73,9 @@ export default function PurchaseOrderCreatePage() {
     () =>
       (partnersData?.partners.items ?? []).filter(
         (p) =>
-          p.partnerType === PartnerType.SUPPLIER ||
-          p.partnerType === PartnerType.BOTH,
+          (p.partnerType === PartnerType.SUPPLIER ||
+            p.partnerType === PartnerType.BOTH) &&
+          p.isActive,
       ),
     [partnersData],
   );

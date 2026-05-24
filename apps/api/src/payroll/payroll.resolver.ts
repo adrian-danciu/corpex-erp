@@ -3,7 +3,10 @@ import { UseGuards } from '@nestjs/common';
 import { PayrollService } from './payroll.service';
 import { PayrollPeriod } from './entities/payroll-period.entity';
 import { PayrollLine } from './entities/payroll-line.entity';
-import { GeneratePayrollInput, UpdatePayrollLineInput } from './dto/payroll.inputs';
+import {
+  GeneratePayrollInput,
+  UpdatePayrollLineInput,
+} from './dto/payroll.inputs';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { DepartmentGuard } from '../auth/guards/department.guard';
 import { RequireModule } from '../auth/decorators/roles.decorator';
@@ -24,7 +27,9 @@ export class PayrollResolver {
   @Query(() => PayrollPeriod, { name: 'payrollPeriod' })
   @UseGuards(JwtAuthGuard, DepartmentGuard)
   @RequireModule('payroll', 'read')
-  async payrollPeriod(@Args('id', { type: () => ID }) id: string): Promise<PayrollPeriod> {
+  async payrollPeriod(
+    @Args('id', { type: () => ID }) id: string,
+  ): Promise<PayrollPeriod> {
     return this.payrollService.findOne(id);
   }
 

@@ -46,6 +46,7 @@ export interface Partner {
   phone?: string | null;
   contactPerson?: string | null;
   partnerType: PartnerType;
+  isActive: boolean;
   bankName?: string | null;
   bankAccount?: string | null;
   notes?: string | null;
@@ -120,6 +121,7 @@ export interface CreatePartnerInput {
   phone?: string;
   contactPerson?: string;
   partnerType: PartnerType;
+  isActive?: boolean;
   bankName?: string;
   bankAccount?: string;
   notes?: string;

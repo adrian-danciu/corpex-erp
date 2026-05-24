@@ -67,7 +67,7 @@ export interface PurchaseOrder {
   createdById: string;
   createdAt: string;
   updatedAt: string;
-  supplier?: Pick<Partner, "id" | "name" | "cui" | "partnerType"> | null;
+  supplier?: Pick<Partner, "id" | "name" | "cui" | "partnerType" | "isActive"> | null;
   warehouse?: Pick<Warehouse, "id" | "code" | "name"> | null;
   createdBy?: Pick<User, "id" | "firstName" | "lastName"> | null;
   lines: PurchaseOrderLine[];

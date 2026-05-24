@@ -1,8 +1,16 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@apollo/client/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Plus, Receipt, Search, AlertCircle } from "lucide-react";
 import { PageLoading } from "@/components/ui/page-loading";
 import { useNavigate } from "react-router-dom";
@@ -12,15 +20,9 @@ import type { Invoice } from "@/types/finance.types";
 import { GET_INVOICES_QUERY } from "@/graphql/mutations/finance.mutations";
 import { Pagination } from "@/components/common/Pagination";
 import { usePagination } from "@/hooks/usePagination";
+import { useUrlFilters } from "@/hooks/useUrlFilters";
 import { PaginatedResult } from "@/types/pagination.types";
-
-function formatCurrency(amount: number, currency = "EUR") {
-  return new Intl.NumberFormat("ro-RO", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-  }).format(amount);
-}
+import { formatCurrency } from "@/lib/formatters";
 
 const statusFilters = [
   { key: "ALL", label: "All" },
@@ -34,8 +36,12 @@ const statusFilters = [
 
 export default function InvoicesPage() {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState("ALL");
+  const { getFilter, setFilter } = useUrlFilters();
+  const searchQuery = getFilter("search");
+  const rawStatus = getFilter("status", "ALL");
+  const filterStatus = statusFilters.some((filter) => filter.key === rawStatus)
+    ? rawStatus
+    : "ALL";
   const { page, pageSize, skip, take, setPage } = usePagination();
 
   const { data, loading, error } = useQuery<{ invoices: PaginatedResult<Invoice> }>(
@@ -102,7 +108,9 @@ export default function InvoicesPage() {
               <Input
                 placeholder="Search by partner or invoice number..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) =>
+                  setFilter("search", e.target.value, { replace: true })
+                }
                 className="pl-10"
               />
             </div>
@@ -112,7 +120,12 @@ export default function InvoicesPage() {
                   key={filter.key}
                   variant={filterStatus === filter.key ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setFilterStatus(filter.key)}
+                  onClick={() =>
+                    setFilter(
+                      "status",
+                      filter.key === "ALL" ? null : filter.key,
+                    )
+                  }
                 >
                   {filter.label}
                 </Button>
@@ -166,57 +179,55 @@ export default function InvoicesPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1200px]">
-                <thead>
-                  <tr className="border-b text-left text-sm font-medium text-slate-600">
-                    <th className="pb-3">Invoice #</th>
-                    <th className="pb-3">Type</th>
-                    <th className="pb-3">Partner</th>
-                    <th className="pb-3">Issue Date</th>
-                    <th className="pb-3">Due Date</th>
-                    <th className="pb-3 text-right">Total</th>
-                    <th className="pb-3 text-right">Paid</th>
-                    <th className="pb-3 text-center">Status</th>
-                    <th className="pb-3">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="text-sm">
-                  {filteredInvoices.map((invoice) => (
-                    <tr
-                      key={invoice.id}
-                      className="border-b hover:bg-slate-50 cursor-pointer"
-                      onClick={() => navigate(`/finance/invoices/${invoice.id}`)}
-                    >
-                      <td className="py-3 font-medium text-slate-900">
+            <Table className="min-w-[1200px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Invoice #</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Partner</TableHead>
+                  <TableHead>Issue Date</TableHead>
+                  <TableHead>Due Date</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="text-right">Paid</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredInvoices.map((invoice) => (
+                  <TableRow
+                    key={invoice.id}
+                    className="cursor-pointer"
+                    onClick={() => navigate(`/finance/invoices/${invoice.id}`)}
+                  >
+                    <TableCell className="font-medium text-slate-900">
                         {invoice.series}-{String(invoice.number).padStart(4, "0")}
-                      </td>
-                      <td className="py-3 text-slate-600 text-xs uppercase">{invoice.invoiceType}</td>
-                      <td className="py-3 text-slate-700">{invoice.partner.name}</td>
-                      <td className="py-3 text-slate-600">{invoice.issueDate}</td>
-                      <td className="py-3 text-slate-600">{invoice.dueDate}</td>
-                      <td className="py-3 text-right font-medium">{formatCurrency(invoice.total, invoice.currency)}</td>
-                      <td className="py-3 text-right text-slate-600">{formatCurrency(invoice.paidAmount, invoice.currency)}</td>
-                      <td className="py-3 text-center">
-                        <InvoiceStatusBadge status={invoice.status} />
-                      </td>
-                      <td className="py-3">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/finance/invoices/${invoice.id}`);
-                          }}
-                        >
-                          View
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    </TableCell>
+                    <TableCell className="text-xs uppercase text-slate-600">{invoice.invoiceType}</TableCell>
+                    <TableCell className="text-slate-700">{invoice.partner.name}</TableCell>
+                    <TableCell className="text-slate-600">{invoice.issueDate}</TableCell>
+                    <TableCell className="text-slate-600">{invoice.dueDate}</TableCell>
+                    <TableCell className="text-right font-medium">{formatCurrency(invoice.total, invoice.currency)}</TableCell>
+                    <TableCell className="text-right text-slate-600">{formatCurrency(invoice.paidAmount, invoice.currency)}</TableCell>
+                    <TableCell className="text-center">
+                      <InvoiceStatusBadge status={invoice.status} />
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/finance/invoices/${invoice.id}`);
+                        }}
+                      >
+                        View
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

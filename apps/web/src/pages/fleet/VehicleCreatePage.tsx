@@ -20,7 +20,7 @@ import {
   FuelTypeEnum,
 } from "@/lib/schemas/fleet.schema";
 import { CREATE_VEHICLE_MUTATION } from "@/graphql/mutations/fleet.mutations";
-import { GET_VEHICLES_QUERY } from "@/graphql/mutations/fleet.queries";
+import { GET_VEHICLES_QUERY } from "@/graphql/queries/fleet.queries";
 
 export default function VehicleCreatePage() {
   const navigate = useNavigate();

@@ -208,6 +208,10 @@ export class LeaveRequestsService {
       throw new BadRequestException('Leave request has already been processed');
     }
 
+    if (leaveRequest.employeeId === approverId) {
+      throw new ForbiddenException('You cannot approve your own leave request');
+    }
+
     // Check if approver is the manager of the employee
     const employee = await this.prisma.employee.findUnique({
       where: { userId: leaveRequest.employeeId },
@@ -305,26 +309,8 @@ export class LeaveRequestsService {
       );
     }
 
-    if (
-      leaveRequest.status !== LeaveStatus.PENDING &&
-      leaveRequest.status !== LeaveStatus.APPROVED
-    ) {
+    if (leaveRequest.status !== LeaveStatus.PENDING) {
       throw new BadRequestException('Leave request cannot be cancelled');
-    }
-
-    // If the request was approved and is annual leave, restore the days
-    if (
-      leaveRequest.status === LeaveStatus.APPROVED &&
-      leaveRequest.leaveType === 'ANNUAL'
-    ) {
-      await this.prisma.employee.update({
-        where: { userId },
-        data: {
-          remainingLeave: {
-            increment: leaveRequest.days,
-          },
-        },
-      });
     }
 
     return this.prisma.leaveRequest.update({

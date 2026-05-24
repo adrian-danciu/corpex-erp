@@ -27,7 +27,9 @@ corpex-erp/
      - `payroll/`: Payroll generation/detail page.
      - `DocumentsPage.tsx`: Employee document storage overview.
      - `ReportsPage.tsx`: Reports with PDF/Excel export actions.
-   - `graphql/mutations/`: Apollo `gql` query and mutation documents (all modules).
+   - `graphql/mutations/`: Apollo `gql` mutation documents, plus legacy mixed query/mutation files that have not been migrated yet.
+   - `graphql/queries/`: Apollo query documents for migrated modules (fleet first).
+   - `graphql/fragments/`: Shared GraphQL fragments for repeated selections (fleet, finance, employee, project task).
    - `types/`: TypeScript interfaces and enums per module.
    - `lib/schemas/`: Zod validation schemas per module.
    - `stores/`: Global state stores (Zustand).
@@ -39,7 +41,11 @@ corpex-erp/
    - `users/`: User management.
    - `employees/`: HR module (Employees, Employee Documents, Leave Requests).
    - `finance/`: Finance module (Partners, Invoices, Payments).
-   - `stock/`: Stock module (Warehouses, Products, Stock Movements).
+   - `stock/`: Stock module (Warehouses, Products, Stock Movements, Purchase Orders).
+     - `stock.service.ts`: Public stock facade for catalog reads/writes and stock helper methods consumed by other modules.
+     - `stock-ledger.service.ts`: Stock movement, reservation, issue, defective, and scrap transaction logic.
+     - `purchase-orders.service.ts`: Public purchase-order facade for CRUD, status transitions, and in-transit queries.
+     - `purchase-order-receiving.service.ts`: Receipt transaction logic, including stock increments, movements, and purchase-order status updates.
    - `fleet/`: Fleet module (Vehicles, Documents, Mileage, Leases, Expenses).
      - `entities/`: GraphQL ObjectTypes for all fleet models.
      - `dto/`: Input types for all fleet mutations.
@@ -59,7 +65,7 @@ corpex-erp/
      - `project-tasks.service.ts` / `project-tasks.resolver.ts`: Task CRUD + kanban transitions; `myProjectTasks` query.
      - `project-feed.service.ts` / `project-feed.resolver.ts`: Combined feed (auto + manual). `recordAutoEntry` is consumed by every other project sub-service.
      - `project-uploads.controller.ts`: REST endpoint `POST /uploads/project-feed` for feed attachments (multer, image+PDF, 10MB cap).
-   - `common/`: Shared DTOs (PaginationInput, Paginated factory).
+   - `common/`: Shared DTOs and helpers (`PaginationInput`, Paginated factory, pagination normalization/result helpers).
    - `reporting/`: Dashboard metrics module.
    - `settings/`: Company settings (singleton).
    - `payroll/`: Payroll periods, payroll lines, Romanian tax calculation, draft delete/approve/paid lifecycle.

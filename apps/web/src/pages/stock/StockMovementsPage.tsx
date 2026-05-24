@@ -10,6 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -272,38 +280,36 @@ export default function StockMovementsPage() {
           {movements.length === 0 ? (
             <p className="text-sm text-slate-500">No stock movements yet.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-xs font-medium text-slate-600">
-                    <th className="py-2">Date</th>
-                    <th className="py-2">Type</th>
-                    <th className="py-2">Product</th>
-                    <th className="py-2">Warehouse</th>
-                    <th className="py-2">Quantity</th>
-                    <th className="py-2">Operator</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {movements.map((movement) => (
-                    <tr key={movement.id} className="border-b last:border-0">
-                      <td className="py-2">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Product</TableHead>
+                  <TableHead>Warehouse</TableHead>
+                  <TableHead>Quantity</TableHead>
+                  <TableHead>Operator</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {movements.map((movement) => (
+                  <TableRow key={movement.id}>
+                    <TableCell>
                         {new Date(movement.createdAt).toLocaleString()}
-                      </td>
-                      <td className="py-2">{movement.type}</td>
-                      <td className="py-2">
+                    </TableCell>
+                    <TableCell>{movement.type}</TableCell>
+                    <TableCell>
                         {movement.product.sku} - {movement.product.name}
-                      </td>
-                      <td className="py-2">{movement.warehouse.code}</td>
-                      <td className="py-2">{movement.quantity}</td>
-                      <td className="py-2">
+                    </TableCell>
+                    <TableCell>{movement.warehouse.code}</TableCell>
+                    <TableCell>{movement.quantity}</TableCell>
+                    <TableCell>
                         {movement.createdBy.firstName} {movement.createdBy.lastName}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

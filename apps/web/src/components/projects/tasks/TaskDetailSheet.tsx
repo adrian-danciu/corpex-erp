@@ -14,15 +14,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { useAuthStore } from "@/stores/auth.store";
 import {
@@ -39,7 +30,6 @@ import {
   UPDATE_PROJECT_TASK_MUTATION,
 } from "@/graphql/mutations/project.mutations";
 import {
-  ProjectTaskPriority,
   ProjectTaskStatus,
   type Project,
   type ProjectFeedEntry,
@@ -48,9 +38,10 @@ import {
 } from "@/types/project.types";
 import { getTaskPermissions } from "@/lib/projectTaskPermissions";
 import { InlineEditText } from "./inline-edit/InlineEditText";
-import { InlineEditTextarea } from "./inline-edit/InlineEditTextarea";
-import { InlineEditSelect } from "./inline-edit/InlineEditSelect";
-import { TaskActivityTimeline } from "./TaskActivityTimeline";
+import { TaskActivityPanel } from "./detail/TaskActivityPanel";
+import { TaskCommentComposer } from "./detail/TaskCommentComposer";
+import { TaskDeleteDialog } from "./detail/TaskDeleteDialog";
+import { TaskFieldsPanel } from "./detail/TaskFieldsPanel";
 
 interface Props {
   project: Project;
@@ -58,24 +49,6 @@ interface Props {
   isProjectManager: boolean;
   onClose: () => void;
 }
-
-// Radix Select disallows empty-string Item values, so we use a non-empty sentinel
-// for the "Unassigned" option and translate at the boundaries.
-const UNASSIGNED_VALUE = "__unassigned__";
-
-const STATUS_OPTIONS = [
-  { value: ProjectTaskStatus.TODO, label: "To do" },
-  { value: ProjectTaskStatus.IN_PROGRESS, label: "In progress" },
-  { value: ProjectTaskStatus.IN_REVIEW, label: "In review" },
-  { value: ProjectTaskStatus.DONE, label: "Done" },
-  { value: ProjectTaskStatus.BLOCKED, label: "Blocked" },
-];
-
-const PRIORITY_OPTIONS = [
-  { value: ProjectTaskPriority.LOW, label: "Low" },
-  { value: ProjectTaskPriority.MEDIUM, label: "Medium" },
-  { value: ProjectTaskPriority.HIGH, label: "High" },
-];
 
 export function TaskDetailSheet({
   project,
@@ -311,209 +284,38 @@ export function TaskDetailSheet({
           </SheetHeader>
 
           <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Status">
-                <InlineEditSelect
-                  value={task.status}
-                  options={STATUS_OPTIONS}
-                  disabled={!perms.canTransition}
-                  onSave={handleStatusChange}
-                />
-              </Field>
-              <Field label="Priority">
-                <InlineEditSelect
-                  value={task.priority}
-                  options={PRIORITY_OPTIONS}
-                  disabled={!perms.canEditFields}
-                  onSave={(next) =>
-                    updateField({
-                      input: {
-                        taskId: task.id,
-                        priority: next as ProjectTaskPriority,
-                      },
-                    })
-                  }
-                />
-              </Field>
-            </div>
-
-            <Field label="Description">
-              <InlineEditTextarea
-                value={task.description ?? ""}
-                disabled={!perms.canEditFields}
-                placeholder="No description."
-                rows={4}
-                className="text-sm leading-relaxed text-slate-700 -mx-2"
-                onSave={(next) =>
-                  updateField({
-                    input: { taskId: task.id, description: next },
-                  })
-                }
-              />
-            </Field>
-
-            <div>
-              <SectionHeading>Details</SectionHeading>
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg border border-slate-200 bg-slate-50/60 p-3">
-                <Field label="Assignee">
-                  <InlineEditSelect
-                    value={task.assigneeId ?? UNASSIGNED_VALUE}
-                    options={[
-                      { value: UNASSIGNED_VALUE, label: "Unassigned" },
-                      ...memberOptions,
-                    ]}
-                    disabled={!perms.canEditFields}
-                    onSave={(next) =>
-                      updateField({
-                        input: {
-                          taskId: task.id,
-                          assigneeId:
-                            next === UNASSIGNED_VALUE ? null : next,
-                        },
-                      })
-                    }
-                  />
-                </Field>
-                <Field label="Due date">
-                  {perms.canEditFields ? (
-                    <Input
-                      type="date"
-                      value={
-                        task.dueDate
-                          ? new Date(task.dueDate).toISOString().slice(0, 10)
-                          : ""
-                      }
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        void updateField({
-                          input: {
-                            taskId: task.id,
-                            dueDate: v ? new Date(v) : null,
-                          },
-                        });
-                      }}
-                    />
-                  ) : (
-                    <StaticValue>
-                      {task.dueDate
-                        ? new Date(task.dueDate).toLocaleDateString()
-                        : "—"}
-                    </StaticValue>
-                  )}
-                </Field>
-                <Field label="Created by">
-                  <StaticValue>
-                    {task.createdBy
-                      ? `${task.createdBy.firstName} ${task.createdBy.lastName}`
-                      : "—"}
-                  </StaticValue>
-                </Field>
-                <Field label="Created">
-                  <StaticValue>
-                    {new Date(task.createdAt).toLocaleString()}
-                  </StaticValue>
-                </Field>
-                {task.completedAt && (
-                  <Field label="Completed">
-                    <StaticValue>
-                      {new Date(task.completedAt).toLocaleString()}
-                    </StaticValue>
-                  </Field>
-                )}
-              </dl>
-            </div>
-
-            <div>
-              <SectionHeading>Activity</SectionHeading>
-              <TaskActivityTimeline
-                events={activityData?.projectTaskActivity ?? []}
-                comments={commentsData?.projectTaskComments ?? []}
-                canEditComment={perms.canEditComment}
-                onUpdateComment={handleUpdateComment}
-                onDeleteComment={handleDeleteComment}
-              />
-            </div>
+            <TaskFieldsPanel
+              handleStatusChange={handleStatusChange}
+              memberOptions={memberOptions}
+              perms={perms}
+              task={task}
+              updateField={updateField}
+            />
+            <TaskActivityPanel
+              events={activityData?.projectTaskActivity ?? []}
+              comments={commentsData?.projectTaskComments ?? []}
+              perms={perms}
+              onUpdateComment={handleUpdateComment}
+              onDeleteComment={handleDeleteComment}
+            />
           </div>
 
           <SheetFooter className="border-t border-slate-200 px-6 py-3 gap-2 mt-0">
-            <Textarea
-              rows={2}
-              value={draftComment}
-              onChange={(e) => setDraftComment(e.target.value)}
-              placeholder="Add a comment… (⌘/Ctrl + Enter to send)"
-              className="text-sm resize-none"
-              onKeyDown={(e) => {
-                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                  e.preventDefault();
-                  void handleAddComment();
-                }
-              }}
+            <TaskCommentComposer
+              draftComment={draftComment}
+              setDraftComment={setDraftComment}
+              onSend={() => void handleAddComment()}
             />
-            <div className="flex justify-end">
-              <Button
-                size="sm"
-                onClick={() => void handleAddComment()}
-                disabled={!draftComment.trim()}
-              >
-                Send
-              </Button>
-            </div>
           </SheetFooter>
         </SheetContent>
       </Sheet>
 
-      <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete this task?</DialogTitle>
-          </DialogHeader>
-          <div className="text-sm text-slate-700">
-            This will permanently delete "{task.title}" and all its comments.
-            This cannot be undone.
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setConfirmDeleteOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => void handleDeleteTask()}
-            >
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <TaskDeleteDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        onConfirm={() => void handleDeleteTask()}
+        taskTitle={task.title}
+      />
     </>
   );
-}
-
-function SectionHeading({ children }: { children: React.ReactNode }) {
-  return (
-    <h3 className="text-xs font-medium uppercase tracking-wide text-slate-500 mb-2">
-      {children}
-    </h3>
-  );
-}
-
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="min-w-0 space-y-1">
-      <div className="text-xs font-medium text-slate-500">{label}</div>
-      {children}
-    </div>
-  );
-}
-
-function StaticValue({ children }: { children: React.ReactNode }) {
-  return <div className="text-sm text-slate-700">{children}</div>;
 }

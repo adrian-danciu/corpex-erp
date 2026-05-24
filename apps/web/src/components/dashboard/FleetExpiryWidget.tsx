@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Car } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { GET_EXPIRING_DOCUMENTS_QUERY } from "@/graphql/mutations/fleet.queries";
+import { GET_EXPIRING_DOCUMENTS_QUERY } from "@/graphql/queries/fleet.queries";
 import type { ExpiringDocumentSummary } from "@/types/fleet.types";
 
 export function FleetExpiryWidget() {

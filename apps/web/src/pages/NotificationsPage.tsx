@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { CheckCheck, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +11,9 @@ import {
 } from "@/components/ui/select";
 import { Pagination } from "@/components/common/Pagination";
 import { NotificationItem } from "@/components/notifications/NotificationItem";
+import { usePagination } from "@/hooks/usePagination";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useUrlFilters } from "@/hooks/useUrlFilters";
 import type {
   NotificationFilter,
   NotificationType,
@@ -30,11 +32,22 @@ const TYPE_LABELS: Record<NotificationType, string> = {
 };
 
 type ReadFilter = "all" | "unread" | "read";
+const READ_FILTERS: ReadFilter[] = ["all", "unread", "read"];
 
 export default function NotificationsPage() {
-  const [page, setPage] = useState(1);
-  const [readFilter, setReadFilter] = useState<ReadFilter>("all");
-  const [typeFilter, setTypeFilter] = useState<NotificationType | "all">("all");
+  const { page, skip, take, setPage } = usePagination({
+    defaultPageSize: PAGE_SIZE,
+  });
+  const { getFilter, setFilter } = useUrlFilters();
+  const rawReadFilter = getFilter("read", "all");
+  const readFilter = READ_FILTERS.includes(rawReadFilter as ReadFilter)
+    ? (rawReadFilter as ReadFilter)
+    : "all";
+  const rawTypeFilter = getFilter("type", "all");
+  const typeFilter =
+    rawTypeFilter === "all" || rawTypeFilter in TYPE_LABELS
+      ? (rawTypeFilter as NotificationType | "all")
+      : "all";
 
   const filter: NotificationFilter | undefined = useMemo(() => {
     const f: NotificationFilter = {};
@@ -46,15 +59,10 @@ export default function NotificationsPage() {
 
   const { notifications, total, unreadCount, loading, markRead, markAllRead } =
     useNotifications({
-      take: PAGE_SIZE,
-      skip: (page - 1) * PAGE_SIZE,
+      take,
+      skip,
       filter,
     });
-
-  const handleFilterChange = <T,>(setter: (v: T) => void, value: T) => {
-    setter(value);
-    setPage(1);
-  };
 
   return (
     <div className="space-y-6">
@@ -88,7 +96,7 @@ export default function NotificationsPage() {
               <Select
                 value={readFilter}
                 onValueChange={(v) =>
-                  handleFilterChange(setReadFilter, v as ReadFilter)
+                  setFilter("read", v === "all" ? null : v)
                 }
               >
                 <SelectTrigger className="h-9 w-[140px]">
@@ -103,10 +111,7 @@ export default function NotificationsPage() {
               <Select
                 value={typeFilter}
                 onValueChange={(v) =>
-                  handleFilterChange(
-                    setTypeFilter,
-                    v as NotificationType | "all",
-                  )
+                  setFilter("type", v === "all" ? null : v)
                 }
               >
                 <SelectTrigger className="h-9 w-[180px]">
@@ -153,7 +158,7 @@ export default function NotificationsPage() {
       <Pagination
         currentPage={page}
         totalItems={total}
-        pageSize={PAGE_SIZE}
+        pageSize={take}
         onPageChange={setPage}
       />
     </div>

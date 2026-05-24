@@ -6,7 +6,12 @@ import { Invoice } from './entities/invoice.entity';
 import { InvoiceLineDraft } from './entities/invoice-line-draft.entity';
 import { PaginationInput } from '../common/dto/pagination.input';
 import { IPaginatedType } from '../common/dto/pagination-result.dto';
-import { InvoiceItemSourceType, ProjectMaterialStatus, ProjectServiceStatus } from '@prisma/client';
+import { toPaginatedResult } from '../common/pagination';
+import {
+  InvoiceItemSourceType,
+  ProjectMaterialStatus,
+  ProjectServiceStatus,
+} from '@prisma/client';
 
 const invoiceInclude = {
   partner: true,
@@ -71,25 +76,17 @@ export class InvoicesService {
   }
 
   async findAll(pagination: PaginationInput): Promise<IPaginatedType<Invoice>> {
-    const { skip, take } = pagination;
     const [items, total] = await Promise.all([
       this.prisma.invoice.findMany({
-        skip,
-        take,
+        skip: pagination.skip,
+        take: pagination.take,
         include: invoiceInclude,
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.invoice.count(),
     ]);
 
-    return {
-      items,
-      meta: {
-        total,
-        skip,
-        take,
-      },
-    };
+    return toPaginatedResult(items, total, pagination);
   }
 
   async findOne(id: string): Promise<Invoice | null> {

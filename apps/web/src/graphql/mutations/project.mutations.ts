@@ -1,4 +1,5 @@
 import { gql } from "@apollo/client";
+import { PROJECT_TASK_FRAGMENT } from "../fragments/project.fragments";
 
 export const CREATE_PROJECT_MUTATION = gql`
   mutation CreateProject($input: CreateProjectInput!) {
@@ -160,16 +161,10 @@ export const CREATE_PROJECT_TASK_MUTATION = gql`
 export const UPDATE_PROJECT_TASK_MUTATION = gql`
   mutation UpdateProjectTask($input: UpdateProjectTaskInput!) {
     updateProjectTask(input: $input) {
-      id
-      title
-      description
-      priority
-      assigneeId
-      dueDate
-      updatedAt
-      assignee { id firstName lastName }
+      ...ProjectTaskFields
     }
   }
+  ${PROJECT_TASK_FRAGMENT}
 `;
 
 export const TRANSITION_PROJECT_TASK_MUTATION = gql`

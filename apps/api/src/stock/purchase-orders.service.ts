@@ -2,17 +2,12 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  PartnerType,
-  Prisma,
-  PurchaseOrderStatus,
-  StockMovementType,
-} from '@prisma/client';
+import { PartnerType, Prisma, PurchaseOrderStatus } from '@prisma/client';
 import { PaginationInput } from '../common/dto/pagination.input';
 import { IPaginatedType } from '../common/dto/pagination-result.dto';
+import { toPaginatedResult } from '../common/pagination';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   CreatePurchaseOrderInput,
@@ -27,6 +22,7 @@ import {
 } from './entities/in-transit.types';
 import { PurchaseOrder } from './entities/purchase-order.entity';
 import { PurchaseOrderReceipt } from './entities/purchase-order-receipt.entity';
+import { PurchaseOrderReceivingService } from './purchase-order-receiving.service';
 
 const OPEN_STATUSES: PurchaseOrderStatus[] = [
   PurchaseOrderStatus.ORDERED,
@@ -52,15 +48,15 @@ const DEFAULT_INCLUDE = {
 
 @Injectable()
 export class PurchaseOrdersService {
-  private readonly logger = new Logger(PurchaseOrdersService.name);
-
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly receiving = new PurchaseOrderReceivingService(prisma),
+  ) {}
 
   async list(
     pagination: PaginationInput,
     filter?: PurchaseOrderFilterInput,
   ): Promise<IPaginatedType<PurchaseOrder>> {
-    const { skip, take } = pagination;
     const where: Prisma.PurchaseOrderWhereInput = {};
 
     if (filter?.status && filter.status.length > 0) {
@@ -87,15 +83,15 @@ export class PurchaseOrdersService {
     const [items, total] = await Promise.all([
       this.prisma.purchaseOrder.findMany({
         where,
-        skip,
-        take,
+        skip: pagination.skip,
+        take: pagination.take,
         orderBy: [{ orderDate: 'desc' }, { number: 'desc' }],
         include: DEFAULT_INCLUDE,
       }),
       this.prisma.purchaseOrder.count({ where }),
     ]);
 
-    return { items, meta: { total, skip, take } };
+    return toPaginatedResult(items, total, pagination);
   }
 
   async getById(id: string): Promise<PurchaseOrder> {
@@ -114,7 +110,9 @@ export class PurchaseOrdersService {
     createdById: string,
   ): Promise<PurchaseOrder> {
     if (!input.lines || input.lines.length === 0) {
-      throw new BadRequestException('Purchase order must have at least one line');
+      throw new BadRequestException(
+        'Purchase order must have at least one line',
+      );
     }
     this.validateLines(input.lines);
 
@@ -133,6 +131,9 @@ export class PurchaseOrdersService {
         `Partner ${supplier.name} is not a supplier`,
       );
     }
+    if (!supplier.isActive) {
+      throw new BadRequestException(`Supplier ${supplier.name} is inactive`);
+    }
     if (!warehouse) {
       throw new NotFoundException(`Warehouse ${input.warehouseId} not found`);
     }
@@ -147,9 +148,7 @@ export class PurchaseOrdersService {
     if (products.length !== productIds.length) {
       const found = new Set(products.map((p) => p.id));
       const missing = productIds.filter((id) => !found.has(id));
-      throw new NotFoundException(
-        `Products not found: ${missing.join(', ')}`,
-      );
+      throw new NotFoundException(`Products not found: ${missing.join(', ')}`);
     }
 
     const subtotal = input.lines.reduce(
@@ -180,9 +179,7 @@ export class PurchaseOrdersService {
     return created;
   }
 
-  async update(
-    input: UpdatePurchaseOrderInput,
-  ): Promise<PurchaseOrder> {
+  async update(input: UpdatePurchaseOrderInput): Promise<PurchaseOrder> {
     const existing = await this.prisma.purchaseOrder.findUnique({
       where: { id: input.id },
       include: { receipts: { select: { id: true } } },
@@ -191,9 +188,7 @@ export class PurchaseOrdersService {
       throw new NotFoundException(`Purchase order ${input.id} not found`);
     }
     if (existing.status !== PurchaseOrderStatus.DRAFT) {
-      throw new BadRequestException(
-        'Only DRAFT purchase orders can be edited',
-      );
+      throw new BadRequestException('Only DRAFT purchase orders can be edited');
     }
     if (existing.receipts.length > 0) {
       throw new ConflictException(
@@ -233,6 +228,9 @@ export class PurchaseOrdersService {
         throw new BadRequestException(
           `Partner ${supplier.name} is not a supplier`,
         );
+      }
+      if (!supplier.isActive) {
+        throw new BadRequestException(`Supplier ${supplier.name} is inactive`);
       }
     }
     if (input.warehouseId) {
@@ -361,136 +359,7 @@ export class PurchaseOrdersService {
     input: RecordReceiptInput,
     createdById: string,
   ): Promise<PurchaseOrderReceipt> {
-    if (!input.lines || input.lines.length === 0) {
-      throw new BadRequestException('Receipt must include at least one line');
-    }
-    for (const line of input.lines) {
-      if (line.qtyReceived <= 0) {
-        throw new BadRequestException(
-          'Each receipt line must have qtyReceived greater than 0',
-        );
-      }
-    }
-
-    return this.prisma.$transaction(async (tx) => {
-      const order = await tx.purchaseOrder.findUnique({
-        where: { id: input.orderId },
-        include: { lines: true },
-      });
-      if (!order) {
-        throw new NotFoundException(
-          `Purchase order ${input.orderId} not found`,
-        );
-      }
-      if (!OPEN_STATUSES.includes(order.status)) {
-        throw new BadRequestException(
-          `Cannot record a receipt against a ${order.status} purchase order`,
-        );
-      }
-
-      const orderLineById = new Map(order.lines.map((l) => [l.id, l]));
-      for (const line of input.lines) {
-        const orderLine = orderLineById.get(line.orderLineId);
-        if (!orderLine) {
-          throw new NotFoundException(
-            `Order line ${line.orderLineId} does not belong to PO ${order.id}`,
-          );
-        }
-        const outstanding = orderLine.qtyOrdered - orderLine.qtyReceived;
-        if (line.qtyReceived > outstanding + 1e-6) {
-          throw new BadRequestException(
-            `Over-receipt on line ${orderLine.id}: outstanding ${outstanding}, attempted ${line.qtyReceived}`,
-          );
-        }
-      }
-
-      const receipt = await tx.purchaseOrderReceipt.create({
-        data: {
-          orderId: order.id,
-          receivedDate: input.receivedDate ?? new Date(),
-          notes: input.notes ?? null,
-          createdById,
-          lines: {
-            create: input.lines.map((l) => ({
-              orderLineId: l.orderLineId,
-              qtyReceived: l.qtyReceived,
-            })),
-          },
-        },
-        include: {
-          createdBy: true,
-          lines: { include: { orderLine: { include: { product: true } } } },
-        },
-      });
-
-      const productIdsTouched = new Set<string>();
-      for (const receiptLine of receipt.lines) {
-        const orderLine = receiptLine.orderLine!;
-        productIdsTouched.add(orderLine.productId);
-
-        await tx.purchaseOrderLine.update({
-          where: { id: orderLine.id },
-          data: { qtyReceived: { increment: receiptLine.qtyReceived } },
-        });
-
-        await tx.productStock.upsert({
-          where: {
-            productId_warehouseId: {
-              productId: orderLine.productId,
-              warehouseId: order.warehouseId,
-            },
-          },
-          update: { quantity: { increment: receiptLine.qtyReceived } },
-          create: {
-            productId: orderLine.productId,
-            warehouseId: order.warehouseId,
-            quantity: receiptLine.qtyReceived,
-          },
-        });
-
-        await tx.stockMovement.create({
-          data: {
-            productId: orderLine.productId,
-            warehouseId: order.warehouseId,
-            type: StockMovementType.IN,
-            quantity: receiptLine.qtyReceived,
-            unitCost: orderLine.unitCost,
-            reference: `PO-${order.number} / NIR-${receipt.nirNumber}`,
-            performedAt: receipt.receivedDate,
-            createdById,
-            purchaseReceiptLineId: receiptLine.id,
-          },
-        });
-      }
-
-      for (const productId of productIdsTouched) {
-        const aggregate = await tx.productStock.aggregate({
-          where: { productId },
-          _sum: { quantity: true },
-        });
-        await tx.product.update({
-          where: { id: productId },
-          data: { currentStock: aggregate._sum.quantity ?? 0 },
-        });
-      }
-
-      const refreshedLines = await tx.purchaseOrderLine.findMany({
-        where: { orderId: order.id },
-      });
-      const fullyReceived = refreshedLines.every(
-        (l) => l.qtyReceived >= l.qtyOrdered - 1e-6,
-      );
-      await tx.purchaseOrder.update({
-        where: { id: order.id },
-        data: {
-          status: fullyReceived
-            ? PurchaseOrderStatus.FULLY_RECEIVED
-            : PurchaseOrderStatus.PARTIALLY_RECEIVED,
-        },
-      });
-
-      return receipt;
-    });
+    return this.receiving.recordReceipt(input, createdById);
   }
 
   // ----- In-transit aggregations ---------------------------------------------
@@ -592,7 +461,12 @@ export class PurchaseOrdersService {
 
     const map = new Map<
       string,
-      { product: { id: string; sku: string; name: string }; qty: number; orderIds: Set<string>; earliest?: Date | null }
+      {
+        product: { id: string; sku: string; name: string };
+        qty: number;
+        orderIds: Set<string>;
+        earliest?: Date | null;
+      }
     >();
     for (const line of lines) {
       const outstanding = Math.max(0, line.qtyOrdered - line.qtyReceived);

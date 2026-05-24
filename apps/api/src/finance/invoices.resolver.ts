@@ -12,6 +12,7 @@ import { User } from '../users/entities/user.entity';
 import { PaginationInput } from '../common/dto/pagination.input';
 import { PaginatedInvoice } from './dto/paginated-invoice.dto';
 import { InvoiceLineDraft } from './entities/invoice-line-draft.entity';
+import { normalizePagination } from '../common/pagination';
 
 @Resolver(() => Invoice)
 export class InvoicesResolver {
@@ -27,8 +28,7 @@ export class InvoicesResolver {
     @Args('pagination', { nullable: true, type: () => PaginationInput })
     pagination?: PaginationInput,
   ): Promise<PaginatedInvoice> {
-    const paginationInput = pagination || { skip: 0, take: 10 };
-    return this.invoicesService.findAll(paginationInput);
+    return this.invoicesService.findAll(normalizePagination(pagination));
   }
 
   @Query(() => Invoice, {

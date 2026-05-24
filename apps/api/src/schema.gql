@@ -178,6 +178,7 @@ input CreatePartnerInput {
   country: String! = "Romania"
   cui: String!
   email: String
+  isActive: Boolean! = true
   name: String!
   notes: String
   partnerType: PartnerType!
@@ -894,6 +895,7 @@ type Partner {
   cui: String!
   email: String
   id: ID!
+  isActive: Boolean!
   name: String!
   notes: String
   partnerType: PartnerType!
@@ -1591,6 +1593,7 @@ input UpdatePartnerInput {
   cui: String
   email: String
   id: String!
+  isActive: Boolean
   name: String
   notes: String
   partnerType: PartnerType

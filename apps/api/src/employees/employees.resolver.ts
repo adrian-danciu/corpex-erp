@@ -13,6 +13,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
 import { PaginationInput } from '../common/dto/pagination.input';
 import { PaginatedEmployee } from './dto/paginated-employee.dto';
+import { normalizePagination } from '../common/pagination';
 
 @Resolver(() => Employee)
 export class EmployeesResolver {
@@ -37,8 +38,7 @@ export class EmployeesResolver {
     @Args('pagination', { nullable: true, type: () => PaginationInput })
     pagination?: PaginationInput,
   ): Promise<PaginatedEmployee> {
-    const paginationInput = pagination || { skip: 0, take: 10 };
-    return this.employeesService.findAll(paginationInput);
+    return this.employeesService.findAll(normalizePagination(pagination));
   }
 
   @Query(() => Employee, {

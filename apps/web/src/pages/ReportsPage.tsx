@@ -1,12 +1,15 @@
 import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
-import { AlertCircle, FileSpreadsheet, FileText } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import type { ExportColumn } from "@/lib/report-export";
+import { ReportDataTable } from "./reports/components/ReportDataTable";
+import {
+  ReportExportButtons,
+  type ReportExportDefinition,
+} from "./reports/components/ReportExportButtons";
 
 const HR_LEAVE_SUMMARY_QUERY = gql`
   query HrLeaveSummary {
@@ -204,12 +207,7 @@ export default function ReportsPage() {
 
   const runExport = async (
     format: "pdf" | "xlsx",
-    report: {
-      filename: string;
-      title: string;
-      columns: ExportColumn[];
-      rows: string[][];
-    },
+    report: ReportExportDefinition,
   ) => {
     const key = `${report.filename}-${format}`;
     setExporting(key);
@@ -220,40 +218,6 @@ export default function ReportsPage() {
       setExporting(null);
     }
   };
-
-  const ExportButtons = ({
-    report,
-    disabled,
-  }: {
-    report: {
-      filename: string;
-      title: string;
-      columns: ExportColumn[];
-      rows: string[][];
-    };
-    disabled: boolean;
-  }) => (
-    <div className="flex flex-wrap justify-end gap-2">
-      <Button
-        variant="outline"
-        size="sm"
-        disabled={disabled || exporting === `${report.filename}-pdf`}
-        onClick={() => void runExport("pdf", report)}
-      >
-        <FileText className="mr-2 h-4 w-4" />
-        {exporting === `${report.filename}-pdf` ? "Generating..." : "PDF"}
-      </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        disabled={disabled || exporting === `${report.filename}-xlsx`}
-        onClick={() => void runExport("xlsx", report)}
-      >
-        <FileSpreadsheet className="mr-2 h-4 w-4" />
-        Excel
-      </Button>
-    </div>
-  );
 
   return (
     <div className="space-y-6">
@@ -302,26 +266,23 @@ export default function ReportsPage() {
           ) : filteredLeaveRows.length === 0 ? (
             <p className="text-sm text-muted-foreground">No leave requests found.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-xs font-medium text-slate-600">
-                    <th className="py-2">Status</th>
-                    <th className="py-2 text-right">Count</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredLeaveRows.map((row) => (
-                    <tr key={row.status} className="border-b last:border-0">
-                      <td className="py-2 font-medium">
-                        {row.status.charAt(0) + row.status.slice(1).toLowerCase()}
-                      </td>
-                      <td className="py-2 text-right">{row.count}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ReportDataTable
+              rows={filteredLeaveRows}
+              getRowKey={(row) => row.status}
+              columns={[
+                {
+                  header: "Status",
+                  className: "font-medium",
+                  render: (row) =>
+                    row.status.charAt(0) + row.status.slice(1).toLowerCase(),
+                },
+                {
+                  header: "Count",
+                  className: "text-right",
+                  render: (row) => row.count,
+                },
+              ]}
+            />
           )}
         </CardContent>
       </Card>
@@ -347,28 +308,31 @@ export default function ReportsPage() {
           ) : agingRows.length === 0 ? (
             <p className="text-sm text-muted-foreground">No outstanding invoices found.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-xs font-medium text-slate-600">
-                    <th className="py-2">Aging Bucket (days)</th>
-                    <th className="py-2 text-right">Outstanding Amount (EUR)</th>
-                    <th className="py-2 text-right">Invoice Count</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {agingRows.map((row) => (
-                    <tr key={row.label} className="border-b last:border-0">
-                      <td className="py-2 font-medium">{row.label}</td>
-                      <td className="py-2 text-right">
-                        {row.amount.toLocaleString("ro-RO", { style: "currency", currency: "EUR" })}
-                      </td>
-                      <td className="py-2 text-right">{row.invoiceCount}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ReportDataTable
+              rows={agingRows}
+              getRowKey={(row) => row.label}
+              columns={[
+                {
+                  header: "Aging Bucket (days)",
+                  className: "font-medium",
+                  render: (row) => row.label,
+                },
+                {
+                  header: "Outstanding Amount (EUR)",
+                  className: "text-right",
+                  render: (row) =>
+                    row.amount.toLocaleString("ro-RO", {
+                      style: "currency",
+                      currency: "EUR",
+                    }),
+                },
+                {
+                  header: "Invoice Count",
+                  className: "text-right",
+                  render: (row) => row.invoiceCount,
+                },
+              ]}
+            />
           )}
         </CardContent>
       </Card>
@@ -382,7 +346,12 @@ export default function ReportsPage() {
               Full list of employees with contract and status information.
             </p>
           </div>
-          <ExportButtons report={employeeExport} disabled={employeeRows.length === 0} />
+          <ReportExportButtons
+            report={employeeExport}
+            disabled={employeeRows.length === 0}
+            exporting={exporting}
+            runExport={runExport}
+          />
         </CardHeader>
         <CardContent>
           {employeeLoading ? (
@@ -397,32 +366,34 @@ export default function ReportsPage() {
           ) : employeeRows.length === 0 ? (
             <p className="text-sm text-muted-foreground">No employees found.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-xs font-medium text-slate-600">
-                    <th className="py-2">Name</th>
-                    <th className="py-2">Position</th>
-                    <th className="py-2">Department</th>
-                    <th className="py-2">Contract</th>
-                    <th className="py-2">Employment Date</th>
-                    <th className="py-2 text-right">Leave Remaining</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {employeeRows.map((row) => (
-                    <tr key={row.id} className="border-b last:border-0">
-                      <td className="py-2 font-medium">{row.firstName} {row.lastName}</td>
-                      <td className="py-2">{row.position}</td>
-                      <td className="py-2">{row.department}</td>
-                      <td className="py-2">{row.contractType.replace("_", " ")}</td>
-                      <td className="py-2">{new Date(row.employmentDate).toLocaleDateString("ro-RO")}</td>
-                      <td className="py-2 text-right">{row.remainingLeave} / {row.annualLeaveDays}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ReportDataTable
+              rows={employeeRows}
+              getRowKey={(row) => row.id}
+              columns={[
+                {
+                  header: "Name",
+                  className: "font-medium",
+                  render: (row) => `${row.firstName} ${row.lastName}`,
+                },
+                { header: "Position", render: (row) => row.position },
+                { header: "Department", render: (row) => row.department },
+                {
+                  header: "Contract",
+                  render: (row) => row.contractType.replace("_", " "),
+                },
+                {
+                  header: "Employment Date",
+                  render: (row) =>
+                    new Date(row.employmentDate).toLocaleDateString("ro-RO"),
+                },
+                {
+                  header: "Leave Remaining",
+                  className: "text-right",
+                  render: (row) =>
+                    `${row.remainingLeave} / ${row.annualLeaveDays}`,
+                },
+              ]}
+            />
           )}
         </CardContent>
       </Card>
@@ -436,7 +407,12 @@ export default function ReportsPage() {
               Net stock per product per warehouse based on all movements.
             </p>
           </div>
-          <ExportButtons report={stockExport} disabled={stockRows.length === 0} />
+          <ReportExportButtons
+            report={stockExport}
+            disabled={stockRows.length === 0}
+            exporting={exporting}
+            runExport={runExport}
+          />
         </CardHeader>
         <CardContent>
           {stockLoading ? (
@@ -451,28 +427,28 @@ export default function ReportsPage() {
           ) : stockRows.length === 0 ? (
             <p className="text-sm text-muted-foreground">No stock data found.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-xs font-medium text-slate-600">
-                    <th className="py-2">Product</th>
-                    <th className="py-2">SKU</th>
-                    <th className="py-2">Warehouse</th>
-                    <th className="py-2 text-right">Qty</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stockRows.map((row) => (
-                    <tr key={`${row.productId}-${row.warehouseName}`} className="border-b last:border-0">
-                      <td className="py-2 font-medium">{row.productName}</td>
-                      <td className="py-2 text-muted-foreground">{row.sku}</td>
-                      <td className="py-2">{row.warehouseName}</td>
-                      <td className="py-2 text-right font-medium">{row.quantity}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ReportDataTable
+              rows={stockRows}
+              getRowKey={(row) => `${row.productId}-${row.warehouseName}`}
+              columns={[
+                {
+                  header: "Product",
+                  className: "font-medium",
+                  render: (row) => row.productName,
+                },
+                {
+                  header: "SKU",
+                  className: "text-muted-foreground",
+                  render: (row) => row.sku,
+                },
+                { header: "Warehouse", render: (row) => row.warehouseName },
+                {
+                  header: "Qty",
+                  className: "text-right font-medium",
+                  render: (row) => row.quantity,
+                },
+              ]}
+            />
           )}
         </CardContent>
       </Card>
@@ -486,7 +462,12 @@ export default function ReportsPage() {
               All vehicles with status and nearest document expiry.
             </p>
           </div>
-          <ExportButtons report={fleetExport} disabled={fleetRows.length === 0} />
+          <ReportExportButtons
+            report={fleetExport}
+            disabled={fleetRows.length === 0}
+            exporting={exporting}
+            runExport={runExport}
+          />
         </CardHeader>
         <CardContent>
           {fleetLoading ? (
@@ -501,36 +482,34 @@ export default function ReportsPage() {
           ) : fleetRows.length === 0 ? (
             <p className="text-sm text-muted-foreground">No vehicles found.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-xs font-medium text-slate-600">
-                    <th className="py-2">Plate</th>
-                    <th className="py-2">Vehicle</th>
-                    <th className="py-2">Year</th>
-                    <th className="py-2">Status</th>
-                    <th className="py-2">Nearest Doc Expiry</th>
-                    <th className="py-2">Doc Type</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {fleetRows.map((row) => (
-                    <tr key={row.id} className="border-b last:border-0">
-                      <td className="py-2 font-medium">{row.plateNumber}</td>
-                      <td className="py-2">{row.brand} {row.model}</td>
-                      <td className="py-2">{row.year}</td>
-                      <td className="py-2">{row.status}</td>
-                      <td className="py-2">
-                        {row.nearestDocumentExpiry
-                          ? new Date(row.nearestDocumentExpiry).toLocaleDateString("ro-RO")
-                          : "—"}
-                      </td>
-                      <td className="py-2">{row.nearestDocumentType ?? "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ReportDataTable
+              rows={fleetRows}
+              getRowKey={(row) => row.id}
+              columns={[
+                {
+                  header: "Plate",
+                  className: "font-medium",
+                  render: (row) => row.plateNumber,
+                },
+                {
+                  header: "Vehicle",
+                  render: (row) => `${row.brand} ${row.model}`,
+                },
+                { header: "Year", render: (row) => row.year },
+                { header: "Status", render: (row) => row.status },
+                {
+                  header: "Nearest Doc Expiry",
+                  render: (row) =>
+                    row.nearestDocumentExpiry
+                      ? new Date(row.nearestDocumentExpiry).toLocaleDateString("ro-RO")
+                      : "—",
+                },
+                {
+                  header: "Doc Type",
+                  render: (row) => row.nearestDocumentType ?? "—",
+                },
+              ]}
+            />
           )}
         </CardContent>
       </Card>

@@ -1,4 +1,9 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserInput } from './dto/create-user.input';
 import { User as PrismaUser } from '@prisma/client';
@@ -116,7 +121,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundException('User not found');
     }
 
     // Verify current password
@@ -126,7 +131,7 @@ export class UsersService {
     );
 
     if (!isPasswordValid) {
-      throw new Error('Current password is incorrect');
+      throw new UnauthorizedException('Current password is incorrect');
     }
 
     // Hash new password

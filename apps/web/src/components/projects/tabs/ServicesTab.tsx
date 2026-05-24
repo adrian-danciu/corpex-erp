@@ -1,38 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@apollo/client/react";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
-import { Plus, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
 import { GET_PROJECT_SERVICES_QUERY } from "@/graphql/mutations/project.queries";
 import {
   CREATE_PROJECT_SERVICE_MUTATION,
@@ -45,6 +13,8 @@ import {
   type Project,
   type ProjectService,
 } from "@/types/project.types";
+import { ServiceDialog } from "./services/ServiceDialog";
+import { ServicesTable } from "./services/ServicesTable";
 
 interface Props {
   project: Project;
@@ -150,261 +120,50 @@ export function ServicesTab({ project, isProjectManager }: Props) {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Project services</CardTitle>
-          {isProjectManager && (
-            <Button
-              size="sm"
-              className="gap-2"
-              onClick={() => {
-                setError("");
-                setOpen(true);
-              }}
-            >
-              <Plus className="h-4 w-4" />
-              Add service
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent>
-          {services.length === 0 ? (
-            <p className="text-sm text-slate-500">
-              No services added yet.
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Service</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Billable</TableHead>
-                  <TableHead className="text-right">Quantity</TableHead>
-                  <TableHead className="text-right">Unit price</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="w-10 text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {services.map((service) => {
-                  const total = service.quantity * service.unitPrice;
-                  return (
-                    <TableRow key={service.id}>
-                      <TableCell>
-                        <div className="font-medium text-slate-900">
-                          {service.description}
-                        </div>
-                        {service.notes && (
-                          <div className="text-xs text-slate-500">
-                            {service.notes}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          disabled={!isProjectManager}
-                          value={service.status}
-                          onValueChange={(value) =>
-                            updateService({
-                              variables: {
-                                input: {
-                                  projectId: project.id,
-                                  serviceId: service.id,
-                                  status: value,
-                                },
-                              },
-                            })
-                          }
-                        >
-                          <SelectTrigger className="h-8 w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value={ProjectServiceStatus.PLANNED}>
-                              Planned
-                            </SelectItem>
-                            <SelectItem value={ProjectServiceStatus.DELIVERED}>
-                              Delivered
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          disabled={!isProjectManager}
-                          value={String(service.billable)}
-                          onValueChange={(value) =>
-                            updateService({
-                              variables: {
-                                input: {
-                                  projectId: project.id,
-                                  serviceId: service.id,
-                                  billable: value === "true",
-                                },
-                              },
-                            })
-                          }
-                        >
-                          <SelectTrigger className="h-8 w-28">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="true">Yes</SelectItem>
-                            <SelectItem value="false">No</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {service.quantity.toLocaleString()} {service.unit}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatMoney(service.unitPrice, project.currency)}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {formatMoney(total, project.currency)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {isProjectManager && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() =>
-                              deleteService({
-                                variables: {
-                                  input: {
-                                    projectId: project.id,
-                                    serviceId: service.id,
-                                  },
-                                },
-                              })
-                            }
-                            aria-label={`Remove ${service.description}`}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      <Dialog open={open} onOpenChange={(next) => (next ? setOpen(true) : reset())}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add project service</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            {error && (
-              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-800 border border-red-200">
-                {error}
-              </div>
-            )}
-            <div>
-              <Label>Description</Label>
-              <Input
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                placeholder="Installation labor, consulting, transport..."
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Quantity</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={quantity}
-                  onChange={(event) => setQuantity(event.target.value)}
-                />
-              </div>
-              <div>
-                <Label>Unit</Label>
-                <Input
-                  value={unit}
-                  onChange={(event) => setUnit(event.target.value)}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Unit price</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={unitPrice}
-                  onChange={(event) => setUnitPrice(event.target.value)}
-                />
-              </div>
-              <div>
-                <Label>VAT rate</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={vatRate}
-                  onChange={(event) => setVatRate(event.target.value)}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Status</Label>
-                <Select
-                  value={status}
-                  onValueChange={(value) =>
-                    setStatus(value as ProjectServiceStatus)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={ProjectServiceStatus.PLANNED}>
-                      Planned
-                    </SelectItem>
-                    <SelectItem value={ProjectServiceStatus.DELIVERED}>
-                      Delivered
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Billable</Label>
-                <Select value={billable} onValueChange={setBillable}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="true">Yes</SelectItem>
-                    <SelectItem value="false">No</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div>
-              <Label>Notes</Label>
-              <Textarea
-                value={notes}
-                onChange={(event) => setNotes(event.target.value)}
-                rows={2}
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={reset}>
-                Cancel
-              </Button>
-              <Button onClick={submit} disabled={creating}>
-                {creating ? "Adding..." : "Add service"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ServicesTable
+        formatMoney={formatMoney}
+        isProjectManager={isProjectManager}
+        onAdd={() => {
+          setError("");
+          setOpen(true);
+        }}
+        onDelete={(serviceId) =>
+          deleteService({
+            variables: { input: { projectId: project.id, serviceId } },
+          })
+        }
+        onUpdate={(serviceId, patch) =>
+          updateService({
+            variables: { input: { projectId: project.id, serviceId, ...patch } },
+          })
+        }
+        project={project}
+        services={services}
+      />
+      <ServiceDialog
+        billable={billable}
+        creating={creating}
+        description={description}
+        error={error}
+        notes={notes}
+        onClose={reset}
+        onOpen={() => setOpen(true)}
+        onSubmit={submit}
+        open={open}
+        quantity={quantity}
+        setBillable={setBillable}
+        setDescription={setDescription}
+        setNotes={setNotes}
+        setQuantity={setQuantity}
+        setStatus={setStatus}
+        setUnit={setUnit}
+        setUnitPrice={setUnitPrice}
+        setVatRate={setVatRate}
+        status={status}
+        unit={unit}
+        unitPrice={unitPrice}
+        vatRate={vatRate}
+      />
     </div>
   );
 }

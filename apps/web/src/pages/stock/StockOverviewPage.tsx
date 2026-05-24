@@ -3,6 +3,14 @@ import { AlertCircle, Boxes, PackageSearch, Warehouse } from "lucide-react";
 import { PageLoading } from "@/components/ui/page-loading";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   GET_LOW_STOCK_PRODUCTS_QUERY,
   GET_STOCK_OVERVIEW_QUERY,
 } from "@/graphql/mutations/stock.mutations";
@@ -91,30 +99,28 @@ export default function StockOverviewPage() {
             {lowStock.length === 0 ? (
               <p className="text-sm text-slate-500">No products below minimum stock.</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b text-left text-xs font-medium text-slate-600">
-                      <th className="py-2">SKU</th>
-                      <th className="py-2">Product</th>
-                      <th className="py-2">Current</th>
-                      <th className="py-2">Minimum</th>
-                      <th className="py-2">Unit</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lowStock.map((product) => (
-                      <tr key={product.id} className="border-b last:border-0">
-                        <td className="py-2 font-mono text-xs">{product.sku}</td>
-                        <td className="py-2">{product.name}</td>
-                        <td className="py-2 text-red-600 font-medium">{product.currentStock}</td>
-                        <td className="py-2">{product.minimumStock}</td>
-                        <td className="py-2">{product.unit}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>SKU</TableHead>
+                    <TableHead>Product</TableHead>
+                    <TableHead>Current</TableHead>
+                    <TableHead>Minimum</TableHead>
+                    <TableHead>Unit</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {lowStock.map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell className="font-mono text-xs">{product.sku}</TableCell>
+                      <TableCell>{product.name}</TableCell>
+                      <TableCell className="font-medium text-red-600">{product.currentStock}</TableCell>
+                      <TableCell>{product.minimumStock}</TableCell>
+                      <TableCell>{product.unit}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
           </CardContent>
         </Card>

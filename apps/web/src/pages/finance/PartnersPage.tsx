@@ -1,8 +1,15 @@
-import { useState } from "react";
 import { useQuery } from "@apollo/client/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Plus, Building2, Search, Phone, Mail, AlertCircle } from "lucide-react";
 import { PageLoading } from "@/components/ui/page-loading";
 import { useNavigate } from "react-router-dom";
@@ -12,12 +19,21 @@ import type { Partner } from "@/types/finance.types";
 import { GET_PARTNERS_QUERY } from "@/graphql/mutations/finance.mutations";
 import { Pagination } from "@/components/common/Pagination";
 import { usePagination } from "@/hooks/usePagination";
+import { useUrlFilters } from "@/hooks/useUrlFilters";
 import { PaginatedResult } from "@/types/pagination.types";
+
+const partnerTypeFilters = ["ALL", "CLIENT", "SUPPLIER", "BOTH"] as const;
 
 export default function PartnersPage() {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState<string>("ALL");
+  const { getFilter, setFilter } = useUrlFilters();
+  const searchQuery = getFilter("search");
+  const rawType = getFilter("type", "ALL");
+  const filterType = partnerTypeFilters.includes(
+    rawType as (typeof partnerTypeFilters)[number],
+  )
+    ? rawType
+    : "ALL";
   const { page, pageSize, skip, take, setPage } = usePagination();
 
   const { data, loading, error } = useQuery<{ partners: PaginatedResult<Partner> }>(
@@ -113,17 +129,21 @@ export default function PartnersPage() {
               <Input
                 placeholder="Search by name, CUI, or city..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) =>
+                  setFilter("search", e.target.value, { replace: true })
+                }
                 className="pl-10"
               />
             </div>
             <div className="flex gap-2">
-              {["ALL", "CLIENT", "SUPPLIER", "BOTH"].map((type) => (
+              {partnerTypeFilters.map((type) => (
                 <Button
                   key={type}
                   variant={filterType === type ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setFilterType(type)}
+                  onClick={() =>
+                    setFilter("type", type === "ALL" ? null : type)
+                  }
                 >
                   {type === "ALL" ? "All" : type === "BOTH" ? "Both" : type.charAt(0) + type.slice(1).toLowerCase()}
                 </Button>
@@ -158,69 +178,67 @@ export default function PartnersPage() {
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1000px]">
-                <thead>
-                  <tr className="border-b text-left text-sm font-medium text-slate-600">
-                    <th className="pb-3">Company</th>
-                    <th className="pb-3">CUI</th>
-                    <th className="pb-3">Type</th>
-                    <th className="pb-3">City</th>
-                    <th className="pb-3">Contact</th>
-                    <th className="pb-3">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="text-sm">
-                  {filteredPartners.map((partner) => (
-                    <tr
-                      key={partner.id}
-                      className="border-b hover:bg-slate-50 cursor-pointer"
-                      onClick={() => navigate(`/finance/partners/${partner.id}`)}
-                    >
-                      <td className="py-4">
+            <Table className="min-w-[1000px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Company</TableHead>
+                  <TableHead>CUI</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>City</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredPartners.map((partner) => (
+                  <TableRow
+                    key={partner.id}
+                    className="cursor-pointer"
+                    onClick={() => navigate(`/finance/partners/${partner.id}`)}
+                  >
+                    <TableCell>
                         <p className="font-medium text-slate-900">{partner.name}</p>
                         {partner.contactPerson && (
                           <p className="text-xs text-slate-500">{partner.contactPerson}</p>
                         )}
-                      </td>
-                      <td className="py-4 text-slate-700 font-mono text-xs">{partner.cui}</td>
-                      <td className="py-4">
-                        <PartnerTypeBadge type={partner.partnerType} />
-                      </td>
-                      <td className="py-4 text-slate-700">{partner.city}</td>
-                      <td className="py-4">
-                        <div className="space-y-1">
-                          {partner.phone && (
-                            <div className="flex items-center gap-1 text-slate-600">
-                              <Phone className="h-3 w-3" />
-                              <span className="text-xs">{partner.phone}</span>
-                            </div>
-                          )}
-                          {partner.email && (
-                            <div className="flex items-center gap-1 text-slate-600">
-                              <Mail className="h-3 w-3" />
-                              <span className="text-xs">{partner.email}</span>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-4">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/finance/partners/${partner.id}`);
-                          }}
-                        >
-                          View
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-slate-700">{partner.cui}</TableCell>
+                    <TableCell>
+                      <PartnerTypeBadge type={partner.partnerType} />
+                    </TableCell>
+                    <TableCell className="text-slate-700">{partner.city}</TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        {partner.phone && (
+                          <div className="flex items-center gap-1 text-slate-600">
+                            <Phone className="h-3 w-3" />
+                            <span className="text-xs">{partner.phone}</span>
+                          </div>
+                        )}
+                        {partner.email && (
+                          <div className="flex items-center gap-1 text-slate-600">
+                            <Mail className="h-3 w-3" />
+                            <span className="text-xs">{partner.email}</span>
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/finance/partners/${partner.id}`);
+                        }}
+                      >
+                        View
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

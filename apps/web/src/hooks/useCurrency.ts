@@ -1,14 +1,8 @@
+import { formatMoney } from "@/lib/formatters";
+
 export const DEFAULT_CURRENCY = "EUR";
 
-export function formatMoney(
-  amount: number,
-  currency: string = DEFAULT_CURRENCY,
-): string {
-  return `${amount.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })} ${currency}`;
-}
+export { formatMoney };
 
 /**
  * Returns the app currency (always EUR) and a `formatMoney` helper.

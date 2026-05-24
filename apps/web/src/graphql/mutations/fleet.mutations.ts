@@ -1,36 +1,28 @@
 import { gql } from "@apollo/client";
+import {
+  MILEAGE_LOG_FRAGMENT,
+  VEHICLE_DOCUMENT_FRAGMENT,
+  VEHICLE_EXPENSE_FRAGMENT,
+  VEHICLE_LEASE_FRAGMENT,
+  VEHICLE_SUMMARY_FRAGMENT,
+} from "../fragments/fleet.fragments";
 
 export const CREATE_VEHICLE_MUTATION = gql`
   mutation CreateVehicle($createVehicleInput: CreateVehicleInput!) {
     createVehicle(createVehicleInput: $createVehicleInput) {
-      id
-      plateNumber
-      chassisNumber
-      brand
-      model
-      year
-      fuelType
-      status
-      createdAt
-      updatedAt
+      ...VehicleSummaryFields
     }
   }
+  ${VEHICLE_SUMMARY_FRAGMENT}
 `;
 
 export const UPDATE_VEHICLE_MUTATION = gql`
   mutation UpdateVehicle($updateVehicleInput: UpdateVehicleInput!) {
     updateVehicle(updateVehicleInput: $updateVehicleInput) {
-      id
-      plateNumber
-      chassisNumber
-      brand
-      model
-      year
-      fuelType
-      status
-      updatedAt
+      ...VehicleSummaryFields
     }
   }
+  ${VEHICLE_SUMMARY_FRAGMENT}
 `;
 
 export const DELETE_VEHICLE_MUTATION = gql`
@@ -44,30 +36,19 @@ export const DELETE_VEHICLE_MUTATION = gql`
 export const CREATE_VEHICLE_DOCUMENT_MUTATION = gql`
   mutation CreateVehicleDocument($createVehicleDocumentInput: CreateVehicleDocumentInput!) {
     createVehicleDocument(createVehicleDocumentInput: $createVehicleDocumentInput) {
-      id
-      vehicleId
-      type
-      expiryDate
-      issuedDate
-      provider
-      createdAt
-      updatedAt
+      ...VehicleDocumentFields
     }
   }
+  ${VEHICLE_DOCUMENT_FRAGMENT}
 `;
 
 export const UPDATE_VEHICLE_DOCUMENT_MUTATION = gql`
   mutation UpdateVehicleDocument($updateVehicleDocumentInput: UpdateVehicleDocumentInput!) {
     updateVehicleDocument(updateVehicleDocumentInput: $updateVehicleDocumentInput) {
-      id
-      vehicleId
-      type
-      expiryDate
-      issuedDate
-      provider
-      updatedAt
+      ...VehicleDocumentFields
     }
   }
+  ${VEHICLE_DOCUMENT_FRAGMENT}
 `;
 
 export const DELETE_VEHICLE_DOCUMENT_MUTATION = gql`
@@ -81,14 +62,10 @@ export const DELETE_VEHICLE_DOCUMENT_MUTATION = gql`
 export const CREATE_MILEAGE_LOG_MUTATION = gql`
   mutation CreateMileageLog($createMileageLogInput: CreateMileageLogInput!) {
     createMileageLog(createMileageLogInput: $createMileageLogInput) {
-      id
-      vehicleId
-      date
-      odometer
-      notes
-      createdAt
+      ...MileageLogFields
     }
   }
+  ${MILEAGE_LOG_FRAGMENT}
 `;
 
 export const DELETE_MILEAGE_LOG_MUTATION = gql`
@@ -102,32 +79,19 @@ export const DELETE_MILEAGE_LOG_MUTATION = gql`
 export const CREATE_VEHICLE_LEASE_MUTATION = gql`
   mutation CreateVehicleLease($createVehicleLeaseInput: CreateVehicleLeaseInput!) {
     createVehicleLease(createVehicleLeaseInput: $createVehicleLeaseInput) {
-      id
-      vehicleId
-      provider
-      startDate
-      endDate
-      monthlyRate
-      notes
-      createdAt
-      updatedAt
+      ...VehicleLeaseFields
     }
   }
+  ${VEHICLE_LEASE_FRAGMENT}
 `;
 
 export const UPDATE_VEHICLE_LEASE_MUTATION = gql`
   mutation UpdateVehicleLease($updateVehicleLeaseInput: UpdateVehicleLeaseInput!) {
     updateVehicleLease(updateVehicleLeaseInput: $updateVehicleLeaseInput) {
-      id
-      vehicleId
-      provider
-      startDate
-      endDate
-      monthlyRate
-      notes
-      updatedAt
+      ...VehicleLeaseFields
     }
   }
+  ${VEHICLE_LEASE_FRAGMENT}
 `;
 
 export const DELETE_VEHICLE_LEASE_MUTATION = gql`
@@ -141,15 +105,10 @@ export const DELETE_VEHICLE_LEASE_MUTATION = gql`
 export const CREATE_VEHICLE_EXPENSE_MUTATION = gql`
   mutation CreateVehicleExpense($createVehicleExpenseInput: CreateVehicleExpenseInput!) {
     createVehicleExpense(createVehicleExpenseInput: $createVehicleExpenseInput) {
-      id
-      vehicleId
-      type
-      amount
-      date
-      description
-      createdAt
+      ...VehicleExpenseFields
     }
   }
+  ${VEHICLE_EXPENSE_FRAGMENT}
 `;
 
 export const DELETE_VEHICLE_EXPENSE_MUTATION = gql`

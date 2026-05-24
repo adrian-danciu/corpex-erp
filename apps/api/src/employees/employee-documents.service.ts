@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { EmployeeDocumentType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmployeeDocument } from './entities/employee-document.entity';
 import {
@@ -11,7 +10,9 @@ import {
 export class EmployeeDocumentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(filter?: EmployeeDocumentFilterInput): Promise<EmployeeDocument[]> {
+  async findAll(
+    filter?: EmployeeDocumentFilterInput,
+  ): Promise<EmployeeDocument[]> {
     return this.prisma.employeeDocument.findMany({
       where: {
         employeeId: filter?.employeeId,
@@ -40,7 +41,7 @@ export class EmployeeDocumentsService {
     return this.prisma.employeeDocument.create({
       data: {
         employeeId: input.employeeId,
-        type: input.type as EmployeeDocumentType,
+        type: input.type,
         title: input.title.trim(),
         fileName: input.fileName,
         fileUrl: input.fileUrl,

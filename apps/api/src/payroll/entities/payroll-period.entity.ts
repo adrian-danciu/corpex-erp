@@ -1,4 +1,11 @@
-import { Field, Float, ID, Int, ObjectType, registerEnumType } from '@nestjs/graphql';
+import {
+  Field,
+  Float,
+  ID,
+  Int,
+  ObjectType,
+  registerEnumType,
+} from '@nestjs/graphql';
 import { PayrollStatus } from '@prisma/client';
 import { User } from '../../users/entities/user.entity';
 import { PayrollLine } from './payroll-line.entity';

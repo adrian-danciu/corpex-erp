@@ -1,6 +1,7 @@
 import { useSortable } from "@dnd-kit/react/sortable";
 import { Maximize2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import {
@@ -53,18 +54,20 @@ export function TaskCard({
         isPending && "opacity-70 cursor-wait",
       )}
     >
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="icon"
         onClick={(e) => {
           e.stopPropagation();
           onOpen(task.id);
         }}
         onPointerDown={(e) => e.stopPropagation()}
-        className="absolute top-1 right-1 h-6 w-6 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center opacity-60 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+        className="absolute right-1 top-1 h-6 w-6 text-slate-400 opacity-60 transition-opacity hover:bg-slate-100 hover:text-slate-700 focus:opacity-100 group-hover:opacity-100"
         aria-label="Open task details"
       >
         <Maximize2 className="h-3.5 w-3.5" />
-      </button>
+      </Button>
 
       {isPending && (
         <div className="absolute top-1 left-1 text-slate-400">

@@ -7,6 +7,7 @@ import { NotificationFilterInput } from './dto/notification-filter.input';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { PaginationInput } from '../common/dto/pagination.input';
+import { normalizePagination } from '../common/pagination';
 
 interface AuthUser {
   id: string;
@@ -27,7 +28,7 @@ export class NotificationsResolver {
   ): Promise<PaginatedNotification> {
     return this.notificationsService.myNotifications(
       user.id,
-      pagination ?? { skip: 0, take: 10 },
+      normalizePagination(pagination),
       filter,
     );
   }

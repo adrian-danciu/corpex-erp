@@ -4,20 +4,19 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CompanySettings, LeaveStatus, LeaveType, PayrollStatus, Prisma } from '@prisma/client';
+import {
+  CompanySettings,
+  LeaveStatus,
+  LeaveType,
+  PayrollStatus,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { GeneratePayrollInput, UpdatePayrollLineInput } from './dto/payroll.inputs';
+import {
+  GeneratePayrollInput,
+  UpdatePayrollLineInput,
+} from './dto/payroll.inputs';
 import { PayrollPeriod } from './entities/payroll-period.entity';
 import { PayrollLine } from './entities/payroll-line.entity';
-
-type PayrollPeriodWithLines = Prisma.PayrollPeriodGetPayload<{
-  include: {
-    lines: { include: { employee: { include: { user: true } } } };
-    createdBy: true;
-    approvedBy: true;
-    paidBy: true;
-  };
-}>;
 
 type PayrollTaxSettings = Pick<
   CompanySettings,
@@ -68,7 +67,10 @@ export class PayrollService {
     return this.withTotals(period);
   }
 
-  async generate(input: GeneratePayrollInput, userId: string): Promise<PayrollPeriod> {
+  async generate(
+    input: GeneratePayrollInput,
+    userId: string,
+  ): Promise<PayrollPeriod> {
     this.validatePeriod(input.year, input.month);
 
     const existing = await this.prisma.payrollPeriod.findUnique({
@@ -132,10 +134,12 @@ export class PayrollService {
           create: employees.map((employee) => {
             const grossSalary = employee.salary;
             const unpaidLeaveDays = employee.userId
-              ? unpaidByUser.get(employee.userId) ?? 0
+              ? (unpaidByUser.get(employee.userId) ?? 0)
               : 0;
             const dailyRate = grossSalary / range.daysInMonth;
-            const unpaidLeaveDeduction = this.round(dailyRate * unpaidLeaveDays);
+            const unpaidLeaveDeduction = this.round(
+              dailyRate * unpaidLeaveDays,
+            );
             const payrollAmounts = this.calculateLine({
               grossSalary,
               bonus: 0,
@@ -212,7 +216,8 @@ export class PayrollService {
       where: { id: periodId },
       select: { status: true },
     });
-    if (!period) throw new NotFoundException(`Payroll period ${periodId} not found`);
+    if (!period)
+      throw new NotFoundException(`Payroll period ${periodId} not found`);
     if (period.status !== PayrollStatus.DRAFT) {
       throw new BadRequestException('Only draft payroll can be approved');
     }
@@ -234,9 +239,12 @@ export class PayrollService {
       where: { id: periodId },
       select: { status: true },
     });
-    if (!period) throw new NotFoundException(`Payroll period ${periodId} not found`);
+    if (!period)
+      throw new NotFoundException(`Payroll period ${periodId} not found`);
     if (period.status !== PayrollStatus.APPROVED) {
-      throw new BadRequestException('Only approved payroll can be marked as paid');
+      throw new BadRequestException(
+        'Only approved payroll can be marked as paid',
+      );
     }
 
     await this.prisma.payrollPeriod.update({
@@ -264,7 +272,8 @@ export class PayrollService {
         paidBy: true,
       },
     });
-    if (!period) throw new NotFoundException(`Payroll period ${periodId} not found`);
+    if (!period)
+      throw new NotFoundException(`Payroll period ${periodId} not found`);
     if (period.status !== PayrollStatus.DRAFT) {
       throw new BadRequestException('Only draft payroll can be deleted');
     }
@@ -276,16 +285,22 @@ export class PayrollService {
     return this.withTotals(period);
   }
 
-  private withTotals<T extends { lines?: Array<{
-    grossSalary: number;
-    bonus: number;
-    manualDeductions: number;
-    casAmount: number;
-    cassAmount: number;
-    incomeTaxAmount: number;
-    netAmount: number;
-    employerTotalCost: number;
-  }> }>(period: T): T & {
+  private withTotals<
+    T extends {
+      lines?: Array<{
+        grossSalary: number;
+        bonus: number;
+        manualDeductions: number;
+        casAmount: number;
+        cassAmount: number;
+        incomeTaxAmount: number;
+        netAmount: number;
+        employerTotalCost: number;
+      }>;
+    },
+  >(
+    period: T,
+  ): T & {
     totalGross: number;
     totalBonus: number;
     totalCas: number;
@@ -312,7 +327,9 @@ export class PayrollService {
   }
 
   private sum(lines: Array<Record<string, number>>, key: string): number {
-    return Number(lines.reduce((total, line) => total + (line[key] ?? 0), 0).toFixed(2));
+    return Number(
+      lines.reduce((total, line) => total + (line[key] ?? 0), 0).toFixed(2),
+    );
   }
 
   private validatePeriod(year: number, month: number) {
@@ -330,7 +347,12 @@ export class PayrollService {
     return { start, end, daysInMonth: end.getUTCDate() };
   }
 
-  private overlapDays(start: Date, end: Date, windowStart: Date, windowEnd: Date) {
+  private overlapDays(
+    start: Date,
+    end: Date,
+    windowStart: Date,
+    windowEnd: Date,
+  ) {
     const from = start > windowStart ? start : windowStart;
     const to = end < windowEnd ? end : windowEnd;
     if (from > to) return 0;

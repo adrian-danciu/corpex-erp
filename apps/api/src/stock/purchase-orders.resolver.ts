@@ -5,6 +5,7 @@ import { RequireModule } from '../auth/decorators/roles.decorator';
 import { DepartmentGuard } from '../auth/guards/department.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PaginationInput } from '../common/dto/pagination.input';
+import { normalizePagination } from '../common/pagination';
 import { User } from '../users/entities/user.entity';
 import { PaginatedPurchaseOrder } from './dto/paginated-purchase-order.dto';
 import {
@@ -32,7 +33,7 @@ export class PurchaseOrdersResolver {
     @Args('pagination', { nullable: true }) pagination?: PaginationInput,
     @Args('filter', { nullable: true }) filter?: PurchaseOrderFilterInput,
   ): Promise<PaginatedPurchaseOrder> {
-    return this.service.list(pagination ?? { skip: 0, take: 20 }, filter);
+    return this.service.list(normalizePagination(pagination, 20), filter);
   }
 
   @Query(() => PurchaseOrder, { name: 'purchaseOrder' })

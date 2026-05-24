@@ -1,91 +1,22 @@
 import { gql } from "@apollo/client";
+import { EMPLOYEE_SUMMARY_FRAGMENT } from "../fragments/employee.fragments";
 
 export const CREATE_EMPLOYEE_MUTATION = gql`
   mutation CreateEmployee($createEmployeeInput: CreateEmployeeInput!) {
     createEmployee(createEmployeeInput: $createEmployeeInput) {
-      id
-      userId
-      firstName
-      lastName
-      user {
-        id
-        firstName
-        lastName
-        email
-        role
-      }
-      personalId
-      dateOfBirth
-      phoneNumber
-      address
-      city
-      country
-      position
-      department
-      contractType
-      isContractor
-      employmentDate
-      contractEndDate
-      salary
-      annualLeaveDays
-      remainingLeave
-      managerId
-      manager {
-        id
-        user {
-          id
-          firstName
-          lastName
-        }
-      }
-      createdAt
-      updatedAt
+      ...EmployeeSummaryFields
     }
   }
+  ${EMPLOYEE_SUMMARY_FRAGMENT}
 `;
 
 export const UPDATE_EMPLOYEE_MUTATION = gql`
   mutation UpdateEmployee($updateEmployeeInput: UpdateEmployeeInput!) {
     updateEmployee(updateEmployeeInput: $updateEmployeeInput) {
-      id
-      userId
-      firstName
-      lastName
-      user {
-        id
-        firstName
-        lastName
-        email
-        role
-      }
-      personalId
-      dateOfBirth
-      phoneNumber
-      address
-      city
-      country
-      position
-      department
-      contractType
-      isContractor
-      employmentDate
-      contractEndDate
-      salary
-      annualLeaveDays
-      remainingLeave
-      managerId
-      manager {
-        id
-        user {
-          id
-          firstName
-          lastName
-        }
-      }
-      createdAt
-      updatedAt
+      ...EmployeeSummaryFields
     }
   }
+  ${EMPLOYEE_SUMMARY_FRAGMENT}
 `;
 
 export const DELETE_EMPLOYEE_MUTATION = gql`
@@ -100,43 +31,7 @@ export const GET_EMPLOYEES_QUERY = gql`
   query GetEmployees($pagination: PaginationInput) {
     employees(pagination: $pagination) {
       items {
-        id
-        userId
-        firstName
-        lastName
-        user {
-          id
-          firstName
-          lastName
-          email
-          role
-        }
-        personalId
-        dateOfBirth
-        phoneNumber
-        address
-        city
-        country
-        position
-        department
-        contractType
-        isContractor
-        employmentDate
-        contractEndDate
-        salary
-        annualLeaveDays
-        remainingLeave
-        managerId
-        manager {
-          id
-          user {
-            id
-            firstName
-            lastName
-          }
-        }
-        createdAt
-        updatedAt
+        ...EmployeeSummaryFields
       }
       meta {
         total
@@ -145,46 +40,13 @@ export const GET_EMPLOYEES_QUERY = gql`
       }
     }
   }
+  ${EMPLOYEE_SUMMARY_FRAGMENT}
 `;
 
 export const GET_EMPLOYEE_QUERY = gql`
   query GetEmployee($id: String!) {
     employee(id: $id) {
-      id
-      userId
-      firstName
-      lastName
-      user {
-        id
-        firstName
-        lastName
-        email
-        role
-      }
-      personalId
-      dateOfBirth
-      phoneNumber
-      address
-      city
-      country
-      position
-      department
-      contractType
-      isContractor
-      employmentDate
-      contractEndDate
-      salary
-      annualLeaveDays
-      remainingLeave
-      managerId
-      manager {
-        id
-        user {
-          id
-          firstName
-          lastName
-        }
-      }
+      ...EmployeeSummaryFields
       subordinates {
         id
         user {
@@ -195,54 +57,18 @@ export const GET_EMPLOYEE_QUERY = gql`
         position
         department
       }
-      createdAt
-      updatedAt
     }
   }
+  ${EMPLOYEE_SUMMARY_FRAGMENT}
 `;
 
 export const GET_MY_EMPLOYEE_PROFILE_QUERY = gql`
   query GetMyEmployeeProfile {
     myEmployeeProfile {
-      id
-      userId
-      firstName
-      lastName
-      user {
-        id
-        firstName
-        lastName
-        email
-        role
-      }
-      personalId
-      dateOfBirth
-      phoneNumber
-      address
-      city
-      country
-      position
-      department
-      contractType
-      isContractor
-      employmentDate
-      contractEndDate
-      salary
-      annualLeaveDays
-      remainingLeave
-      managerId
-      manager {
-        id
-        user {
-          id
-          firstName
-          lastName
-        }
-      }
-      createdAt
-      updatedAt
+      ...EmployeeSummaryFields
     }
   }
+  ${EMPLOYEE_SUMMARY_FRAGMENT}
 `;
 
 export const GET_ORG_CHART_QUERY = gql`

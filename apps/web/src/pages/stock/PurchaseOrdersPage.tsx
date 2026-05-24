@@ -26,6 +26,7 @@ import {
 import { useAuthStore } from "@/stores/auth.store";
 import { canAccess } from "@/lib/permissions";
 import { usePagination } from "@/hooks/usePagination";
+import { useUrlFilters } from "@/hooks/useUrlFilters";
 import { GET_PURCHASE_ORDERS_QUERY } from "@/graphql/mutations/purchaseOrders.mutations";
 import type { PaginatedResult } from "@/types/pagination.types";
 import {
@@ -33,11 +34,9 @@ import {
   type PurchaseOrder,
 } from "@/types/purchaseOrder.types";
 import { PurchaseOrderStatusBadge } from "@/components/stock/PurchaseOrderStatusBadge";
+import { formatDate } from "@/lib/formatters";
 
 const ALL_STATUSES = "__all__";
-
-const formatDate = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleDateString() : "—";
 
 export default function PurchaseOrdersPage() {
   const navigate = useNavigate();
@@ -46,9 +45,10 @@ export default function PurchaseOrdersPage() {
   const { page, pageSize, skip, take, setPage } = usePagination({
     defaultPageSize: 20,
   });
-  const [statusFilter, setStatusFilter] = useState<string>(ALL_STATUSES);
-  const [searchValue, setSearchValue] = useState("");
-  const [search, setSearch] = useState("");
+  const { getFilter, setFilter } = useUrlFilters();
+  const search = getFilter("search");
+  const statusFilter = getFilter("status", ALL_STATUSES);
+  const [searchValue, setSearchValue] = useState(search);
 
   const { data, loading, error } = useQuery<{
     purchaseOrders: PaginatedResult<PurchaseOrder>;
@@ -108,8 +108,7 @@ export default function PurchaseOrdersPage() {
             className="grid grid-cols-1 md:grid-cols-[1fr_220px_auto] gap-3 items-end"
             onSubmit={(event) => {
               event.preventDefault();
-              setPage(1);
-              setSearch(searchValue.trim());
+              setFilter("search", searchValue.trim());
             }}
           >
             <div className="space-y-1.5">
@@ -130,8 +129,7 @@ export default function PurchaseOrdersPage() {
               <Select
                 value={statusFilter}
                 onValueChange={(v) => {
-                  setStatusFilter(v);
-                  setPage(1);
+                  setFilter("status", v === ALL_STATUSES ? null : v);
                 }}
               >
                 <SelectTrigger id="po-status">

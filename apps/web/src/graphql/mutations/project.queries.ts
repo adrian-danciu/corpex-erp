@@ -1,4 +1,5 @@
 import { gql } from "@apollo/client";
+import { PROJECT_TASK_FRAGMENT } from "../fragments/project.fragments";
 
 const PROJECT_CORE_FIELDS = `
   id
@@ -137,22 +138,10 @@ export const GET_PROJECT_VEHICLES_QUERY = gql`
 export const GET_PROJECT_TASKS_QUERY = gql`
   query GetProjectTasks($projectId: String!) {
     projectTasks(projectId: $projectId) {
-      id
-      projectId
-      title
-      description
-      assigneeId
-      status
-      priority
-      dueDate
-      completedAt
-      createdById
-      createdAt
-      updatedAt
-      assignee { id firstName lastName }
-      createdBy { id firstName lastName }
+      ...ProjectTaskFields
     }
   }
+  ${PROJECT_TASK_FRAGMENT}
 `;
 
 export const GET_PROJECT_FEED_QUERY = gql`

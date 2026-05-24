@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma, ProjectFeedKind } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -89,17 +94,19 @@ export class ProjectFeedService {
       where: { id: entryId },
     });
     if (!entry) {
-      throw new Error('Feed entry not found');
+      throw new NotFoundException('Feed entry not found');
     }
     if (entry.kind !== ProjectFeedKind.POST) {
-      throw new Error('Cannot delete an automatic feed entry');
+      throw new BadRequestException('Cannot delete an automatic feed entry');
     }
     if (!isAdmin && entry.authorId !== actorId) {
       const fifteenMinutesMs = 15 * 60 * 1000;
       const isOwn = entry.authorId === actorId;
       const isFresh = Date.now() - entry.createdAt.getTime() < fifteenMinutesMs;
       if (!isOwn || !isFresh) {
-        throw new Error('You can only delete your own posts within 15 minutes');
+        throw new ForbiddenException(
+          'You can only delete your own posts within 15 minutes',
+        );
       }
     }
 

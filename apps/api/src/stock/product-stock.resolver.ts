@@ -18,7 +18,8 @@ export class ProductStockResolver {
   }
 
   @ResolveField(() => Float, {
-    description: 'Outstanding quantity across open POs for this product/warehouse',
+    description:
+      'Outstanding quantity across open POs for this product/warehouse',
   })
   async inTransitQty(@Parent() stock: ProductStock): Promise<number> {
     return this.purchaseOrders.inTransitForProductStock(

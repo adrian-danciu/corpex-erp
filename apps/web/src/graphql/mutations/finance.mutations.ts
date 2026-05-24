@@ -1,4 +1,5 @@
 import { gql } from "@apollo/client";
+import { INVOICE_SUMMARY_FRAGMENT } from "../fragments/finance.fragments";
 
 // ==========================================
 // Partner Queries & Mutations
@@ -19,6 +20,7 @@ export const GET_PARTNERS_QUERY = gql`
         phone
         contactPerson
         partnerType
+        isActive
         bankName
         bankAccount
         notes
@@ -48,6 +50,7 @@ export const GET_PARTNER_QUERY = gql`
       phone
       contactPerson
       partnerType
+      isActive
       bankName
       bankAccount
       notes
@@ -64,6 +67,7 @@ export const CREATE_PARTNER_MUTATION = gql`
       name
       cui
       partnerType
+      isActive
       city
       createdAt
     }
@@ -84,6 +88,7 @@ export const UPDATE_PARTNER_MUTATION = gql`
       phone
       contactPerson
       partnerType
+      isActive
       bankName
       bankAccount
       notes
@@ -108,29 +113,7 @@ export const GET_INVOICES_QUERY = gql`
   query GetInvoices($pagination: PaginationInput) {
     invoices(pagination: $pagination) {
       items {
-        id
-        series
-        number
-        invoiceType
-        status
-        partnerId
-        partner {
-          id
-          name
-          cui
-        }
-        isClientInvoice
-        issueDate
-        dueDate
-        subtotal
-        vatTotal
-        total
-        paidAmount
-        currency
-        projectId
-        purchaseOrderId
-        purchaseReceiptId
-        createdAt
+        ...InvoiceSummaryFields
       }
       meta {
         total
@@ -139,6 +122,7 @@ export const GET_INVOICES_QUERY = gql`
       }
     }
   }
+  ${INVOICE_SUMMARY_FRAGMENT}
 `;
 
 export const GET_INVOICE_QUERY = gql`

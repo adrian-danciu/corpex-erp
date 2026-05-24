@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -46,6 +47,7 @@ export default function PartnerForm({
       phone: defaultValues?.phone ?? "",
       contactPerson: defaultValues?.contactPerson ?? "",
       partnerType: defaultValues?.partnerType ?? undefined,
+      isActive: defaultValues?.isActive ?? true,
       bankName: defaultValues?.bankName ?? "",
       bankAccount: defaultValues?.bankAccount ?? "",
       notes: defaultValues?.notes ?? "",
@@ -89,6 +91,21 @@ export default function PartnerForm({
             {errors.partnerType && (
               <p className="text-sm text-red-600">{errors.partnerType.message}</p>
             )}
+          </div>
+
+          <div className="flex items-center gap-3 rounded-md border border-slate-200 px-3 py-2">
+            <Controller
+              name="isActive"
+              control={control}
+              render={({ field }) => (
+                <Checkbox
+                  id="isActive"
+                  checked={field.value ?? true}
+                  onCheckedChange={(checked) => field.onChange(checked === true)}
+                />
+              )}
+            />
+            <Label htmlFor="isActive">Active</Label>
           </div>
 
           <div className="space-y-2">

@@ -9,6 +9,7 @@ import { UpdatePartnerInput } from './dto/update-partner.input';
 import { Partner } from './entities/partner.entity';
 import { PaginationInput } from '../common/dto/pagination.input';
 import { IPaginatedType } from '../common/dto/pagination-result.dto';
+import { toPaginatedResult } from '../common/pagination';
 
 @Injectable()
 export class PartnersService {
@@ -37,6 +38,7 @@ export class PartnersService {
         phone: input.phone,
         contactPerson: input.contactPerson,
         partnerType: input.partnerType,
+        isActive: input.isActive ?? true,
         bankName: input.bankName,
         bankAccount: input.bankAccount,
         notes: input.notes,
@@ -45,24 +47,16 @@ export class PartnersService {
   }
 
   async findAll(pagination: PaginationInput): Promise<IPaginatedType<Partner>> {
-    const { skip, take } = pagination;
     const [items, total] = await Promise.all([
       this.prisma.partner.findMany({
-        skip,
-        take,
+        skip: pagination.skip,
+        take: pagination.take,
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.partner.count(),
     ]);
 
-    return {
-      items,
-      meta: {
-        total,
-        skip,
-        take,
-      },
-    };
+    return toPaginatedResult(items, total, pagination);
   }
 
   async findOne(id: string): Promise<Partner | null> {

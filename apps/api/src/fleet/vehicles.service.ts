@@ -8,6 +8,7 @@ import { CreateVehicleInput } from './dto/create-vehicle.input';
 import { UpdateVehicleInput } from './dto/update-vehicle.input';
 import { PaginationInput } from '../common/dto/pagination.input';
 import { IPaginatedType } from '../common/dto/pagination-result.dto';
+import { toPaginatedResult } from '../common/pagination';
 import { Vehicle } from './entities/vehicle.entity';
 
 @Injectable()
@@ -34,17 +35,16 @@ export class VehiclesService {
   }
 
   async findAll(pagination: PaginationInput): Promise<IPaginatedType<Vehicle>> {
-    const { skip, take } = pagination;
     const [items, total] = await Promise.all([
       this.prisma.vehicle.findMany({
-        skip,
-        take,
+        skip: pagination.skip,
+        take: pagination.take,
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.vehicle.count(),
     ]);
 
-    return { items, meta: { total, skip, take } };
+    return toPaginatedResult(items, total, pagination);
   }
 
   async findOne(id: string): Promise<Vehicle | null> {

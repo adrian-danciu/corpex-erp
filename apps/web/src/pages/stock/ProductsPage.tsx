@@ -12,6 +12,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -20,6 +28,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Pagination } from "@/components/common/Pagination";
 import { usePagination } from "@/hooks/usePagination";
+import { useUrlFilters } from "@/hooks/useUrlFilters";
 import {
   GET_PRODUCTS_QUERY,
   UPDATE_PRODUCT_MUTATION,
@@ -53,8 +62,9 @@ export default function ProductsPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const canWrite = canAccess(user, "stock", "write");
-  const [search, setSearch] = useState("");
-  const [searchValue, setSearchValue] = useState("");
+  const { getFilter, setFilter } = useUrlFilters();
+  const search = getFilter("search");
+  const [searchValue, setSearchValue] = useState(search);
   const [editing, setEditing] = useState<Product | null>(null);
   const [defectiveFor, setDefectiveFor] = useState<Product | null>(null);
   const [editError, setEditError] = useState("");
@@ -170,8 +180,7 @@ export default function ProductsPage() {
             className="flex gap-2"
             onSubmit={(event) => {
               event.preventDefault();
-              setPage(1);
-              setSearch(searchValue.trim());
+              setFilter("search", searchValue.trim());
             }}
           >
             <div className="relative flex-1">
@@ -198,87 +207,81 @@ export default function ProductsPage() {
           {products.length === 0 ? (
             <p className="text-sm text-slate-500">No products found.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-xs font-medium text-slate-600">
-                    <th className="py-2 pr-4">SKU</th>
-                    <th className="py-2 pr-4">Name</th>
-                    <th className="py-2 pr-4">Category</th>
-                    <th className="py-2 pr-4 text-right">Unit price</th>
-                    <th className="py-2 pr-4 text-right">Current stock</th>
-                    <th className="py-2 pr-4 text-right">In transit</th>
-                    <th className="py-2 pr-4 text-right">Min stock</th>
-                    <th className="py-2 pr-4 text-right">Stock value</th>
-                    <th className="py-2 w-10"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.map((product) => (
-                    <tr
-                      key={product.id}
-                      className={
-                        product.isActive
-                          ? "border-b last:border-0"
-                          : "border-b last:border-0 opacity-60"
-                      }
-                    >
-                      <td className="py-2 pr-4 font-mono text-xs">{product.sku}</td>
-                      <td className="py-2 pr-4 font-medium">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>SKU</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead className="text-right">Unit price</TableHead>
+                  <TableHead className="text-right">Current stock</TableHead>
+                  <TableHead className="text-right">In transit</TableHead>
+                  <TableHead className="text-right">Min stock</TableHead>
+                  <TableHead className="text-right">Stock value</TableHead>
+                  <TableHead className="w-10" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {products.map((product) => (
+                  <TableRow
+                    key={product.id}
+                    className={product.isActive ? "" : "opacity-60"}
+                  >
+                    <TableCell className="font-mono text-xs">{product.sku}</TableCell>
+                    <TableCell className="font-medium">
                         {product.name}
                         {!product.isActive && (
                           <span className="ml-2 inline-flex items-center rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-700">
                             inactive
                           </span>
                         )}
-                      </td>
-                      <td className="py-2 pr-4">{product.category || "-"}</td>
-                      <td className="py-2 pr-4 text-right">
+                    </TableCell>
+                    <TableCell>{product.category || "-"}</TableCell>
+                    <TableCell className="text-right">
                         {formatMoney(product.unitPrice)} / {product.unit}
-                      </td>
-                      <td className="py-2 pr-4 text-right">
+                    </TableCell>
+                    <TableCell className="text-right">
                         {product.currentStock.toLocaleString()} {product.unit}
-                      </td>
-                      <td className="py-2 pr-4 text-right text-amber-700">
+                    </TableCell>
+                    <TableCell className="text-right text-amber-700">
                         {(inTransitMap.get(product.id) ?? 0).toLocaleString()}{" "}
                         {product.unit}
-                      </td>
-                      <td className="py-2 pr-4 text-right">
+                    </TableCell>
+                    <TableCell className="text-right">
                         {product.minimumStock.toLocaleString()} {product.unit}
-                      </td>
-                      <td className="py-2 pr-4 text-right font-medium">
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
                         {formatMoney(product.currentStock * product.unitPrice)}
-                      </td>
-                      <td className="py-2 text-right">
-                        {canWrite && (
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-amber-700 hover:text-amber-800 hover:bg-amber-50"
-                              onClick={() => setDefectiveFor(product)}
-                              aria-label={`Manage defective stock for ${product.name}`}
-                              title="Manage defective stock"
-                            >
-                              <PackageX className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => setEditing(product)}
-                              aria-label={`Edit ${product.name}`}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {canWrite && (
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+                            onClick={() => setDefectiveFor(product)}
+                            aria-label={`Manage defective stock for ${product.name}`}
+                            title="Manage defective stock"
+                          >
+                            <PackageX className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => setEditing(product)}
+                            aria-label={`Edit ${product.name}`}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

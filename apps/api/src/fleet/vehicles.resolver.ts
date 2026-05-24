@@ -9,6 +9,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { DepartmentGuard } from '../auth/guards/department.guard';
 import { RequireModule } from '../auth/decorators/roles.decorator';
 import { PaginationInput } from '../common/dto/pagination.input';
+import { normalizePagination } from '../common/pagination';
 
 @Resolver(() => Vehicle)
 export class VehiclesResolver {
@@ -21,7 +22,7 @@ export class VehiclesResolver {
     @Args('pagination', { nullable: true, type: () => PaginationInput })
     pagination?: PaginationInput,
   ): Promise<PaginatedVehicle> {
-    return this.vehiclesService.findAll(pagination ?? { skip: 0, take: 10 });
+    return this.vehiclesService.findAll(normalizePagination(pagination));
   }
 
   @Query(() => Vehicle, { name: 'vehicle', nullable: true })

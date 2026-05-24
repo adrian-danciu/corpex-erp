@@ -41,6 +41,9 @@ export class Partner {
   @Field(() => PartnerType)
   partnerType: PartnerType;
 
+  @Field()
+  isActive: boolean;
+
   @Field(() => String, { nullable: true })
   bankName?: string | null;
 

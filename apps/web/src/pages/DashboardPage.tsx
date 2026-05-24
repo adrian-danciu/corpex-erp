@@ -8,6 +8,7 @@ import { MyTasksWidget } from "@/components/dashboard/MyTasksWidget";
 import { NotificationsWidget } from "@/components/dashboard/NotificationsWidget";
 import { useAuthStore } from "@/stores/auth.store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatCurrency } from "@/lib/formatters";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
@@ -54,10 +55,6 @@ const LEAVE_COLORS: Record<string, string> = {
   REJECTED: "#ef4444",
   CANCELLED: "#94a3b8",
 };
-
-function formatEUR(value: number) {
-  return new Intl.NumberFormat("ro-RO", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(value);
-}
 
 function KpiCard({ title, value, sub, icon, accent }: { title: string; value: string | number; sub: string; icon?: React.ReactNode; accent?: string }) {
   return (
@@ -160,12 +157,18 @@ export default function DashboardPage() {
             />
             <KpiCard
               title="Total Invoiced"
-              value={formatEUR(metrics.totalInvoicedAmount)}
+              value={formatCurrency(metrics.totalInvoicedAmount, "EUR", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              })}
               sub="Sum of all invoice totals"
             />
             <KpiCard
               title="Total Collected"
-              value={formatEUR(metrics.totalPaidAmount)}
+              value={formatCurrency(metrics.totalPaidAmount, "EUR", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              })}
               sub="Payments received"
               accent="text-green-700"
             />
@@ -194,7 +197,10 @@ export default function DashboardPage() {
                       <Cell fill="#22c55e" />
                       <Cell fill="#f59e0b" />
                     </Pie>
-                    <Tooltip formatter={(v) => formatEUR(Number(v))} />
+                    <Tooltip formatter={(v) => formatCurrency(Number(v), "EUR", {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    })} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="flex justify-center gap-4 mt-2 text-xs text-slate-600">
@@ -250,7 +256,10 @@ export default function DashboardPage() {
                       <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                       <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                      <Tooltip formatter={(v) => formatEUR(Number(v))} />
+                      <Tooltip formatter={(v) => formatCurrency(Number(v), "EUR", {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      })} />
                       <Bar dataKey="amount" fill="#ef4444" radius={[4, 4, 0, 0]} name="Outstanding" />
                     </BarChart>
                   </ResponsiveContainer>

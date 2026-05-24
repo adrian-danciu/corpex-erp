@@ -10,6 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   CREATE_WAREHOUSE_MUTATION,
   GET_WAREHOUSES_QUERY,
 } from "@/graphql/mutations/stock.mutations";
@@ -159,30 +167,28 @@ export default function WarehousesPage() {
           {warehouses.length === 0 ? (
             <p className="text-sm text-slate-500">No warehouses yet.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-xs font-medium text-slate-600">
-                    <th className="py-2">Code</th>
-                    <th className="py-2">Name</th>
-                    <th className="py-2">City</th>
-                    <th className="py-2">Country</th>
-                    <th className="py-2">Address</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {warehouses.map((warehouse) => (
-                    <tr key={warehouse.id} className="border-b last:border-0">
-                      <td className="py-2 font-mono text-xs">{warehouse.code}</td>
-                      <td className="py-2">{warehouse.name}</td>
-                      <td className="py-2">{warehouse.city || "-"}</td>
-                      <td className="py-2">{warehouse.country}</td>
-                      <td className="py-2">{warehouse.address || "-"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Code</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>City</TableHead>
+                  <TableHead>Country</TableHead>
+                  <TableHead>Address</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {warehouses.map((warehouse) => (
+                  <TableRow key={warehouse.id}>
+                    <TableCell className="font-mono text-xs">{warehouse.code}</TableCell>
+                    <TableCell>{warehouse.name}</TableCell>
+                    <TableCell>{warehouse.city || "-"}</TableCell>
+                    <TableCell>{warehouse.country}</TableCell>
+                    <TableCell>{warehouse.address || "-"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

@@ -1,4 +1,11 @@
-import { Args, Float, ID, Parent, ResolveField, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  Float,
+  ID,
+  Parent,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
 import { Product } from './entities/product.entity';
 import { PurchaseOrdersService } from './purchase-orders.service';
 

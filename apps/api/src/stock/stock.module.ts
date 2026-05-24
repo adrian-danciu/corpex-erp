@@ -9,23 +9,32 @@ import {
   PurchaseOrderReceiptFieldsResolver,
 } from './purchase-order-fields.resolver';
 import { PurchaseOrdersResolver } from './purchase-orders.resolver';
+import { PurchaseOrderReceivingService } from './purchase-order-receiving.service';
 import { PurchaseOrdersService } from './purchase-orders.service';
 import { StockResolver } from './stock.resolver';
 import { StockService } from './stock.service';
+import { StockLedgerService } from './stock-ledger.service';
 
 @Module({
   imports: [PrismaModule, NotificationsModule],
   providers: [
     StockResolver,
     StockService,
+    StockLedgerService,
     ProductStockResolver,
     ProductFieldsResolver,
     PurchaseOrdersResolver,
     PurchaseOrdersService,
+    PurchaseOrderReceivingService,
     PurchaseOrderFieldsResolver,
     PurchaseOrderLineFieldsResolver,
     PurchaseOrderReceiptFieldsResolver,
   ],
-  exports: [StockService, PurchaseOrdersService],
+  exports: [
+    StockService,
+    StockLedgerService,
+    PurchaseOrdersService,
+    PurchaseOrderReceivingService,
+  ],
 })
 export class StockModule {}

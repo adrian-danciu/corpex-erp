@@ -63,6 +63,8 @@ export const createPartnerSchema = z.object({
     message: "Partner type is required",
   }),
 
+  isActive: z.boolean().optional(),
+
   bankName: z
     .string()
     .max(100, "Bank name is too long")

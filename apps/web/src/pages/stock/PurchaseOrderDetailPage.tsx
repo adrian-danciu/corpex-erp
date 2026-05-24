@@ -52,12 +52,7 @@ import {
 } from "@/types/purchaseOrder.types";
 import { PurchaseOrderStatusBadge } from "@/components/stock/PurchaseOrderStatusBadge";
 import { RecordReceptionSheet } from "@/components/stock/RecordReceptionSheet";
-
-const formatDate = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleDateString() : "—";
-
-const formatDateTime = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleString() : "—";
+import { formatDate, formatDateTime } from "@/lib/formatters";
 
 export default function PurchaseOrderDetailPage() {
   const { id } = useParams<{ id: string }>();

@@ -5,6 +5,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { DepartmentGuard } from '../auth/guards/department.guard';
 import { PaginationInput } from '../common/dto/pagination.input';
+import { normalizePagination } from '../common/pagination';
 import { User } from '../users/entities/user.entity';
 import { CreateProductInput } from './dto/create-product.input';
 import {
@@ -38,8 +39,7 @@ export class StockResolver {
     @Args('pagination', { nullable: true, type: () => PaginationInput })
     pagination?: PaginationInput,
   ): Promise<PaginatedWarehouse> {
-    const paginationInput = pagination || { skip: 0, take: 10 };
-    return this.stockService.findAllWarehouses(paginationInput);
+    return this.stockService.findAllWarehouses(normalizePagination(pagination));
   }
 
   @Query(() => PaginatedProduct, {
@@ -52,8 +52,10 @@ export class StockResolver {
     pagination?: PaginationInput,
     @Args('search', { nullable: true }) search?: string,
   ): Promise<PaginatedProduct> {
-    const paginationInput = pagination || { skip: 0, take: 10 };
-    return this.stockService.findAllProducts(paginationInput, search);
+    return this.stockService.findAllProducts(
+      normalizePagination(pagination),
+      search,
+    );
   }
 
   @Query(() => [Product], {
@@ -76,8 +78,10 @@ export class StockResolver {
     @Args('filter', { nullable: true, type: () => StockMovementFilterInput })
     filter?: StockMovementFilterInput,
   ): Promise<StockMovement[]> {
-    const paginationInput = pagination || { skip: 0, take: 20 };
-    return this.stockService.findStockMovements(paginationInput, filter);
+    return this.stockService.findStockMovements(
+      normalizePagination(pagination, 20),
+      filter,
+    );
   }
 
   @Query(() => StockOverview, {

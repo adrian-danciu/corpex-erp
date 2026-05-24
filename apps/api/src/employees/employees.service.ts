@@ -11,6 +11,7 @@ import { UpdateEmployeeInput } from './dto/update-employee.input';
 import { Employee } from './entities/employee.entity';
 import { PaginationInput } from '../common/dto/pagination.input';
 import { IPaginatedType } from '../common/dto/pagination-result.dto';
+import { toPaginatedResult } from '../common/pagination';
 
 @Injectable()
 export class EmployeesService {
@@ -92,12 +93,10 @@ export class EmployeesService {
   async findAll(
     pagination: PaginationInput,
   ): Promise<IPaginatedType<Employee>> {
-    const { skip, take } = pagination;
-
     const [items, total] = await Promise.all([
       this.prisma.employee.findMany({
-        skip,
-        take,
+        skip: pagination.skip,
+        take: pagination.take,
         include: {
           user: true,
           manager: {
@@ -113,14 +112,7 @@ export class EmployeesService {
       this.prisma.employee.count(),
     ]);
 
-    return {
-      items,
-      meta: {
-        total,
-        skip,
-        take,
-      },
-    };
+    return toPaginatedResult(items, total, pagination);
   }
 
   /**

@@ -2,6 +2,14 @@ import { useQuery } from "@apollo/client/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   DollarSign,
   TrendingUp,
   TrendingDown,
@@ -18,14 +26,7 @@ import { InvoiceStatus } from "@/types/finance.types";
 import type { Invoice } from "@/types/finance.types";
 import { GET_INVOICES_QUERY } from "@/graphql/mutations/finance.mutations";
 import { PaginatedResult } from "@/types/pagination.types";
-
-function formatCurrency(amount: number, currency = "EUR") {
-  return new Intl.NumberFormat("ro-RO", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-  }).format(amount);
-}
+import { formatCurrency } from "@/lib/formatters";
 
 export default function FinanceOverviewPage() {
   const navigate = useNavigate();
@@ -202,40 +203,38 @@ export default function FinanceOverviewPage() {
               <p className="font-medium">No invoices yet</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1000px]">
-                <thead>
-                  <tr className="border-b text-left text-sm font-medium text-slate-600">
-                    <th className="pb-3">Invoice</th>
-                    <th className="pb-3">Partner</th>
-                    <th className="pb-3">Issue Date</th>
-                    <th className="pb-3">Due Date</th>
-                    <th className="pb-3 text-right">Total</th>
-                    <th className="pb-3 text-center">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="text-sm">
-                  {recentInvoices.map((invoice) => (
-                    <tr
-                      key={invoice.id}
-                      className="border-b hover:bg-slate-50 cursor-pointer"
-                      onClick={() => navigate(`/finance/invoices/${invoice.id}`)}
-                    >
-                      <td className="py-3 font-medium text-slate-900">
+            <Table className="min-w-[1000px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Invoice</TableHead>
+                  <TableHead>Partner</TableHead>
+                  <TableHead>Issue Date</TableHead>
+                  <TableHead>Due Date</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentInvoices.map((invoice) => (
+                  <TableRow
+                    key={invoice.id}
+                    className="cursor-pointer"
+                    onClick={() => navigate(`/finance/invoices/${invoice.id}`)}
+                  >
+                    <TableCell className="font-medium text-slate-900">
                         {invoice.series}-{String(invoice.number).padStart(4, "0")}
-                      </td>
-                      <td className="py-3 text-slate-700">{invoice.partner.name}</td>
-                      <td className="py-3 text-slate-600">{invoice.issueDate}</td>
-                      <td className="py-3 text-slate-600">{invoice.dueDate}</td>
-                      <td className="py-3 text-right font-medium">{formatCurrency(invoice.total, invoice.currency)}</td>
-                      <td className="py-3 text-center">
-                        <InvoiceStatusBadge status={invoice.status} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    </TableCell>
+                    <TableCell className="text-slate-700">{invoice.partner.name}</TableCell>
+                    <TableCell className="text-slate-600">{invoice.issueDate}</TableCell>
+                    <TableCell className="text-slate-600">{invoice.dueDate}</TableCell>
+                    <TableCell className="text-right font-medium">{formatCurrency(invoice.total, invoice.currency)}</TableCell>
+                    <TableCell className="text-center">
+                      <InvoiceStatusBadge status={invoice.status} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

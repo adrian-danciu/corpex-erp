@@ -1,7 +1,8 @@
 import { Field, Float, ID, Int, ObjectType } from '@nestjs/graphql';
 
 @ObjectType({
-  description: 'Aggregated in-transit quantity for one product within a warehouse',
+  description:
+    'Aggregated in-transit quantity for one product within a warehouse',
 })
 export class InTransitRow {
   @Field()

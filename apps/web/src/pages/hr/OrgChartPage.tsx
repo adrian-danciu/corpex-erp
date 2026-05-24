@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@apollo/client/react";
 import Tree from "react-d3-tree";
@@ -115,6 +115,7 @@ function OrgNode({ nodeDatum }: CustomNodeElementProps) {
 export default function OrgChartPage() {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(900);
 
   const { data, loading, error } = useQuery<{
     employees: { items: OrgEmployee[] };
@@ -124,6 +125,18 @@ export default function OrgChartPage() {
     (props: CustomNodeElementProps) => <OrgNode {...props} />,
     []
   );
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver(([entry]) => {
+      setContainerWidth(Math.max(entry.contentRect.width, 320));
+    });
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, []);
 
   if (loading) {
     return <PageLoading message="Loading org chart..." />;
@@ -152,7 +165,6 @@ export default function OrgChartPage() {
   }
 
   const treeData = buildTree(employees);
-  const containerWidth = containerRef.current?.clientWidth ?? 900;
 
   return (
     <div className="flex flex-col h-[calc(100vh-80px)]">

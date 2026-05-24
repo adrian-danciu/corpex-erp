@@ -9,6 +9,7 @@ import { DepartmentGuard } from '../auth/guards/department.guard';
 import { RequireModule } from '../auth/decorators/roles.decorator';
 import { PaginationInput } from '../common/dto/pagination.input';
 import { PaginatedPartner } from './dto/paginated-partner.dto';
+import { normalizePagination } from '../common/pagination';
 
 @Resolver(() => Partner)
 export class PartnersResolver {
@@ -24,8 +25,7 @@ export class PartnersResolver {
     @Args('pagination', { nullable: true, type: () => PaginationInput })
     pagination?: PaginationInput,
   ): Promise<PaginatedPartner> {
-    const paginationInput = pagination || { skip: 0, take: 10 };
-    return this.partnersService.findAll(paginationInput);
+    return this.partnersService.findAll(normalizePagination(pagination));
   }
 
   @Query(() => Partner, {

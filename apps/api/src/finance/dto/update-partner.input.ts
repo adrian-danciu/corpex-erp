@@ -37,6 +37,9 @@ export class UpdatePartnerInput {
   partnerType?: PartnerType;
 
   @Field({ nullable: true })
+  isActive?: boolean;
+
+  @Field({ nullable: true })
   bankName?: string;
 
   @Field({ nullable: true })

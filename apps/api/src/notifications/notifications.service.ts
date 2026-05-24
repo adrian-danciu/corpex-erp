@@ -12,6 +12,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { PaginationInput } from '../common/dto/pagination.input';
 import { IPaginatedType } from '../common/dto/pagination-result.dto';
+import { toPaginatedResult } from '../common/pagination';
 import { Notification } from './entities/notification.entity';
 import { NotificationFilterInput } from './dto/notification-filter.input';
 
@@ -261,7 +262,6 @@ export class NotificationsService {
     pagination: PaginationInput,
     filter?: NotificationFilterInput,
   ): Promise<IPaginatedType<Notification>> {
-    const { skip, take } = pagination;
     const where = {
       recipientId: userId,
       ...(filter?.isRead !== undefined ? { isRead: filter.isRead } : {}),
@@ -271,14 +271,14 @@ export class NotificationsService {
     const [items, total] = await Promise.all([
       this.prisma.notification.findMany({
         where,
-        skip,
-        take,
+        skip: pagination.skip,
+        take: pagination.take,
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.notification.count({ where }),
     ]);
 
-    return { items, meta: { total, skip, take } };
+    return toPaginatedResult(items, total, pagination);
   }
 
   async myUnreadCount(userId: string): Promise<number> {

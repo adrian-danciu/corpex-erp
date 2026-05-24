@@ -39,7 +39,9 @@ export class EmployeeDocumentsResolver {
   @Mutation(() => EmployeeDocument)
   @UseGuards(JwtAuthGuard, DepartmentGuard)
   @RequireModule('hr', 'write')
-  async deleteEmployeeDocument(@Args('id') id: string): Promise<EmployeeDocument> {
+  async deleteEmployeeDocument(
+    @Args('id') id: string,
+  ): Promise<EmployeeDocument> {
     return this.documentsService.remove(id);
   }
 }

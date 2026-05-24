@@ -49,15 +49,8 @@ import {
   CREATE_PAYMENT_MUTATION,
   DELETE_INVOICE_MUTATION,
 } from "@/graphql/mutations/finance.mutations";
-
-function formatCurrency(amount: number, currency = "EUR") {
-  return new Intl.NumberFormat("ro-RO", { style: "currency", currency, minimumFractionDigits: 2 }).format(amount);
-}
-
-function formatDate(value?: string | null) {
-  if (!value) return "—";
-  return new Date(value).toLocaleDateString("ro-RO");
-}
+import { downloadBlob } from "@/lib/download";
+import { formatCurrency, formatDate } from "@/lib/formatters";
 
 function PaymentDialog({ invoice, onRecordPayment, loading: paymentLoading }: { invoice: Invoice; onRecordPayment: (data: { amount: number; paymentDate: string; paymentMethod: string; reference: string }) => void; loading?: boolean }) {
   const [open, setOpen] = useState(false);
@@ -195,12 +188,10 @@ export default function InvoiceDetailPage() {
     setPdfLoading(true);
     try {
       const blob = await pdf(<InvoicePDF invoice={invoice} />).toBlob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `invoice-${invoice.series}-${String(invoice.number).padStart(4, "0")}.pdf`;
-      link.click();
-      URL.revokeObjectURL(url);
+      downloadBlob(
+        blob,
+        `invoice-${invoice.series}-${String(invoice.number).padStart(4, "0")}.pdf`,
+      );
     } finally {
       setPdfLoading(false);
     }
