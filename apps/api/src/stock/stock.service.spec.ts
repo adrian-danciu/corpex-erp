@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { StockMovementType } from '@prisma/client';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { StockLedgerService } from './stock-ledger.service';
 import { StockService } from './stock.service';
 
 describe('StockService', () => {
@@ -20,6 +21,7 @@ describe('StockService', () => {
     stockMovement: { create: jest.Mock };
   };
   let service: StockService;
+  let notifications: NotificationsService;
 
   beforeEach(() => {
     tx = {
@@ -38,11 +40,13 @@ describe('StockService', () => {
       product: { findUnique: jest.fn() },
       warehouse: { findUnique: jest.fn() },
     };
+    notifications = {
+      notifyStockBelowMinimum: jest.fn(),
+    } as unknown as NotificationsService;
     service = new StockService(
       prisma as unknown as PrismaService,
-      {
-        notifyStockBelowMinimum: jest.fn(),
-      } as unknown as NotificationsService,
+      notifications,
+      new StockLedgerService(prisma as unknown as PrismaService, notifications),
     );
   });
 

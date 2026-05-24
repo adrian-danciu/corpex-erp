@@ -50,7 +50,7 @@ const DEFAULT_INCLUDE = {
 export class PurchaseOrdersService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly receiving = new PurchaseOrderReceivingService(prisma),
+    private readonly receiving: PurchaseOrderReceivingService,
   ) {}
 
   async list(

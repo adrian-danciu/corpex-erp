@@ -5,6 +5,7 @@ import {
   StockMovementType,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { PurchaseOrderReceivingService } from './purchase-order-receiving.service';
 import { PurchaseOrdersService } from './purchase-orders.service';
 
 describe('PurchaseOrdersService', () => {
@@ -53,7 +54,10 @@ describe('PurchaseOrdersService', () => {
         delete: jest.fn(),
       },
     };
-    service = new PurchaseOrdersService(prisma as unknown as PrismaService);
+    service = new PurchaseOrdersService(
+      prisma as unknown as PrismaService,
+      new PurchaseOrderReceivingService(prisma as unknown as PrismaService),
+    );
   });
 
   const validInput = {

@@ -25,7 +25,7 @@ export class StockService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
-    private readonly ledger = new StockLedgerService(prisma, notifications),
+    private readonly ledger: StockLedgerService,
   ) {}
 
   async createWarehouse(input: CreateWarehouseInput): Promise<Warehouse> {
