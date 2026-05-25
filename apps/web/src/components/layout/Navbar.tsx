@@ -49,9 +49,17 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
           <NotificationBell />
 
           <div className="flex items-center gap-3 md:hidden">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-              {initials}
-            </div>
+            {user.profilePicture ? (
+              <img
+                src={user.profilePicture}
+                alt={`${user.firstName} ${user.lastName}`}
+                className="h-10 w-10 rounded-full border object-cover"
+              />
+            ) : (
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                {initials}
+              </div>
+            )}
             <div className="hidden sm:block">
               <p className="text-sm font-medium text-slate-900">
                 Hey, {user.firstName}

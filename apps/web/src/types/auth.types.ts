@@ -17,7 +17,7 @@ export interface User {
   firstName: string;
   lastName: string;
   email: string;
-  profilePicture?: string;
+  profilePicture?: string | null;
   role: UserRole;
   mustChangePassword: boolean;
   department?: Department | null;

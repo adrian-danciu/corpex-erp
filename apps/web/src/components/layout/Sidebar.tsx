@@ -272,9 +272,17 @@ export default function Sidebar({
         <div className="p-3">
           {isCollapsed ? (
             <div className="flex flex-col items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-                {initials}
-              </div>
+              {user?.profilePicture ? (
+                <img
+                  src={user.profilePicture}
+                  alt={`${user.firstName} ${user.lastName}`}
+                  className="h-10 w-10 rounded-full border object-cover"
+                />
+              ) : (
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                  {initials}
+                </div>
+              )}
               <Button
                 variant="ghost"
                 size="icon"
@@ -288,9 +296,17 @@ export default function Sidebar({
           ) : (
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground flex-shrink-0">
-                  {initials}
-                </div>
+                {user?.profilePicture ? (
+                  <img
+                    src={user.profilePicture}
+                    alt={`${user.firstName} ${user.lastName}`}
+                    className="h-10 w-10 flex-shrink-0 rounded-full border object-cover"
+                  />
+                ) : (
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                    {initials}
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-slate-900 truncate">
                     {user?.firstName} {user?.lastName}

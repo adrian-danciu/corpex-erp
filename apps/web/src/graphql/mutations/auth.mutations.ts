@@ -10,6 +10,7 @@ export const LOGIN_MUTATION = gql`
         firstName
         lastName
         email
+        profilePicture
         role
         mustChangePassword
       }
@@ -30,6 +31,7 @@ export const ME_QUERY = gql`
       firstName
       lastName
       email
+      profilePicture
       role
       mustChangePassword
       createdAt

@@ -7,6 +7,7 @@ export const CHANGE_PASSWORD_MUTATION = gql`
       email
       firstName
       lastName
+      profilePicture
       role
       mustChangePassword
     }
