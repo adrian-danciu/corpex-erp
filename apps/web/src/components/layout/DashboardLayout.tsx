@@ -167,7 +167,9 @@ const menuItems: MenuItem[] = [
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(
+    {},
+  );
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -188,8 +190,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const hasChildren = item.children && item.children.length > 0;
     const isActive =
       location.pathname === item.href ||
-      (!hasChildren && item.href !== "/dashboard" && location.pathname.startsWith(item.href + "/"));
-    const isParentActive = hasChildren && location.pathname.startsWith(item.href);
+      (!hasChildren &&
+        item.href !== "/dashboard" &&
+        location.pathname.startsWith(item.href + "/"));
+    const isParentActive =
+      hasChildren && location.pathname.startsWith(item.href);
     const isExpanded = expandedMenus[item.href];
 
     if (hasChildren) {
@@ -200,7 +205,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <div key={item.href}>
           <button
             onClick={() => {
-              setExpandedMenus((prev) => ({ ...prev, [item.href]: !prev[item.href] }));
+              setExpandedMenus((prev) => ({
+                ...prev,
+                [item.href]: !prev[item.href],
+              }));
               navigate(item.href);
               setIsMobileMenuOpen(false);
             }}
@@ -208,7 +216,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
               isParentActive
                 ? "bg-primary text-primary-foreground"
-                : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                : "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
             )}
           >
             <Icon className="h-5 w-5 shrink-0" />
@@ -216,13 +224,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <ChevronDown
               className={cn(
                 "h-4 w-4 transition-transform",
-                isExpanded && "rotate-180"
+                isExpanded && "rotate-180",
               )}
             />
           </button>
           {isExpanded && (
             <div className="ml-4 mt-1 space-y-1 border-l border-slate-200 pl-2">
-              {visibleChildren.map((child) => renderMobileMenuItem(child, true))}
+              {visibleChildren.map((child) =>
+                renderMobileMenuItem(child, true),
+              )}
             </div>
           )}
         </div>
@@ -239,7 +249,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           isActive
             ? "bg-primary text-primary-foreground"
             : "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
-          isChild && "text-[13px]"
+          isChild && "text-[13px]",
         )}
       >
         <Icon className={cn("h-5 w-5 shrink-0", isChild && "h-4 w-4")} />
@@ -272,7 +282,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
         <SheetContent side="left" className="w-64 p-0">
           <SheetHeader className="border-b p-4">
-            <SheetTitle>Menu</SheetTitle>
+            <SheetTitle>
+              <span className="sr-only">Menu</span>
+              <img
+                src="/corpex_complete_logo.png"
+                alt="Corpex ERP"
+                className="h-10 w-auto"
+              />
+            </SheetTitle>
           </SheetHeader>
           <nav className="flex-1 space-y-1 p-2">
             {visibleMenuItems.map((item) => renderMobileMenuItem(item))}
@@ -284,7 +301,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <main
         className={cn(
           "transition-all duration-300",
-          isCollapsed ? "md:pl-16" : "md:pl-64"
+          isCollapsed ? "md:pl-16" : "md:pl-64",
         )}
       >
         <div className="p-6">{children}</div>

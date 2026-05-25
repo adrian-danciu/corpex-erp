@@ -5,7 +5,13 @@ import {
   APPROVE_OR_REJECT_LEAVE_REQUEST_MUTATION,
 } from "@/graphql/mutations/leave-request.mutations";
 import { GET_MY_SUBORDINATES_QUERY } from "@/graphql/mutations/employee.mutations";
-import type { LeaveRequest, Employee } from "@/types/hr.types";
+import type {
+  AllPendingLeaveRequestsQueryResult,
+  ApproveOrRejectLeaveRequestMutationResult,
+  Employee,
+  LeaveRequest,
+  MySubordinatesQueryResult,
+} from "@/types/hr.types";
 import {
   Card,
   CardContent,
@@ -32,10 +38,10 @@ export default function ApprovalsPage() {
     loading,
     error,
     refetch,
-  } = useQuery<{ allPendingLeaveRequests: LeaveRequest[] }>(
+  } = useQuery<AllPendingLeaveRequestsQueryResult>(
     GET_ALL_PENDING_LEAVE_REQUESTS_QUERY,
   );
-  const { data: subordinatesData } = useQuery<{ mySubordinates: Employee[] }>(
+  const { data: subordinatesData } = useQuery<MySubordinatesQueryResult>(
     GET_MY_SUBORDINATES_QUERY,
   );
 
@@ -43,7 +49,7 @@ export default function ApprovalsPage() {
     APPROVE_OR_REJECT_LEAVE_REQUEST_MUTATION,
     {
       successMessage: (d: unknown) => {
-        const result = d as { approveOrRejectLeaveRequest: LeaveRequest };
+        const result = d as ApproveOrRejectLeaveRequestMutationResult;
         return `Request ${result.approveOrRejectLeaveRequest.status === "APPROVED" ? "approved" : "rejected"}`;
       },
       onCompleted: () => {

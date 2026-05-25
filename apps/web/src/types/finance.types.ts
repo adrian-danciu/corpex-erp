@@ -1,4 +1,5 @@
 import type { User } from "./auth.types";
+import type { PaginatedResult } from "./pagination.types";
 
 export enum PartnerType {
   CLIENT = "CLIENT",
@@ -165,4 +166,31 @@ export interface CreatePaymentInput {
   paymentMethod: PaymentMethod;
   reference?: string;
   notes?: string;
+}
+
+export interface PartnersQueryResult {
+  partners: PaginatedResult<Partner>;
+}
+
+export interface PartnerQueryResult {
+  partner: Partner | null;
+}
+
+export interface CreatePartnerMutationResult {
+  createPartner: Pick<Partner, "id" | "name">;
+}
+
+export interface InvoicesQueryResult {
+  invoices: PaginatedResult<Invoice>;
+}
+
+export interface InvoiceQueryResult {
+  invoice: Invoice | null;
+}
+
+export interface RecordPaymentFormValues {
+  amount: number;
+  paymentDate: string;
+  paymentMethod: string;
+  reference: string;
 }

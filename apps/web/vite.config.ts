@@ -23,10 +23,6 @@ export default defineConfig({
             return 'charts-vendor';
           }
 
-          if (id.includes('react-d3-tree')) {
-            return 'org-chart-vendor';
-          }
-
           if (id.includes('@dnd-kit')) {
             return 'kanban-vendor';
           }

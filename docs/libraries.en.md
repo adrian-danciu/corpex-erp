@@ -13,7 +13,6 @@ Runtime libraries:
 - Lucide React: icon set.
 - Sonner: toast notifications, wrapped by local toast/mutation helpers.
 - Recharts: dashboard/report charting.
-- react-d3-tree: HR organization chart.
 - @react-pdf/renderer + xlsx: invoice/report/payroll exports.
 - @dnd-kit/react + @dnd-kit/helpers: project task kanban drag-and-drop.
 - date-fns: date formatting in HR and related screens.

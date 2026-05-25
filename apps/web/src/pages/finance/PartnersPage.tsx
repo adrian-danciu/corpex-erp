@@ -15,12 +15,11 @@ import { PageLoading } from "@/components/ui/page-loading";
 import { useNavigate } from "react-router-dom";
 import PartnerTypeBadge from "@/components/finance/PartnerTypeBadge";
 import { PartnerType } from "@/types/finance.types";
-import type { Partner } from "@/types/finance.types";
+import type { PartnersQueryResult } from "@/types/finance.types";
 import { GET_PARTNERS_QUERY } from "@/graphql/mutations/finance.mutations";
 import { Pagination } from "@/components/common/Pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { useUrlFilters } from "@/hooks/useUrlFilters";
-import { PaginatedResult } from "@/types/pagination.types";
 
 const partnerTypeFilters = ["ALL", "CLIENT", "SUPPLIER", "BOTH"] as const;
 
@@ -36,7 +35,7 @@ export default function PartnersPage() {
     : "ALL";
   const { page, pageSize, skip, take, setPage } = usePagination();
 
-  const { data, loading, error } = useQuery<{ partners: PaginatedResult<Partner> }>(
+  const { data, loading, error } = useQuery<PartnersQueryResult>(
     GET_PARTNERS_QUERY,
     {
       variables: {

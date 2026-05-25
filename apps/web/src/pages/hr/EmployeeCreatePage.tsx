@@ -9,8 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CREATE_EMPLOYEE_MUTATION, GET_EMPLOYEES_QUERY } from "@/graphql/mutations/employee.mutations";
-import { ContractType, Department, type CreateEmployeeInput, type Employee } from "@/types/hr.types";
-import { PaginatedResult } from "@/types/pagination.types";
+import {
+  ContractType,
+  Department,
+  type CreateEmployeeInput,
+  type EmployeesQueryResult,
+} from "@/types/hr.types";
 
 export default function EmployeeCreatePage() {
   const navigate = useNavigate();
@@ -41,7 +45,7 @@ export default function EmployeeCreatePage() {
     },
   });
 
-  const { data: employeesData } = useQuery<{ employees: PaginatedResult<Employee> }>(GET_EMPLOYEES_QUERY, {
+  const { data: employeesData } = useQuery<EmployeesQueryResult>(GET_EMPLOYEES_QUERY, {
     variables: { pagination: { skip: 0, take: 500 } },
   });
   const allEmployees = employeesData?.employees.items ?? [];

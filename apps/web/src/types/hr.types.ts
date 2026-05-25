@@ -1,5 +1,6 @@
 import type { User } from "./auth.types";
 import { Department } from "./auth.types";
+import type { PaginatedResult } from "./pagination.types";
 export { Department };
 
 export enum ContractType {
@@ -150,4 +151,56 @@ export interface ApproveLeaveRequestInput {
   leaveRequestId: string;
   approved: boolean;
   comments?: string;
+}
+
+export interface EmployeesQueryResult {
+  employees: PaginatedResult<Employee>;
+}
+
+export interface EmployeeQueryResult {
+  employee: Employee | null;
+}
+
+export interface MyEmployeeProfile {
+  remainingLeave: number;
+  annualLeaveDays: number;
+}
+
+export interface MyEmployeeProfileQueryResult {
+  myEmployeeProfile: MyEmployeeProfile | null;
+}
+
+export interface MySubordinatesQueryResult {
+  mySubordinates: Employee[];
+}
+
+export interface MyLeaveRequestsQueryResult {
+  myLeaveRequests: LeaveRequest[];
+}
+
+export interface AllPendingLeaveRequestsQueryResult {
+  allPendingLeaveRequests: LeaveRequest[];
+}
+
+export interface ApproveOrRejectLeaveRequestMutationResult {
+  approveOrRejectLeaveRequest: LeaveRequest;
+}
+
+export interface LeaveRequestFormValues {
+  leaveType: LeaveType | "";
+  startDate: string;
+  endDate: string;
+  days: number;
+  reason: string;
+}
+
+export interface EmployeeDocumentsQueryResult {
+  employeeDocuments: EmployeeDocument[];
+}
+
+export interface EmployeeDocumentUploadPayload {
+  url: string;
+  filename: string;
+  size: number;
+  mime: string;
 }

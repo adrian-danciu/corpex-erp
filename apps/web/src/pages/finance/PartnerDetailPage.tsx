@@ -8,7 +8,7 @@ import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { ArrowLeft, Edit, Trash2, Phone, Mail, MapPin, Building2, CreditCard, AlertCircle } from "lucide-react";
 import { PageLoading } from "@/components/ui/page-loading";
 import PartnerTypeBadge from "@/components/finance/PartnerTypeBadge";
-import type { Partner } from "@/types/finance.types";
+import type { PartnerQueryResult } from "@/types/finance.types";
 import { GET_PARTNER_QUERY, GET_PARTNERS_QUERY, DELETE_PARTNER_MUTATION } from "@/graphql/mutations/finance.mutations";
 
 export default function PartnerDetailPage() {
@@ -16,7 +16,7 @@ export default function PartnerDetailPage() {
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  const { data, loading, error } = useQuery<{ partner: Partner | null }>(GET_PARTNER_QUERY, {
+  const { data, loading, error } = useQuery<PartnerQueryResult>(GET_PARTNER_QUERY, {
     variables: { id },
     skip: !id,
   });

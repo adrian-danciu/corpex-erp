@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Download, Plus, Trash2, Loader2 } from "lucide-react";
-import type { Partner } from "@/types/finance.types";
+import type { PartnersQueryResult } from "@/types/finance.types";
 import { PaginatedResult } from "@/types/pagination.types";
 import { GET_PARTNERS_QUERY, CREATE_INVOICE_MUTATION, GET_INVOICES_QUERY } from "@/graphql/mutations/finance.mutations";
 import { GET_PURCHASE_ORDERS_QUERY } from "@/graphql/mutations/purchaseOrders.mutations";
@@ -44,9 +44,7 @@ export default function InvoiceCreatePage() {
   const [searchParams] = useSearchParams();
   const initialProjectId = searchParams.get("projectId") ?? "";
 
-  const { data: partnersData, loading: partnersLoading } = useQuery<{
-    partners: PaginatedResult<Partner>;
-  }>(GET_PARTNERS_QUERY, {
+  const { data: partnersData, loading: partnersLoading } = useQuery<PartnersQueryResult>(GET_PARTNERS_QUERY, {
     variables: {
       pagination: { skip: 0, take: 100 },
     },

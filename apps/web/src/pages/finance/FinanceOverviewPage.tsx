@@ -23,14 +23,13 @@ import { PageLoading } from "@/components/ui/page-loading";
 import { useNavigate } from "react-router-dom";
 import InvoiceStatusBadge from "@/components/finance/InvoiceStatusBadge";
 import { InvoiceStatus } from "@/types/finance.types";
-import type { Invoice } from "@/types/finance.types";
+import type { InvoicesQueryResult } from "@/types/finance.types";
 import { GET_INVOICES_QUERY } from "@/graphql/mutations/finance.mutations";
-import { PaginatedResult } from "@/types/pagination.types";
 import { formatCurrency } from "@/lib/formatters";
 
 export default function FinanceOverviewPage() {
   const navigate = useNavigate();
-  const { data, loading, error } = useQuery<{ invoices: PaginatedResult<Invoice> }>(
+  const { data, loading, error } = useQuery<InvoicesQueryResult>(
     GET_INVOICES_QUERY,
     {
       variables: {

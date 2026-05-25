@@ -34,7 +34,11 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <div className="text-xl font-bold text-slate-900">Corpex ERP</div>
+          <img
+            src="/corpex-logo-mark.svg"
+            alt="Corpex ERP"
+            className="h-9 w-9"
+          />
         </div>
 
         {/* Spacer pushes the right-side group to the end on desktop */}

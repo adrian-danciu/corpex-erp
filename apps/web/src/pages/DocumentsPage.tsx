@@ -19,9 +19,13 @@ import { GET_EMPLOYEES_QUERY } from "@/graphql/mutations/employee.mutations";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { toastError, toastSuccess } from "@/lib/toast";
 import { getApiBaseUrl } from "@/lib/api-url";
-import type { Employee, EmployeeDocument } from "@/types/hr.types";
+import type {
+  EmployeeDocument,
+  EmployeeDocumentsQueryResult,
+  EmployeeDocumentUploadPayload,
+  EmployeesQueryResult,
+} from "@/types/hr.types";
 import { EmployeeDocumentType } from "@/types/hr.types";
-import type { PaginatedResult } from "@/types/pagination.types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
@@ -38,13 +42,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-
-interface UploadedFilePayload {
-  url: string;
-  filename: string;
-  size: number;
-  mime: string;
-}
 
 const DOCUMENT_TYPE_LABELS: Record<EmployeeDocumentType, string> = {
   [EmployeeDocumentType.ID_CARD]: "ID card",
@@ -85,14 +82,12 @@ export default function DocumentsPage() {
     loading: documentsLoading,
     error: documentsError,
     refetch: refetchDocuments,
-  } = useQuery<{ employeeDocuments: EmployeeDocument[] }>(
+  } = useQuery<EmployeeDocumentsQueryResult>(
     GET_EMPLOYEE_DOCUMENTS_QUERY,
     { variables: { filter: documentFilter } },
   );
 
-  const { data: employeesData, loading: employeesLoading } = useQuery<{
-    employees: PaginatedResult<Employee>;
-  }>(GET_EMPLOYEES_QUERY, {
+  const { data: employeesData, loading: employeesLoading } = useQuery<EmployeesQueryResult>(GET_EMPLOYEES_QUERY, {
     variables: { pagination: { skip: 0, take: 1000 } },
   });
 
@@ -123,7 +118,7 @@ export default function DocumentsPage() {
   const employees = employeesData?.employees.items ?? [];
   const documents = documentsData?.employeeDocuments ?? [];
 
-  const uploadFile = async (): Promise<UploadedFilePayload> => {
+  const uploadFile = async (): Promise<EmployeeDocumentUploadPayload> => {
     if (!file) throw new Error("Choose a file first");
 
     const formData = new FormData();
@@ -141,7 +136,7 @@ export default function DocumentsPage() {
       throw new Error(text || "Upload failed");
     }
 
-    return response.json() as Promise<UploadedFilePayload>;
+    return response.json() as Promise<EmployeeDocumentUploadPayload>;
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {

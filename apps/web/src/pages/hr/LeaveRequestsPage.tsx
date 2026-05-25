@@ -8,7 +8,12 @@ import {
   CANCEL_LEAVE_REQUEST_MUTATION,
 } from "@/graphql/mutations/leave-request.mutations";
 import { GET_MY_EMPLOYEE_PROFILE_QUERY } from "@/graphql/mutations/employee.mutations";
-import type { LeaveRequest } from "@/types/hr.types";
+import type {
+  LeaveRequest,
+  LeaveRequestFormValues,
+  MyEmployeeProfileQueryResult,
+  MyLeaveRequestsQueryResult,
+} from "@/types/hr.types";
 import { LeaveType, LeaveStatus } from "@/types/hr.types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,14 +30,6 @@ import {
 } from "@/components/ui/select";
 import { Calendar, Plus, X, CheckCircle, XCircle, Clock } from "lucide-react";
 import { format } from "date-fns";
-
-interface LeaveRequestFormValues {
-  leaveType: LeaveType | "";
-  startDate: string;
-  endDate: string;
-  days: number;
-  reason: string;
-}
 
 export default function LeaveRequestsPage() {
   const [showForm, setShowForm] = useState(false);
@@ -57,8 +54,10 @@ export default function LeaveRequestsPage() {
   const watchEndDate = useWatch({ control, name: "endDate" });
   const watchDays = useWatch({ control, name: "days" });
 
-  const { data: leaveRequestsData, loading, error, refetch } = useQuery<{ myLeaveRequests: LeaveRequest[] }>(GET_MY_LEAVE_REQUESTS_QUERY);
-  const { data: profileData } = useQuery<{ myEmployeeProfile: { remainingLeave: number; annualLeaveDays: number } | null }>(GET_MY_EMPLOYEE_PROFILE_QUERY);
+  const { data: leaveRequestsData, loading, error, refetch } =
+    useQuery<MyLeaveRequestsQueryResult>(GET_MY_LEAVE_REQUESTS_QUERY);
+  const { data: profileData } =
+    useQuery<MyEmployeeProfileQueryResult>(GET_MY_EMPLOYEE_PROFILE_QUERY);
 
   const [createLeaveRequest, { loading: creating }] = useMutationWithToast(
     CREATE_LEAVE_REQUEST_MUTATION,

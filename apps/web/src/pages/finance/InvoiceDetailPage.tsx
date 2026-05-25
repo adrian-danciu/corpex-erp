@@ -39,7 +39,13 @@ import {
 import { PageLoading } from "@/components/ui/page-loading";
 import InvoiceStatusBadge from "@/components/finance/InvoiceStatusBadge";
 import { InvoiceStatus, InvoiceType } from "@/types/finance.types";
-import type { Invoice, InvoiceItem, Payment } from "@/types/finance.types";
+import type {
+  Invoice,
+  InvoiceItem,
+  InvoiceQueryResult,
+  Payment,
+  RecordPaymentFormValues,
+} from "@/types/finance.types";
 import {
   GET_INVOICE_QUERY,
   GET_INVOICES_QUERY,
@@ -50,7 +56,15 @@ import {
 import { downloadBlob } from "@/lib/download";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 
-function PaymentDialog({ invoice, onRecordPayment, loading: paymentLoading }: { invoice: Invoice; onRecordPayment: (data: { amount: number; paymentDate: string; paymentMethod: string; reference: string }) => void; loading?: boolean }) {
+function PaymentDialog({
+  invoice,
+  onRecordPayment,
+  loading: paymentLoading,
+}: {
+  invoice: Invoice;
+  onRecordPayment: (data: RecordPaymentFormValues) => void;
+  loading?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState(String(invoice.total - invoice.paidAmount));
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split("T")[0]);
@@ -118,7 +132,7 @@ export default function InvoiceDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { data, loading, error, refetch } = useQuery<{ invoice: Invoice | null }>(GET_INVOICE_QUERY, {
+  const { data, loading, error, refetch } = useQuery<InvoiceQueryResult>(GET_INVOICE_QUERY, {
     variables: { id },
     skip: !id,
   });
@@ -199,7 +213,7 @@ export default function InvoiceDetailPage() {
     }
   };
 
-  const handleRecordPayment = (data: { amount: number; paymentDate: string; paymentMethod: string; reference: string }) => {
+  const handleRecordPayment = (data: RecordPaymentFormValues) => {
     createPayment({
       variables: {
         createPaymentInput: {

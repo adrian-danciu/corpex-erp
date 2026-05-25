@@ -13,7 +13,6 @@ Librarii runtime:
 - Lucide React: iconuri.
 - Sonner: notificari toast, folosit prin helpere locale.
 - Recharts: grafice pentru dashboard/rapoarte.
-- react-d3-tree: organigrama HR.
 - @react-pdf/renderer + xlsx: exporturi pentru facturi/rapoarte/payroll.
 - @dnd-kit/react + @dnd-kit/helpers: drag-and-drop pentru kanban-ul task-urilor de proiect.
 - date-fns: formatare date in HR si ecrane conexe.

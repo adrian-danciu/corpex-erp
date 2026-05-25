@@ -17,7 +17,7 @@ Note: local PDF text extraction tools were not available in this environment, so
 ## Stack
 
 - Runtime/package manager: Bun. Prefer Bun commands inside each app.
-- Frontend: `apps/web`, React 19, Vite 7, TypeScript, Apollo Client 4, React Router 7, Zustand, React Hook Form + Zod, Tailwind 4, shadcn/Radix primitives, Lucide icons, Recharts, react-d3-tree, `@react-pdf/renderer`.
+- Frontend: `apps/web`, React 19, Vite 7, TypeScript, Apollo Client 4, React Router 7, Zustand, React Hook Form + Zod, Tailwind 4, shadcn/Radix primitives, Lucide icons, Recharts, `@react-pdf/renderer`.
 - Backend: `apps/api`, NestJS 11, GraphQL code-first with Apollo Server 5, Prisma 7, Postgres/Neon, JWT auth via Passport, bcrypt, multer uploads, Nest schedule cron jobs.
 - Monorepo style: lightweight. Root package is minimal; `apps/api` and `apps/web` are independent.
 
@@ -68,7 +68,7 @@ All main backend modules are registered in `apps/api/src/app.module.ts`. Fronten
 |---|---|---|
 | Auth | Implemented | JWT access/refresh tokens, `JwtAuthGuard`, current user decorator, Zustand persistence on web. |
 | Users | Implemented | Admin-only user creation/admin list. |
-| HR | Implemented | Employees, leave requests, approvals, org chart. Leave decisions emit notifications. |
+| HR | Implemented | Employees, leave requests, approvals. Leave decisions emit notifications. |
 | Employee Documents | Implemented | Employee document storage/upload, expiry dates, `/documents` page, employee detail panel, expiry reminders. |
 | Finance | Implemented | Partners, invoices, payments, invoice PDF, project cost import. |
 | Stock | Implemented | Warehouses, products, stock movements, purchase orders/NIR, in-transit goods, defective/scrap stock. |

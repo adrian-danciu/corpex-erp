@@ -8,16 +8,13 @@ import {
   GET_PARTNERS_QUERY,
 } from "@/graphql/mutations/finance.mutations";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
-
-interface CreatePartnerData {
-  createPartner: { id: string; name: string };
-}
+import type { CreatePartnerMutationResult } from "@/types/finance.types";
 
 export default function PartnerCreatePage() {
   const navigate = useNavigate();
 
   const [createPartner, { loading: isLoading }] =
-    useMutationWithToast<CreatePartnerData>(CREATE_PARTNER_MUTATION, {
+    useMutationWithToast<CreatePartnerMutationResult>(CREATE_PARTNER_MUTATION, {
       refetchQueries: [{ query: GET_PARTNERS_QUERY }],
       successMessage: (data) => `Partner "${data.createPartner.name}" created`,
       onCompleted: () => navigate("/finance/partners"),

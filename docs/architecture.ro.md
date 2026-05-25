@@ -75,7 +75,7 @@ Cleanup-ul recent a mutat comportamentul repetat din pagini in utilitare comune 
 - **Hook-uri controller locale**: `useVehicleDetailController`, `usePayrollController` si `useMaterialAllocation` tin state-ul de workflow si mutation handlers pentru ecrane dense. Nu muta campurile de formular in Zustand; React Hook Form ramane owner-ul state-ului de formular.
 - **Split pe workflow**: taburile de vehicle detail sunt in `pages/fleet/components/`, subview-urile payroll in `pages/payroll/components/`, controalele de tabel/export rapoarte in `pages/reports/components/`, iar subcomponentele pentru task/material/service proiect in `components/projects/`.
 - **React Hook Form watchers**: cand o valoare urmarita este folosita in render, prefera `useWatch({ control, name })` in loc de `watch("field")` direct.
-- **Nota build**: code-splitting-ul pe rute tine entry-ul aplicatiei sub pragul Vite de 500 kB. Exporturile PDF si XLSX sunt incarcate prin dynamic imports la nivel de actiune, cu chunk-uri separate `pdf-export` si `xlsx-export`. Vendorii de vizualizare sunt impartiti pe scop (`charts-vendor`, `org-chart-vendor`, `kanban-vendor`). Vite inca raporteaza chunk-ul PDF lazy ca mare deoarece `@react-pdf/renderer` este greu.
+- **Nota build**: code-splitting-ul pe rute tine entry-ul aplicatiei sub pragul Vite de 500 kB. Exporturile PDF si XLSX sunt incarcate prin dynamic imports la nivel de actiune, cu chunk-uri separate `pdf-export` si `xlsx-export`. Vendorii de vizualizare sunt impartiti pe scop (`charts-vendor`, `kanban-vendor`). Vite inca raporteaza chunk-ul PDF lazy ca mare deoarece `@react-pdf/renderer` este greu.
 
 ## Arhitectura modulului Fleet
 

@@ -76,7 +76,7 @@ Recent cleanup moved repeated page behavior into shared utilities and feature-lo
 - **Feature controller hooks**: `useVehicleDetailController`, `usePayrollController` and `useMaterialAllocation` own grouped workflow state and mutation handlers for dense screens. Avoid moving form fields into Zustand; React Hook Form remains the form state owner.
 - **Split pages by workflow**: vehicle detail tabs live under `pages/fleet/components/`, payroll subviews live under `pages/payroll/components/`, report table/export controls live under `pages/reports/components/`, and project task/material/service subcomponents live under `components/projects/`.
 - **React Hook Form watchers**: when a watched form value is used in render logic, prefer `useWatch({ control, name })` over direct `watch("field")`.
-- **Build note**: route-level code-splitting keeps the app entry under Vite's 500 kB warning line. PDF and XLSX exports are loaded by action-level dynamic imports, with separate `pdf-export` and `xlsx-export` chunks. Visualization vendors are split by purpose (`charts-vendor`, `org-chart-vendor`, `kanban-vendor`). Vite still reports the lazy PDF chunk as large because `@react-pdf/renderer` is heavy.
+- **Build note**: route-level code-splitting keeps the app entry under Vite's 500 kB warning line. PDF and XLSX exports are loaded by action-level dynamic imports, with separate `pdf-export` and `xlsx-export` chunks. Visualization vendors are split by purpose (`charts-vendor`, `kanban-vendor`). Vite still reports the lazy PDF chunk as large because `@react-pdf/renderer` is heavy.
 
 ## Fleet module architecture
 

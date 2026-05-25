@@ -7,8 +7,8 @@ import { ChangePasswordInput } from './dto/change-password.input';
 import { UpdateProfilePictureInput } from './dto/update-profile-picture.input';
 import { EmployeeAccountGenerationResult } from './dto/employee-account-generation-result';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { DepartmentGuard } from '../auth/guards/department.guard';
-import { RequireModule } from '../auth/decorators/roles.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @Resolver(() => User)
@@ -16,6 +16,8 @@ export class UsersResolver {
   constructor(private readonly usersService: UsersService) {}
 
   @Mutation(() => User, { description: 'Create a new user account' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   async createUser(
     @Args('createUserInput') createUserInput: CreateUserInput,
   ): Promise<User> {
@@ -23,6 +25,8 @@ export class UsersResolver {
   }
 
   @Query(() => [User], { name: 'users', description: 'Get all users' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   async findAll(): Promise<User[]> {
     return this.usersService.findAll();
   }
@@ -32,6 +36,8 @@ export class UsersResolver {
     description: 'Get a user by ID',
     nullable: true,
   })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   async findOne(@Args('id') id: string): Promise<User | null> {
     return this.usersService.findOne(id);
   }
@@ -39,8 +45,8 @@ export class UsersResolver {
   @Mutation(() => EmployeeAccountGenerationResult, {
     description: 'Generate a user account from an employee record',
   })
-  @UseGuards(JwtAuthGuard, DepartmentGuard)
-  @RequireModule('hr', 'read')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   async generateEmployeeAccount(
     @Args('employeeId') employeeId: string,
   ): Promise<EmployeeAccountGenerationResult> {
@@ -50,8 +56,8 @@ export class UsersResolver {
   @Mutation(() => [EmployeeAccountGenerationResult], {
     description: 'Generate user accounts for multiple employee records',
   })
-  @UseGuards(JwtAuthGuard, DepartmentGuard)
-  @RequireModule('hr', 'read')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   async generateEmployeeAccounts(
     @Args('employeeIds', { type: () => [String] }) employeeIds: string[],
   ): Promise<EmployeeAccountGenerationResult[]> {

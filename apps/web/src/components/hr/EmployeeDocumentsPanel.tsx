@@ -2,7 +2,7 @@ import { useQuery } from "@apollo/client/react";
 import { ExternalLink, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { GET_EMPLOYEE_DOCUMENTS_QUERY } from "@/graphql/mutations/employeeDocuments.mutations";
-import type { EmployeeDocument } from "@/types/hr.types";
+import type { EmployeeDocumentsQueryResult } from "@/types/hr.types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
@@ -20,7 +20,7 @@ function formatDocumentType(type: string): string {
 }
 
 export function EmployeeDocumentsPanel({ employeeId }: Props) {
-  const { data, loading } = useQuery<{ employeeDocuments: EmployeeDocument[] }>(
+  const { data, loading } = useQuery<EmployeeDocumentsQueryResult>(
     GET_EMPLOYEE_DOCUMENTS_QUERY,
     {
       variables: { filter: { employeeId } },

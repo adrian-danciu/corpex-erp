@@ -79,20 +79,25 @@ const menuItems: MenuItem[] = [
   { title: "Settings", href: "/settings", icon: Settings },
 ];
 
-export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
+export default function Sidebar({
+  isCollapsed,
+  onToggleCollapse,
+}: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
 
-  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {};
-    menuItems.forEach((item) => {
-      if (item.children && location.pathname.startsWith(item.href)) {
-        initial[item.href] = true;
-      }
-    });
-    return initial;
-  });
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(
+    () => {
+      const initial: Record<string, boolean> = {};
+      menuItems.forEach((item) => {
+        if (item.children && location.pathname.startsWith(item.href)) {
+          initial[item.href] = true;
+        }
+      });
+      return initial;
+    },
+  );
 
   const toggleMenu = (href: string) => {
     setExpandedMenus((prev) => ({ ...prev, [href]: !prev[href] }));
@@ -115,7 +120,6 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
       case "/dashboard":
       case "/profile":
       case "/hr/leave-requests":
-      case "/hr/org-chart":
         return true;
       case "/hr/employees":
       case "/hr/employees/new":
@@ -184,7 +188,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
             className={cn(
               "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
               "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
-              isCollapsed && "justify-center"
+              isCollapsed && "justify-center",
             )}
             title={isCollapsed ? item.title : undefined}
           >
@@ -195,7 +199,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
                 <ChevronDown
                   className={cn(
                     "h-4 w-4 transition-transform",
-                    isExpanded && "rotate-180"
+                    isExpanded && "rotate-180",
                   )}
                 />
               </>
@@ -220,7 +224,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
             ? "bg-primary text-primary-foreground"
             : "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
           isCollapsed && "justify-center",
-          isChild && "text-[13px]"
+          isChild && "text-[13px]",
         )}
         title={isCollapsed ? item.title : undefined}
       >
@@ -234,13 +238,17 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
     <aside
       className={cn(
         "fixed left-0 top-0 z-30 h-screen border-r bg-white transition-all duration-300",
-        isCollapsed ? "w-16" : "w-64"
+        isCollapsed ? "w-16" : "w-64",
       )}
     >
       <div className="flex h-full flex-col">
         <div className="flex h-16 items-center justify-between border-b px-4">
           {!isCollapsed && (
-            <div className="text-xl font-bold text-slate-900">Corpex ERP</div>
+            <img
+              src="/corpex_complete_logo.png"
+              alt="Corpex ERP"
+              className="h-12 w-auto"
+            />
           )}
           <Button
             variant="ghost"

@@ -14,7 +14,7 @@ Product requirements live in:
 ## Tech stack
 
 - **Runtime / package manager**: Bun (everywhere, never npm/yarn).
-- **Frontend** ([apps/web](apps/web)): React 19 + Vite 7 + TypeScript, Apollo Client 4, Zustand, React Hook Form + Zod, shadcn/ui (Radix + Tailwind 4), Lucide icons, recharts, react-d3-tree, @react-pdf/renderer, react-router-dom 7.
+- **Frontend** ([apps/web](apps/web)): React 19 + Vite 7 + TypeScript, Apollo Client 4, Zustand, React Hook Form + Zod, shadcn/ui (Radix + Tailwind 4), Lucide icons, recharts, @react-pdf/renderer, react-router-dom 7.
 - **Backend** ([apps/api](apps/api)): NestJS 11 + GraphQL (code-first, schema auto-generated to [apps/api/src/schema.gql](apps/api/src/schema.gql)) + Apollo Server 5, Prisma 7 + Postgres (Neon serverless via `@prisma/adapter-pg`), JWT auth (Passport), bcrypt, multer for uploads.
 - **Monorepo**: lightweight — root `package.json` is mostly empty, each app is independent. No workspace tooling.
 
@@ -74,7 +74,7 @@ All 9 NestJS modules are registered in [apps/api/src/app.module.ts](apps/api/src
 |---|---|---|---|
 | Auth | ✅ | ✅ Login | JWT 15m access + 7d refresh; tokens in localStorage |
 | Users (ADMIN) | ✅ | ✅ User create + admin list | |
-| HR | ✅ | ✅ Employees, Leave, Approvals, Org chart | Org chart uses react-d3-tree |
+| HR | ✅ | ✅ Employees, Leave, Approvals | |
 | Finance | ✅ | ✅ Overview, Partners, Invoices (with project cost import) | PDF render via @react-pdf/renderer |
 | Stock | ✅ | ✅ Overview, Warehouses, Products, Movements | `ProductStock.reservedQty` tracked |
 | Fleet | ✅ | ✅ List, Create, Detail (5 tabs) | `expiringDocuments(daysAhead)` query + dashboard widget |

@@ -21,7 +21,6 @@ const EmployeeCreatePage = lazy(() => import("./pages/hr/EmployeeCreatePage"));
 const EmployeeDetailPage = lazy(() => import("./pages/hr/EmployeeDetailPage"));
 const LeaveRequestsPage = lazy(() => import("./pages/hr/LeaveRequestsPage"));
 const ApprovalsPage = lazy(() => import("./pages/hr/ApprovalsPage"));
-const OrgChartPage = lazy(() => import("./pages/hr/OrgChartPage"));
 const FinanceOverviewPage = lazy(
   () => import("./pages/finance/FinanceOverviewPage"),
 );
@@ -180,7 +179,6 @@ function App() {
               />
             }
           />
-          <Route path="/hr/org-chart" element={<ProtectedPage component={OrgChartPage} />} />
           <Route
             path="/hr/leave-requests"
             element={<ProtectedPage component={LeaveRequestsPage} />}

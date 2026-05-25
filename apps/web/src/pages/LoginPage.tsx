@@ -6,10 +6,11 @@ export default function LoginPage() {
       {/* Left side - Corporate branding (hidden on mobile) */}
       <div className="hidden lg:flex lg:w-1/2 bg-black items-center justify-center p-12">
         <div className="text-white text-center">
-          <h1 className="text-5xl font-bold mb-4">Corpex ERP</h1>
-          <p className="text-xl text-blue-100">
-            Enterprise Resource Planning System
-          </p>
+          <img
+            src="/corpex_complete_logo_white.png"
+            alt="Corpex ERP"
+            className="mx-auto mb-4 h-24 w-auto"
+          />
         </div>
       </div>
 
