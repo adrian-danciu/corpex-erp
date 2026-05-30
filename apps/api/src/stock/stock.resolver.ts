@@ -1,9 +1,10 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { RequireModule } from '../auth/decorators/roles.decorator';
+import { RequireModule, Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { DepartmentGuard } from '../auth/guards/department.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
 import { PaginationInput } from '../common/dto/pagination.input';
 import { normalizePagination } from '../common/pagination';
 import { User } from '../users/entities/user.entity';
@@ -131,8 +132,10 @@ export class StockResolver {
   }
 
   @Mutation(() => StockMovement, {
-    description: 'Register an incoming/outgoing stock movement',
+    description: 'Register an admin-only stock adjustment',
   })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @RequireModule('stock', 'write')
   async createStockMovement(
     @Args('createStockMovementInput') input: CreateStockMovementInput,

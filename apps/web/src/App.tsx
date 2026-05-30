@@ -55,6 +55,9 @@ const WarehousesPage = lazy(() => import("./pages/stock/WarehousesPage"));
 const StockMovementsPage = lazy(
   () => import("./pages/stock/StockMovementsPage"),
 );
+const StockAdjustmentPage = lazy(
+  () => import("./pages/stock/StockAdjustmentPage"),
+);
 const PurchaseOrdersPage = lazy(
   () => import("./pages/stock/PurchaseOrdersPage"),
 );
@@ -372,6 +375,15 @@ function App() {
                 component={StockMovementsPage}
                 requiredModule="stock"
                 requiredAccess="read"
+              />
+            }
+          />
+          <Route
+            path="/stock/adjustments"
+            element={
+              <ProtectedPage
+                component={StockAdjustmentPage}
+                requiredRole={["ADMIN"]}
               />
             }
           />

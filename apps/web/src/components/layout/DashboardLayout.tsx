@@ -27,6 +27,7 @@ import {
   ChevronDown,
   Boxes,
   Truck,
+  AlertTriangle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useAuthStore } from "@/stores/auth.store";
@@ -109,6 +110,12 @@ const menuItems: MenuItem[] = [
         href: "/stock/movements",
         icon: Briefcase,
         roles: ["ADMIN", "MANAGER"],
+      },
+      {
+        title: "Adjustments",
+        href: "/stock/adjustments",
+        icon: AlertTriangle,
+        roles: ["ADMIN"],
       },
       {
         title: "Purchase Orders",

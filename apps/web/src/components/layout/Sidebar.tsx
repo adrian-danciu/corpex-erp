@@ -24,6 +24,7 @@ import {
   Car,
   Truck,
   WalletCards,
+  AlertTriangle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -59,6 +60,7 @@ const menuItems: MenuItem[] = [
       { title: "Products", href: "/stock/products", icon: Package },
       { title: "Warehouses", href: "/stock/warehouses", icon: Building2 },
       { title: "Movements", href: "/stock/movements", icon: Briefcase },
+      { title: "Adjustments", href: "/stock/adjustments", icon: AlertTriangle },
       { title: "Purchase Orders", href: "/stock/purchase-orders", icon: Truck },
     ],
   },
@@ -142,6 +144,8 @@ export default function Sidebar({
       case "/stock/movements":
       case "/stock/purchase-orders":
         return canAccess(user, "stock");
+      case "/stock/adjustments":
+        return false;
       case "/fleet":
         return canAccess(user, "fleet");
       case "/projects":
