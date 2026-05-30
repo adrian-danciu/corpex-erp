@@ -63,7 +63,10 @@ export function InvoicesTab({ project }: Props) {
   const { data, loading, refetch } = useQuery<{
     invoices: PaginatedResult<Invoice>;
   }>(GET_INVOICES_QUERY, {
-    variables: { pagination: { skip: 0, take: 200 } },
+    variables: {
+      pagination: { skip: 0, take: 200 },
+      isClientInvoice: true,
+    },
     fetchPolicy: "cache-and-network",
   });
   const { data: settingsData } = useQuery<{
@@ -97,7 +100,9 @@ export function InvoicesTab({ project }: Props) {
   );
 
   const linked =
-    data?.invoices.items.filter((inv) => inv.projectId === project.id) ?? [];
+    data?.invoices.items.filter(
+      (inv) => inv.projectId === project.id && inv.isClientInvoice,
+    ) ?? [];
   const drafts = useMemo(
     () => projectCostsData?.projectCostsForInvoice ?? [],
     [projectCostsData?.projectCostsForInvoice],
@@ -179,7 +184,7 @@ export function InvoicesTab({ project }: Props) {
               variant="outline"
               className="gap-2"
               onClick={() =>
-                navigate(`/finance/invoices/new?projectId=${project.id}`)
+                navigate(`/finance/client-invoices/new?projectId=${project.id}`)
               }
             >
               <Plus className="h-4 w-4" />

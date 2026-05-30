@@ -137,8 +137,14 @@ const menuItems: MenuItem[] = [
         roles: ["ADMIN", "FINANCE", "MANAGER"],
       },
       {
-        title: "Invoices",
-        href: "/finance/invoices",
+        title: "Client Invoices",
+        href: "/finance/client-invoices",
+        icon: Receipt,
+        roles: ["ADMIN", "FINANCE", "MANAGER"],
+      },
+      {
+        title: "Supplier Invoices",
+        href: "/finance/supplier-invoices",
         icon: Receipt,
         roles: ["ADMIN", "FINANCE", "MANAGER"],
       },

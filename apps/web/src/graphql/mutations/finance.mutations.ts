@@ -110,8 +110,8 @@ export const DELETE_PARTNER_MUTATION = gql`
 // ==========================================
 
 export const GET_INVOICES_QUERY = gql`
-  query GetInvoices($pagination: PaginationInput) {
-    invoices(pagination: $pagination) {
+  query GetInvoices($pagination: PaginationInput, $isClientInvoice: Boolean) {
+    invoices(pagination: $pagination, isClientInvoice: $isClientInvoice) {
       items {
         ...InvoiceSummaryFields
       }

@@ -1365,7 +1365,7 @@ type Query {
   invoice(id: String!): Invoice
 
   """Get all invoices (paginated)"""
-  invoices(pagination: PaginationInput): PaginatedInvoice!
+  invoices(isClientInvoice: Boolean, pagination: PaginationInput): PaginatedInvoice!
 
   """Get a leave request by ID"""
   leaveRequest(id: String!): LeaveRequest

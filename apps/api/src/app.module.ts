@@ -21,9 +21,8 @@ import { PayrollModule } from './payroll/payroll.module';
 
 @Module({
   imports: [
-    // Environment Configuration - Load .env file
     ConfigModule.forRoot({
-      isGlobal: true, // Makes ConfigModule available globally
+      isGlobal: true,
       envFilePath: '.env',
     }),
     // GraphQL Configuration
@@ -31,18 +30,15 @@ import { PayrollModule } from './payroll/payroll.module';
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
       sortSchema: true,
-      playground: true, // Enable GraphQL Playground for development
-      introspection: true, // Enable introspection
+      playground: true,
+      introspection: true,
       context: ({ req, res }: { req: Request; res: Response }) => ({
         req,
         res,
-      }), // Pass request/response to context
+      }),
     }),
-    // Cron / scheduled jobs
     ScheduleModule.forRoot(),
-    // Database
     PrismaModule,
-    // Feature Modules
     AuthModule,
     UsersModule,
     EmployeesModule,

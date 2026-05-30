@@ -70,7 +70,8 @@ const menuItems: MenuItem[] = [
     icon: DollarSign,
     children: [
       { title: "Partners", href: "/finance/partners", icon: Building2 },
-      { title: "Invoices", href: "/finance/invoices", icon: Receipt },
+      { title: "Client Invoices", href: "/finance/client-invoices", icon: Receipt },
+      { title: "Supplier Invoices", href: "/finance/supplier-invoices", icon: Receipt },
     ],
   },
   { title: "Reports", href: "/reports", icon: BarChart3 },
@@ -132,7 +133,8 @@ export default function Sidebar({
         return canAccess(user, "payroll");
       case "/finance":
       case "/finance/partners":
-      case "/finance/invoices":
+      case "/finance/client-invoices":
+      case "/finance/supplier-invoices":
         return canAccess(user, "finance");
       case "/stock":
       case "/stock/products":

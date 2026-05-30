@@ -55,15 +55,22 @@ import {
 } from "@/graphql/mutations/finance.mutations";
 import { downloadBlob } from "@/lib/download";
 import { formatCurrency, formatDate } from "@/lib/formatters";
+import { getInvoiceListPath } from "@/lib/invoice-direction";
 
 function PaymentDialog({
   invoice,
   onRecordPayment,
   loading: paymentLoading,
+  buttonLabel = "Record Payment",
+  title = "Record Payment",
+  outstandingLabel = "Outstanding",
 }: {
   invoice: Invoice;
   onRecordPayment: (data: RecordPaymentFormValues) => void;
   loading?: boolean;
+  buttonLabel?: string;
+  title?: string;
+  outstandingLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState(String(invoice.total - invoice.paidAmount));
@@ -81,14 +88,14 @@ function PaymentDialog({
       <DialogTrigger asChild>
         <Button className="gap-2">
           <CreditCard className="h-4 w-4" />
-          Record Payment
+          {buttonLabel}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Record Payment</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            Outstanding: {formatCurrency(invoice.total - invoice.paidAmount, invoice.currency)}
+            {outstandingLabel}: {formatCurrency(invoice.total - invoice.paidAmount, invoice.currency)}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -120,7 +127,7 @@ function PaymentDialog({
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
           <Button onClick={handleSubmit} disabled={paymentLoading}>
-            {paymentLoading ? "Recording..." : "Record Payment"}
+            {paymentLoading ? "Recording..." : buttonLabel}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -156,7 +163,7 @@ export default function InvoiceDetailPage() {
     {
       refetchQueries: [{ query: GET_INVOICES_QUERY }],
       successMessage: "Invoice deleted",
-      onCompleted: () => navigate("/finance/invoices"),
+      onCompleted: () => navigate(invoice ? getInvoiceListPath(invoice.isClientInvoice) : "/finance/client-invoices"),
     },
   );
 
@@ -178,11 +185,12 @@ export default function InvoiceDetailPage() {
   }
 
   const invoice = data?.invoice;
+  const backPath = invoice ? getInvoiceListPath(invoice.isClientInvoice) : "/finance/client-invoices";
 
   if (!invoice) {
     return (
       <div className="space-y-6">
-        <Button variant="ghost" onClick={() => navigate("/finance/invoices")} className="gap-2">
+        <Button variant="ghost" onClick={() => navigate(backPath)} className="gap-2">
           <ArrowLeft className="h-4 w-4" /> Back to Invoices
         </Button>
         <div className="text-center py-12 text-slate-500">
@@ -195,6 +203,15 @@ export default function InvoiceDetailPage() {
   }
 
   const remaining = invoice.total - invoice.paidAmount;
+  const isClientInvoice = invoice.isClientInvoice;
+  const paymentButtonLabel = isClientInvoice ? "Record Collection" : "Record Payment";
+  const paymentDialogTitle = isClientInvoice ? "Record Collection" : "Record Supplier Payment";
+  const paidLabel = isClientInvoice ? "Collected" : "Paid Out";
+  const remainingLabel = isClientInvoice ? "Outstanding" : "Still Owed";
+  const emptyPaymentText = isClientInvoice
+    ? "Record a collection to track progress."
+    : "Record a supplier payment to track progress.";
+  const statusAdvanceLabel = isClientInvoice ? "Mark as Sent" : "Mark as Received";
 
   const handlePrint = async () => {
     setPdfLoading(true);
@@ -260,7 +277,7 @@ export default function InvoiceDetailPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/finance/invoices")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(backPath)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
@@ -282,11 +299,18 @@ export default function InvoiceDetailPage() {
           </Button>
           {invoice.status === InvoiceStatus.DRAFT && (
             <Button variant="outline" className="gap-2" onClick={handleMarkAsSent}>
-              <Send className="h-4 w-4" /> Mark as Sent
+              <Send className="h-4 w-4" /> {statusAdvanceLabel}
             </Button>
           )}
           {(invoice.status === InvoiceStatus.SENT || invoice.status === InvoiceStatus.PARTIALLY_PAID || invoice.status === InvoiceStatus.OVERDUE) && (
-            <PaymentDialog invoice={invoice} onRecordPayment={handleRecordPayment} loading={paymentLoading} />
+            <PaymentDialog
+              invoice={invoice}
+              onRecordPayment={handleRecordPayment}
+              loading={paymentLoading}
+              buttonLabel={paymentButtonLabel}
+              title={paymentDialogTitle}
+              outstandingLabel={remainingLabel}
+            />
           )}
           {invoice.status !== InvoiceStatus.CANCELLED && invoice.status !== InvoiceStatus.PAID && (
             <Button variant="destructive" className="gap-2" onClick={() => setCancelDialogOpen(true)}>
@@ -315,13 +339,13 @@ export default function InvoiceDetailPage() {
             </Card>
             <Card>
               <CardContent className="pt-6">
-                <p className="text-sm text-slate-500">Paid</p>
+                <p className="text-sm text-slate-500">{paidLabel}</p>
                 <p className="text-2xl font-bold text-green-700">{formatCurrency(invoice.paidAmount, invoice.currency)}</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6">
-                <p className="text-sm text-slate-500">Remaining</p>
+                <p className="text-sm text-slate-500">{remainingLabel}</p>
                 <p className="text-2xl font-bold text-amber-700">{formatCurrency(remaining, invoice.currency)}</p>
               </CardContent>
             </Card>
@@ -470,7 +494,14 @@ export default function InvoiceDetailPage() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg">Payment History</CardTitle>
               {remaining > 0 && (
-                <PaymentDialog invoice={invoice} onRecordPayment={handleRecordPayment} loading={paymentLoading} />
+                <PaymentDialog
+                  invoice={invoice}
+                  onRecordPayment={handleRecordPayment}
+                  loading={paymentLoading}
+                  buttonLabel={paymentButtonLabel}
+                  title={paymentDialogTitle}
+                  outstandingLabel={remainingLabel}
+                />
               )}
             </CardHeader>
             <CardContent>
@@ -478,7 +509,7 @@ export default function InvoiceDetailPage() {
                 <div className="text-center py-8 text-slate-500">
                   <CreditCard className="h-10 w-10 mx-auto mb-3 text-slate-300" />
                   <p className="font-medium">No payments recorded</p>
-                  <p className="text-sm mt-1">Record a payment to track progress.</p>
+                  <p className="text-sm mt-1">{emptyPaymentText}</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -524,12 +555,12 @@ export default function InvoiceDetailPage() {
                     <span>{formatCurrency(invoice.total, invoice.currency)}</span>
                   </div>
                   <div className="flex justify-between text-sm text-green-700">
-                    <span>Total Paid:</span>
+                    <span>{paidLabel}:</span>
                     <span>{formatCurrency(invoice.paidAmount, invoice.currency)}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between font-bold">
-                    <span>Outstanding:</span>
+                    <span>{remainingLabel}:</span>
                     <span className={remaining > 0 ? "text-amber-700" : "text-green-700"}>
                       {formatCurrency(remaining, invoice.currency)}
                     </span>

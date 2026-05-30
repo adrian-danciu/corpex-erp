@@ -22,7 +22,6 @@ export default function PartnerCreatePage() {
 
   const handleSubmit = (data: CreatePartnerFormData) => {
     void createPartner({ variables: { createPartnerInput: data } }).catch(() => {
-      // error toast handled by hook; stay on the form
     });
   };
 

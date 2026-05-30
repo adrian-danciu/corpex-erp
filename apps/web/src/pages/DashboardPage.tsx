@@ -1,8 +1,8 @@
-import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
 import { AlertCircle, Briefcase, Users as UsersIcon, FileText, AlertTriangle } from "lucide-react";
 import { PageLoading } from "@/components/ui/page-loading";
 import { FleetExpiryWidget } from "@/components/dashboard/FleetExpiryWidget";
+import { KpiCard } from "@/components/dashboard/KpiCard";
 import { MyProjectsWidget } from "@/components/dashboard/MyProjectsWidget";
 import { MyTasksWidget } from "@/components/dashboard/MyTasksWidget";
 import { NotificationsWidget } from "@/components/dashboard/NotificationsWidget";
@@ -10,44 +10,15 @@ import { useAuthStore } from "@/stores/auth.store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/formatters";
 import {
+  DASHBOARD_METRICS_QUERY,
+  FINANCE_AGING_DASHBOARD_QUERY,
+  HR_LEAVE_SUMMARY_DASHBOARD_QUERY,
+} from "@/graphql/queries/dashboard.queries";
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from "recharts";
 import type { PieLabelRenderProps } from "recharts";
-
-const DASHBOARD_METRICS_QUERY = gql`
-  query DashboardMetrics {
-    dashboardMetrics {
-      totalUsers
-      totalEmployees
-      pendingLeaveRequests
-      approvedLeaveThisMonth
-      totalInvoices
-      overdueInvoices
-      totalInvoicedAmount
-      totalPaidAmount
-    }
-  }
-`;
-
-const HR_LEAVE_SUMMARY_QUERY = gql`
-  query HrLeaveSummaryDash {
-    hrLeaveSummary {
-      status
-      count
-    }
-  }
-`;
-
-const FINANCE_AGING_QUERY = gql`
-  query FinanceAgingSummaryDash {
-    financeAgingSummary {
-      label
-      amount
-      invoiceCount
-    }
-  }
-`;
 
 const LEAVE_COLORS: Record<string, string> = {
   PENDING: "#f59e0b",
@@ -55,19 +26,6 @@ const LEAVE_COLORS: Record<string, string> = {
   REJECTED: "#ef4444",
   CANCELLED: "#94a3b8",
 };
-
-function KpiCard({ title, value, sub, icon, accent }: { title: string; value: string | number; sub: string; icon?: React.ReactNode; accent?: string }) {
-  return (
-    <div className="rounded-lg border bg-card p-6 shadow-sm">
-      <div className="flex items-center justify-between pb-2">
-        <h3 className="text-sm font-medium">{title}</h3>
-        {icon}
-      </div>
-      <div className={`text-2xl font-bold ${accent ?? ""}`}>{value}</div>
-      <p className="text-xs text-muted-foreground mt-1">{sub}</p>
-    </div>
-  );
-}
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
@@ -85,8 +43,8 @@ export default function DashboardPage() {
     };
   }>(DASHBOARD_METRICS_QUERY);
 
-  const { data: hrData } = useQuery<{ hrLeaveSummary: { status: string; count: number }[] }>(HR_LEAVE_SUMMARY_QUERY);
-  const { data: agingData } = useQuery<{ financeAgingSummary: { label: string; amount: number; invoiceCount: number }[] }>(FINANCE_AGING_QUERY);
+  const { data: hrData } = useQuery<{ hrLeaveSummary: { status: string; count: number }[] }>(HR_LEAVE_SUMMARY_DASHBOARD_QUERY);
+  const { data: agingData } = useQuery<{ financeAgingSummary: { label: string; amount: number; invoiceCount: number }[] }>(FINANCE_AGING_DASHBOARD_QUERY);
 
   const metrics = data?.dashboardMetrics;
   const leaveRows = hrData?.hrLeaveSummary ?? [];

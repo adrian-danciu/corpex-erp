@@ -1,4 +1,3 @@
-import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
 import { AlertCircle } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
@@ -10,99 +9,24 @@ import {
   ReportExportButtons,
   type ReportExportDefinition,
 } from "./reports/components/ReportExportButtons";
+import {
+  EMPLOYEE_REPORT_QUERY,
+  FINANCE_AGING_SUMMARY_QUERY,
+  FLEET_REPORT_QUERY,
+  HR_LEAVE_SUMMARY_QUERY,
+  STOCK_REPORT_QUERY,
+} from "@/graphql/queries/report.queries";
+import type {
+  EmployeeReportRow,
+  FinanceAgingRow,
+  FleetReportRow,
+  HrLeaveSummaryRow,
+  StockReportRow,
+} from "@/types/report.types";
 
-const HR_LEAVE_SUMMARY_QUERY = gql`
-  query HrLeaveSummary {
-    hrLeaveSummary {
-      status
-      count
-    }
-  }
-`;
-
-const FINANCE_AGING_SUMMARY_QUERY = gql`
-  query FinanceAgingSummary {
-    financeAgingSummary {
-      label
-      amount
-      invoiceCount
-    }
-  }
-`;
-
-const EMPLOYEE_REPORT_QUERY = gql`
-  query EmployeeReport {
-    employeeReport {
-      id
-      firstName
-      lastName
-      position
-      department
-      contractType
-      employmentDate
-      remainingLeave
-      annualLeaveDays
-    }
-  }
-`;
-
-const STOCK_REPORT_QUERY = gql`
-  query StockReport {
-    stockReport {
-      productId
-      productName
-      sku
-      warehouseName
-      quantity
-    }
-  }
-`;
-
-const FLEET_REPORT_QUERY = gql`
-  query FleetReport {
-    fleetReport {
-      id
-      plateNumber
-      brand
-      model
-      year
-      status
-      nearestDocumentExpiry
-      nearestDocumentType
-    }
-  }
-`;
-
-type HrLeaveSummaryRow = { status: string; count: number };
-type FinanceAgingRow = { label: string; amount: number; invoiceCount: number };
-type EmployeeRow = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  position: string;
-  department: string;
-  contractType: string;
-  employmentDate: string;
-  remainingLeave: number;
-  annualLeaveDays: number;
-};
-type StockRow = {
-  productId: string;
-  productName: string;
-  sku: string;
-  warehouseName: string;
-  quantity: number;
-};
-type FleetRow = {
-  id: string;
-  plateNumber: string;
-  brand: string;
-  model: string;
-  year: number;
-  status: string;
-  nearestDocumentExpiry: string | null;
-  nearestDocumentType: string | null;
-};
+function shortId(id: string) {
+  return id.length > 12 ? `${id.slice(0, 8)}...${id.slice(-4)}` : id;
+}
 
 export default function ReportsPage() {
   const [leaveFilter, setLeaveFilter] = useState<string>("ALL");
@@ -115,13 +39,13 @@ export default function ReportsPage() {
     useQuery<{ financeAgingSummary: FinanceAgingRow[] }>(FINANCE_AGING_SUMMARY_QUERY);
 
   const { data: employeeData, loading: employeeLoading, error: employeeError } =
-    useQuery<{ employeeReport: EmployeeRow[] }>(EMPLOYEE_REPORT_QUERY);
+    useQuery<{ employeeReport: EmployeeReportRow[] }>(EMPLOYEE_REPORT_QUERY);
 
   const { data: stockData, loading: stockLoading, error: stockError } =
-    useQuery<{ stockReport: StockRow[] }>(STOCK_REPORT_QUERY);
+    useQuery<{ stockReport: StockReportRow[] }>(STOCK_REPORT_QUERY);
 
   const { data: fleetData, loading: fleetLoading, error: fleetError } =
-    useQuery<{ fleetReport: FleetRow[] }>(FLEET_REPORT_QUERY);
+    useQuery<{ fleetReport: FleetReportRow[] }>(FLEET_REPORT_QUERY);
 
   const leaveRows = hrData?.hrLeaveSummary ?? [];
   const agingRows = financeData?.financeAgingSummary ?? [];
@@ -147,7 +71,7 @@ export default function ReportsPage() {
       { header: "Annual Leave", width: 75 },
     ],
     rows: employeeRows.map((r) => [
-      r.id,
+      shortId(r.id),
       r.firstName,
       r.lastName,
       r.position,

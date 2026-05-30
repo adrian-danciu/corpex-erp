@@ -22,6 +22,10 @@ import { Pagination } from "@/components/common/Pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { useUrlFilters } from "@/hooks/useUrlFilters";
 import { formatCurrency } from "@/lib/formatters";
+import {
+  getInvoiceDirectionConfig,
+  type InvoiceDirection,
+} from "@/lib/invoice-direction";
 
 const statusFilters = [
   { key: "ALL", label: "All" },
@@ -33,8 +37,15 @@ const statusFilters = [
   { key: InvoiceStatus.CANCELLED, label: "Cancelled" },
 ];
 
-export default function InvoicesPage() {
+type InvoicesPageProps = {
+  invoiceDirection?: InvoiceDirection;
+};
+
+export default function InvoicesPage({
+  invoiceDirection = "client",
+}: InvoicesPageProps) {
   const navigate = useNavigate();
+  const directionConfig = getInvoiceDirectionConfig(invoiceDirection);
   const { getFilter, setFilter } = useUrlFilters();
   const searchQuery = getFilter("search");
   const rawStatus = getFilter("status", "ALL");
@@ -48,6 +59,7 @@ export default function InvoicesPage() {
     {
       variables: {
         pagination: { skip, take },
+        isClientInvoice: directionConfig.isClientInvoice,
       },
       fetchPolicy: "cache-and-network",
     }
@@ -56,6 +68,10 @@ export default function InvoicesPage() {
   const filteredInvoices = useMemo(() => {
     const invoices = data?.invoices.items || [];
     return invoices.filter((invoice) => {
+      if (invoice.isClientInvoice !== directionConfig.isClientInvoice) {
+        return false;
+      }
+
       const matchesSearch =
         invoice.partner.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         `${invoice.series}-${invoice.number}`.toLowerCase().includes(searchQuery.toLowerCase());
@@ -64,7 +80,12 @@ export default function InvoicesPage() {
 
       return matchesSearch && matchesStatus;
     });
-  }, [data?.invoices.items, searchQuery, filterStatus]);
+  }, [
+    data?.invoices.items,
+    directionConfig.isClientInvoice,
+    searchQuery,
+    filterStatus,
+  ]);
 
   const totalItems = data?.invoices.meta.total || 0;
 
@@ -89,12 +110,16 @@ export default function InvoicesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Invoices</h1>
-          <p className="text-slate-600 mt-1">Create and manage invoices</p>
+          <h1 className="text-3xl font-bold text-slate-900">
+            {directionConfig.listTitle}
+          </h1>
+          <p className="text-slate-600 mt-1">
+            {directionConfig.listDescription}
+          </p>
         </div>
-        <Button onClick={() => navigate("/finance/invoices/new")} className="gap-2">
+        <Button onClick={() => navigate(directionConfig.createPath)} className="gap-2">
           <Plus className="h-4 w-4" />
-          New Invoice
+          {directionConfig.createButtonLabel}
         </Button>
       </div>
 
@@ -138,7 +163,9 @@ export default function InvoicesPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Invoiced</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {directionConfig.totalLabel}
+            </CardTitle>
             <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -148,7 +175,9 @@ export default function InvoicesPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Collected</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {directionConfig.paidLabel}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-700">{formatCurrency(totalPaid)}</div>
@@ -156,7 +185,9 @@ export default function InvoicesPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Outstanding</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {directionConfig.outstandingLabel}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-amber-700">{formatCurrency(totalAmount - totalPaid)}</div>
@@ -174,7 +205,7 @@ export default function InvoicesPage() {
               <p className="text-sm mt-1">
                 {searchQuery || filterStatus !== "ALL"
                   ? "Try adjusting your search or filters"
-                  : "Get started by creating your first invoice"}
+                  : directionConfig.emptyListText}
               </p>
             </div>
           ) : (

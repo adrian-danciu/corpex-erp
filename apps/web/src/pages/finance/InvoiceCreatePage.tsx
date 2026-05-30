@@ -7,6 +7,7 @@ import { useForm, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createInvoiceSchema, type CreateInvoiceFormData } from "@/lib/schemas/invoice.schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,6 +31,15 @@ import {
 } from "@/graphql/mutations/project.queries";
 import type { InvoiceLineDraft, Project } from "@/types/project.types";
 import type { PurchaseOrder } from "@/types/purchaseOrder.types";
+import {
+  getInvoiceDirectionConfig,
+  partnerMatchesInvoiceDirection,
+  type InvoiceDirection,
+} from "@/lib/invoice-direction";
+import {
+  buildSupplierInvoiceItemsFromReceipts,
+  getSelectedPurchaseOrderReceipts,
+} from "@/lib/supplier-invoice-lines";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("ro-RO", {
@@ -39,9 +49,17 @@ function formatCurrency(amount: number) {
   }).format(amount);
 }
 
-export default function InvoiceCreatePage() {
+type InvoiceCreatePageProps = {
+  invoiceDirection?: InvoiceDirection;
+};
+
+export default function InvoiceCreatePage({
+  invoiceDirection = "client",
+}: InvoiceCreatePageProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const directionConfig = getInvoiceDirectionConfig(invoiceDirection);
+  const isClientMode = directionConfig.isClientInvoice;
   const initialProjectId = searchParams.get("projectId") ?? "";
 
   const { data: partnersData, loading: partnersLoading } = useQuery<PartnersQueryResult>(GET_PARTNERS_QUERY, {
@@ -50,11 +68,13 @@ export default function InvoiceCreatePage() {
     },
   });
 
-  const partners = partnersData?.partners?.items ?? [];
+  const partners = (partnersData?.partners?.items ?? []).filter((partner) =>
+    partnerMatchesInvoiceDirection(partner.partnerType, invoiceDirection),
+  );
 
   const { data: projectsData } = useQuery<{ projects: Project[] }>(
     GET_PROJECTS_QUERY,
-    { variables: { filter: {} } },
+    { variables: { filter: {} }, skip: !isClientMode },
   );
   const projects = useMemo(
     () => projectsData?.projects ?? [],
@@ -65,6 +85,7 @@ export default function InvoiceCreatePage() {
   }>(GET_PURCHASE_ORDERS_QUERY, {
     variables: { pagination: { skip: 0, take: 200 }, filter: {} },
     fetchPolicy: "cache-first",
+    skip: isClientMode,
   });
   const purchaseOrders = purchaseOrdersData?.purchaseOrders.items ?? [];
 
@@ -75,9 +96,14 @@ export default function InvoiceCreatePage() {
   const [createInvoice, { loading: isLoading }] = useMutationWithToast(
     CREATE_INVOICE_MUTATION,
     {
-      refetchQueries: [{ query: GET_INVOICES_QUERY }],
-      successMessage: "Invoice created",
-      onCompleted: () => navigate("/finance/invoices"),
+      refetchQueries: [
+        {
+          query: GET_INVOICES_QUERY,
+          variables: { isClientInvoice: isClientMode },
+        },
+      ],
+      successMessage: `${directionConfig.directionLabel} saved`,
+      onCompleted: () => navigate(directionConfig.listPath),
     },
   );
 
@@ -105,32 +131,49 @@ export default function InvoiceCreatePage() {
       series: "CORP",
       invoiceType: "FISCAL",
       partnerId: "",
-      isClientInvoice: true,
+      isClientInvoice: isClientMode,
       issueDate: today,
       dueDate: defaultDueDate,
       deliveryDate: "",
       currency: "EUR",
       notes: "",
-      projectId: initialProjectId,
+      projectId: isClientMode ? initialProjectId : "",
       purchaseOrderId: "",
       purchaseReceiptId: "",
       items: [{ description: "", quantity: 1, unit: "buc", unitPrice: 0, vatRate: 19 }],
     },
   });
 
+  const selectedPartnerId = useWatch({ control, name: "partnerId" });
   const selectedProjectId = useWatch({ control, name: "projectId" });
-  const isClientInvoice = useWatch({ control, name: "isClientInvoice" });
   const selectedPurchaseOrderId = useWatch({ control, name: "purchaseOrderId" });
-  const selectedPurchaseOrder = purchaseOrders.find((po) => po.id === selectedPurchaseOrderId);
+  const filteredPurchaseOrders = useMemo(
+    () =>
+      isClientMode || !selectedPartnerId
+        ? []
+        : purchaseOrders.filter((po) => po.supplierId === selectedPartnerId),
+    [isClientMode, purchaseOrders, selectedPartnerId],
+  );
+  const selectedPurchaseOrder = filteredPurchaseOrders.find((po) => po.id === selectedPurchaseOrderId);
+  const [selectedReceiptIds, setSelectedReceiptIds] = useState<string[]>([]);
 
   // When project changes (or is provided via URL), pre-fill partnerId from the project
   useEffect(() => {
+    if (!isClientMode) return;
     if (!selectedProjectId) return;
     const proj = projects.find((p) => p.id === selectedProjectId);
     if (proj?.partnerId) {
       setValue("partnerId", proj.partnerId, { shouldValidate: true });
     }
-  }, [selectedProjectId, projects, setValue]);
+  }, [isClientMode, selectedProjectId, projects, setValue]);
+
+  useEffect(() => {
+    if (isClientMode) return;
+
+    setValue("purchaseOrderId", "");
+    setValue("purchaseReceiptId", "");
+    setSelectedReceiptIds([]);
+  }, [isClientMode, selectedPartnerId, setValue]);
 
   const { fields, append, remove, replace } = useFieldArray({
     control,
@@ -158,13 +201,12 @@ export default function InvoiceCreatePage() {
       variables: {
         createInvoiceInput: {
           ...rest,
+          isClientInvoice: isClientMode,
           currency: "EUR",
-          // Send null when delivery date is empty so backend/Prisma
-          // don't receive an invalid Date object
           deliveryDate: deliveryDate ? deliveryDate : null,
-          projectId: projectId || undefined,
-          purchaseOrderId: purchaseOrderId || undefined,
-          purchaseReceiptId: purchaseReceiptId || undefined,
+          projectId: isClientMode && projectId ? projectId : undefined,
+          purchaseOrderId: !isClientMode && purchaseOrderId ? purchaseOrderId : undefined,
+          purchaseReceiptId: !isClientMode && purchaseReceiptId ? purchaseReceiptId : undefined,
         },
       },
     }).catch(() => {
@@ -182,7 +224,6 @@ export default function InvoiceCreatePage() {
       toastInfo("No unbilled materials, services, or vehicle expenses on this project yet.");
       return;
     }
-    // Replace the items array with imported drafts
     replace(
       drafts.map((d) => ({
         description: d.description,
@@ -197,16 +238,43 @@ export default function InvoiceCreatePage() {
     );
   };
 
+  const toggleReceiptSelection = (receiptId: string, checked: boolean) => {
+    setSelectedReceiptIds((current) =>
+      checked
+        ? [...new Set([...current, receiptId])]
+        : current.filter((id) => id !== receiptId),
+    );
+  };
+
+  const importSupplierReceiptLines = () => {
+    const selectedReceipts = getSelectedPurchaseOrderReceipts(
+      selectedPurchaseOrder,
+      selectedReceiptIds,
+    );
+    const nextItems = buildSupplierInvoiceItemsFromReceipts(selectedReceipts);
+
+    if (nextItems.length === 0) {
+      toastInfo("Select at least one NIR with received items.");
+      return;
+    }
+
+    replace(nextItems);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/finance/invoices")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(directionConfig.listPath)}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">New Invoice</h1>
-          <p className="text-slate-600 mt-1">Create a new fiscal or proforma invoice</p>
+          <h1 className="text-3xl font-bold text-slate-900">
+            {directionConfig.createTitle}
+          </h1>
+          <p className="text-slate-600 mt-1">
+            {directionConfig.createDescription}
+          </p>
         </div>
       </div>
 
@@ -250,7 +318,7 @@ export default function InvoiceCreatePage() {
           </CardContent>
         </Card>
 
-        {/* Project (optional) */}
+        {isClientMode && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg">Project (optional)</CardTitle>
@@ -301,6 +369,7 @@ export default function InvoiceCreatePage() {
             </div>
           </CardContent>
         </Card>
+        )}
 
         {/* Partner Selection */}
         <Card>
@@ -309,14 +378,20 @@ export default function InvoiceCreatePage() {
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label>Partner *</Label>
+              <Label>{directionConfig.partnerLabel} *</Label>
               <Controller
                 name="partnerId"
                 control={control}
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} value={field.value} disabled={partnersLoading}>
                     <SelectTrigger>
-                      <SelectValue placeholder={partnersLoading ? "Loading partners..." : "Select a partner"} />
+                      <SelectValue
+                        placeholder={
+                          partnersLoading
+                            ? "Loading partners..."
+                            : `Select a ${directionConfig.partnerLabel.toLowerCase()}`
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {partners.map((p) => (
@@ -332,30 +407,15 @@ export default function InvoiceCreatePage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Direction</Label>
-              <Controller
-                name="isClientInvoice"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    onValueChange={(v) => field.onChange(v === "true")}
-                    value={String(field.value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="true">We invoice them (Client)</SelectItem>
-                      <SelectItem value="false">They invoice us (Supplier)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
+              <Label>Invoice Direction</Label>
+              <div className="flex h-9 items-center rounded-md border bg-slate-50 px-3 text-sm text-slate-700">
+                {directionConfig.directionLabel}
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {!isClientInvoice && (
+        {!isClientMode && (
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Procurement link (optional)</CardTitle>
@@ -371,6 +431,7 @@ export default function InvoiceCreatePage() {
                       onValueChange={(value) => {
                         field.onChange(value === "__none__" ? "" : value);
                         setValue("purchaseReceiptId", "");
+                        setSelectedReceiptIds([]);
                       }}
                       value={field.value || "__none__"}
                     >
@@ -379,7 +440,7 @@ export default function InvoiceCreatePage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none__">No purchase order</SelectItem>
-                        {purchaseOrders.map((order) => (
+                        {filteredPurchaseOrders.map((order) => (
                           <SelectItem key={order.id} value={order.id}>
                             {order.formattedNumber} - {order.supplier?.name ?? "Supplier"}
                           </SelectItem>
@@ -390,30 +451,66 @@ export default function InvoiceCreatePage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>NIR / receipt</Label>
-                <Controller
-                  name="purchaseReceiptId"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      onValueChange={(value) => field.onChange(value === "__none__" ? "" : value)}
-                      value={field.value || "__none__"}
-                      disabled={!selectedPurchaseOrder?.receipts?.length}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="No receipt" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">No receipt</SelectItem>
-                        {(selectedPurchaseOrder?.receipts ?? []).map((receipt) => (
-                          <SelectItem key={receipt.id} value={receipt.id}>
-                            {receipt.formattedNumber}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
+                <div className="flex items-center justify-between gap-3">
+                  <Label>NIR / receipts</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={importSupplierReceiptLines}
+                    disabled={!selectedReceiptIds.length}
+                  >
+                    Import selected
+                  </Button>
+                </div>
+                {!selectedPurchaseOrder ? (
+                  <div className="rounded-md border bg-slate-50 px-3 py-2 text-sm text-slate-500">
+                    Select a purchase order first.
+                  </div>
+                ) : selectedPurchaseOrder.receipts.length === 0 ? (
+                  <div className="rounded-md border bg-slate-50 px-3 py-2 text-sm text-slate-500">
+                    No NIRs recorded for this purchase order.
+                  </div>
+                ) : (
+                  <div className="max-h-44 space-y-2 overflow-y-auto rounded-md border p-3">
+                    {selectedPurchaseOrder.receipts.map((receipt) => {
+                      const checked = selectedReceiptIds.includes(receipt.id);
+                      const lineCount = receipt.lines?.length ?? 0;
+
+                      return (
+                        <label
+                          key={receipt.id}
+                          className="flex cursor-pointer items-start gap-3 rounded-md p-2 hover:bg-slate-50"
+                        >
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={(value) => {
+                              const nextChecked = value === true;
+                              toggleReceiptSelection(receipt.id, nextChecked);
+                              setValue(
+                                "purchaseReceiptId",
+                                nextChecked && selectedReceiptIds.length === 0
+                                  ? receipt.id
+                                  : "",
+                              );
+                            }}
+                          />
+                          <span className="space-y-0.5 text-sm">
+                            <span className="block font-medium text-slate-900">
+                              {receipt.formattedNumber}
+                            </span>
+                            <span className="block text-xs text-slate-500">
+                              {new Date(receipt.receivedDate).toLocaleDateString("ro-RO")} · {lineCount} line{lineCount === 1 ? "" : "s"}
+                            </span>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+                <p className="text-xs text-slate-500">
+                  Selected NIR lines can auto-fill the invoice. You can still add manual charges below.
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -564,11 +661,11 @@ export default function InvoiceCreatePage() {
 
         {/* Actions */}
         <div className="flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={() => navigate("/finance/invoices")}>
+          <Button type="button" variant="outline" onClick={() => navigate(directionConfig.listPath)}>
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Creating...</> : "Create Invoice"}
+            {isLoading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving...</> : directionConfig.submitLabel}
           </Button>
         </div>
       </form>

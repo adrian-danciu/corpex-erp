@@ -143,6 +143,23 @@ export const GET_PURCHASE_ORDERS_QUERY = gql`
           id
           formattedNumber
           receivedDate
+          lines {
+            id
+            receiptId
+            orderLineId
+            qtyReceived
+            orderLine {
+              id
+              productId
+              unitCost
+              product {
+                id
+                sku
+                name
+                unit
+              }
+            }
+          }
         }
       }
       meta {

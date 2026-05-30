@@ -1,6 +1,12 @@
 import { lazy, Suspense, type ComponentType, type ReactNode } from "react";
 import { ApolloProvider } from "@apollo/client/react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 import "./App.css";
 import { apolloClient } from "./lib/apollo-client";
 import LoginPage from "./pages/LoginPage";
@@ -111,6 +117,33 @@ function ProtectedPage({
         <Page />
       </LazyDashboard>
     </ProtectedRoute>
+  );
+}
+
+function ClientInvoicesPage() {
+  return <InvoicesPage invoiceDirection="client" />;
+}
+
+function SupplierInvoicesPage() {
+  return <InvoicesPage invoiceDirection="supplier" />;
+}
+
+function ClientInvoiceCreatePage() {
+  return <InvoiceCreatePage invoiceDirection="client" />;
+}
+
+function SupplierInvoiceCreatePage() {
+  return <InvoiceCreatePage invoiceDirection="supplier" />;
+}
+
+function LegacyInvoiceCreateRedirect() {
+  const location = useLocation();
+
+  return (
+    <Navigate
+      to={`/finance/client-invoices/new${location.search}`}
+      replace
+    />
   );
 }
 
@@ -235,9 +268,23 @@ function App() {
           />
           <Route
             path="/finance/invoices"
+            element={<Navigate to="/finance/client-invoices" replace />}
+          />
+          <Route
+            path="/finance/client-invoices"
             element={
               <ProtectedPage
-                component={InvoicesPage}
+                component={ClientInvoicesPage}
+                requiredModule="finance"
+                requiredAccess="read"
+              />
+            }
+          />
+          <Route
+            path="/finance/supplier-invoices"
+            element={
+              <ProtectedPage
+                component={SupplierInvoicesPage}
                 requiredModule="finance"
                 requiredAccess="read"
               />
@@ -245,9 +292,23 @@ function App() {
           />
           <Route
             path="/finance/invoices/new"
+            element={<LegacyInvoiceCreateRedirect />}
+          />
+          <Route
+            path="/finance/client-invoices/new"
             element={
               <ProtectedPage
-                component={InvoiceCreatePage}
+                component={ClientInvoiceCreatePage}
+                requiredModule="finance"
+                requiredAccess="write"
+              />
+            }
+          />
+          <Route
+            path="/finance/supplier-invoices/new"
+            element={
+              <ProtectedPage
+                component={SupplierInvoiceCreatePage}
                 requiredModule="finance"
                 requiredAccess="write"
               />

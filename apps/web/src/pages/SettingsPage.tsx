@@ -64,28 +64,24 @@ export default function SettingsPage() {
     },
   );
 
-  // Company form
   const {
     register: regCompany,
     handleSubmit: submitCompany,
     reset: resetCompany,
   } = useForm<Pick<CompanySettingsData, "companyName" | "cui" | "regCom" | "address" | "city" | "country" | "email" | "phone" | "bankName" | "bankAccount">>();
 
-  // Invoice form
   const {
     register: regInvoice,
     handleSubmit: submitInvoice,
     reset: resetInvoice,
   } = useForm<Pick<CompanySettingsData, "defaultInvoiceSeries" | "defaultVatRate" | "paymentTermsDays">>();
 
-  // HR form
   const {
     register: regHr,
     handleSubmit: submitHr,
     reset: resetHr,
   } = useForm<Pick<CompanySettingsData, "defaultAnnualLeaveDays" | "defaultCountry">>();
 
-  // Fleet form
   const {
     register: regFleet,
     handleSubmit: submitFleet,
@@ -98,7 +94,6 @@ export default function SettingsPage() {
     reset: resetPayroll,
   } = useForm<Pick<CompanySettingsData, "payrollTaxCasRate" | "payrollTaxCassRate" | "payrollTaxIncomeRate" | "payrollTaxCamRate" | "payrollPersonalDeduction" | "payrollTaxRuleVersion">>();
 
-  // Populate forms when data loads
   useEffect(() => {
     if (data?.companySettings) {
       const s = data.companySettings;

@@ -23,9 +23,67 @@ import { PageLoading } from "@/components/ui/page-loading";
 import { useNavigate } from "react-router-dom";
 import InvoiceStatusBadge from "@/components/finance/InvoiceStatusBadge";
 import { InvoiceStatus } from "@/types/finance.types";
-import type { InvoicesQueryResult } from "@/types/finance.types";
+import type { Invoice, InvoicesQueryResult } from "@/types/finance.types";
 import { GET_INVOICES_QUERY } from "@/graphql/mutations/finance.mutations";
 import { formatCurrency } from "@/lib/formatters";
+
+type RecentInvoiceTableProps = {
+  invoices: Invoice[];
+  emptyLabel: string;
+  onInvoiceClick: (invoiceId: string) => void;
+};
+
+function RecentInvoiceTable({
+  invoices,
+  emptyLabel,
+  onInvoiceClick,
+}: RecentInvoiceTableProps) {
+  if (invoices.length === 0) {
+    return (
+      <div className="text-center py-8 text-slate-500">
+        <Receipt className="h-10 w-10 mx-auto mb-3 text-slate-300" />
+        <p className="font-medium">{emptyLabel}</p>
+      </div>
+    );
+  }
+
+  return (
+    <Table className="min-w-[1000px]">
+      <TableHeader>
+        <TableRow>
+          <TableHead>Invoice</TableHead>
+          <TableHead>Partner</TableHead>
+          <TableHead>Issue Date</TableHead>
+          <TableHead>Due Date</TableHead>
+          <TableHead className="text-right">Total</TableHead>
+          <TableHead className="text-center">Status</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {invoices.map((invoice) => (
+          <TableRow
+            key={invoice.id}
+            className="cursor-pointer"
+            onClick={() => onInvoiceClick(invoice.id)}
+          >
+            <TableCell className="font-medium text-slate-900">
+              {invoice.series}-{String(invoice.number).padStart(4, "0")}
+            </TableCell>
+            <TableCell className="text-slate-700">{invoice.partner.name}</TableCell>
+            <TableCell className="text-slate-600">{invoice.issueDate}</TableCell>
+            <TableCell className="text-slate-600">{invoice.dueDate}</TableCell>
+            <TableCell className="text-right font-medium">
+              {formatCurrency(invoice.total, invoice.currency)}
+            </TableCell>
+            <TableCell className="text-center">
+              <InvoiceStatusBadge status={invoice.status} />
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}
 
 export default function FinanceOverviewPage() {
   const navigate = useNavigate();
@@ -75,7 +133,10 @@ export default function FinanceOverviewPage() {
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   }).length;
 
-  const recentInvoices = [...invoices]
+  const recentClientInvoices = [...clientInvoices]
+    .sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime())
+    .slice(0, 5);
+  const recentSupplierInvoices = [...supplierInvoices]
     .sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime())
     .slice(0, 5);
 
@@ -92,9 +153,17 @@ export default function FinanceOverviewPage() {
             <Building2 className="h-4 w-4" />
             New Partner
           </Button>
-          <Button onClick={() => navigate("/finance/invoices/new")} className="gap-2">
+          <Button onClick={() => navigate("/finance/client-invoices/new")} className="gap-2">
             <Plus className="h-4 w-4" />
-            New Invoice
+            New Client Invoice
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate("/finance/supplier-invoices/new")}
+            className="gap-2"
+          >
+            <Receipt className="h-4 w-4" />
+            Add Supplier Invoice
           </Button>
         </div>
       </div>
@@ -154,87 +223,37 @@ export default function FinanceOverviewPage() {
         </Card>
       </div>
 
-      {/* Quick Access */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card
-          className="cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => navigate("/finance/partners")}
-        >
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="rounded-lg bg-blue-50 p-3">
-              <Building2 className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-slate-900">Partners</h3>
-              <p className="text-sm text-slate-600">Manage clients and suppliers</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card
-          className="cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => navigate("/finance/invoices")}
-        >
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="rounded-lg bg-green-50 p-3">
-              <Receipt className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-slate-900">Invoices</h3>
-              <p className="text-sm text-slate-600">Create and manage invoices</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Invoices */}
+      {/* Recent Client Invoices */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Recent Invoices</CardTitle>
-          <Button variant="outline" size="sm" onClick={() => navigate("/finance/invoices")}>
-            View All
+          <CardTitle>Recent Client Invoices</CardTitle>
+          <Button variant="outline" size="sm" onClick={() => navigate("/finance/client-invoices")}>
+            View Client Invoices
           </Button>
         </CardHeader>
         <CardContent>
-          {recentInvoices.length === 0 ? (
-            <div className="text-center py-8 text-slate-500">
-              <Receipt className="h-10 w-10 mx-auto mb-3 text-slate-300" />
-              <p className="font-medium">No invoices yet</p>
-            </div>
-          ) : (
-            <Table className="min-w-[1000px]">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Invoice</TableHead>
-                  <TableHead>Partner</TableHead>
-                  <TableHead>Issue Date</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentInvoices.map((invoice) => (
-                  <TableRow
-                    key={invoice.id}
-                    className="cursor-pointer"
-                    onClick={() => navigate(`/finance/invoices/${invoice.id}`)}
-                  >
-                    <TableCell className="font-medium text-slate-900">
-                        {invoice.series}-{String(invoice.number).padStart(4, "0")}
-                    </TableCell>
-                    <TableCell className="text-slate-700">{invoice.partner.name}</TableCell>
-                    <TableCell className="text-slate-600">{invoice.issueDate}</TableCell>
-                    <TableCell className="text-slate-600">{invoice.dueDate}</TableCell>
-                    <TableCell className="text-right font-medium">{formatCurrency(invoice.total, invoice.currency)}</TableCell>
-                    <TableCell className="text-center">
-                      <InvoiceStatusBadge status={invoice.status} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          <RecentInvoiceTable
+            invoices={recentClientInvoices}
+            emptyLabel="No client invoices yet"
+            onInvoiceClick={(invoiceId) => navigate(`/finance/invoices/${invoiceId}`)}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Recent Supplier Invoices */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Recent Supplier Invoices</CardTitle>
+          <Button variant="outline" size="sm" onClick={() => navigate("/finance/supplier-invoices")}>
+            View Supplier Invoices
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <RecentInvoiceTable
+            invoices={recentSupplierInvoices}
+            emptyLabel="No supplier invoices yet"
+            onInvoiceClick={(invoiceId) => navigate(`/finance/invoices/${invoiceId}`)}
+          />
         </CardContent>
       </Card>
     </div>

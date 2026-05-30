@@ -27,8 +27,13 @@ export class InvoicesResolver {
   async findAllInvoices(
     @Args('pagination', { nullable: true, type: () => PaginationInput })
     pagination?: PaginationInput,
+    @Args('isClientInvoice', { nullable: true })
+    isClientInvoice?: boolean,
   ): Promise<PaginatedInvoice> {
-    return this.invoicesService.findAll(normalizePagination(pagination));
+    return this.invoicesService.findAll(
+      normalizePagination(pagination),
+      isClientInvoice,
+    );
   }
 
   @Query(() => Invoice, {

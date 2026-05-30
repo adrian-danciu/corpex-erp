@@ -75,15 +75,22 @@ export class InvoicesService {
     });
   }
 
-  async findAll(pagination: PaginationInput): Promise<IPaginatedType<Invoice>> {
+  async findAll(
+    pagination: PaginationInput,
+    isClientInvoice?: boolean,
+  ): Promise<IPaginatedType<Invoice>> {
+    const where =
+      typeof isClientInvoice === 'boolean' ? { isClientInvoice } : undefined;
+
     const [items, total] = await Promise.all([
       this.prisma.invoice.findMany({
+        where,
         skip: pagination.skip,
         take: pagination.take,
         include: invoiceInclude,
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.invoice.count(),
+      this.prisma.invoice.count({ where }),
     ]);
 
     return toPaginatedResult(items, total, pagination);
