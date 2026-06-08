@@ -84,8 +84,16 @@ export class StockLedgerService {
     input: CreateStockMovementInput,
     createdById: string,
   ): Promise<StockMovement> {
-    if (input.quantity <= 0) {
-      throw new BadRequestException('Quantity must be greater than 0');
+    if (input.quantity < 0) {
+      throw new BadRequestException('Quantity cannot be negative');
+    }
+    if (
+      input.quantity === 0 &&
+      input.type !== StockMovementType.ADJUSTMENT
+    ) {
+      throw new BadRequestException(
+        'Quantity must be greater than 0 for non-adjustment movements',
+      );
     }
 
     const [product, warehouse] = await Promise.all([
@@ -117,6 +125,7 @@ export class StockLedgerService {
 
       const previousQuantity = currentStock?.quantity ?? 0;
       const defectiveQty = currentStock?.defectiveQty ?? 0;
+      const reservedQty = currentStock?.reservedQty ?? 0;
       const sellable = previousQuantity - defectiveQty;
       let nextQuantity = previousQuantity;
 
@@ -130,12 +139,10 @@ export class StockLedgerService {
         }
         nextQuantity = previousQuantity - input.quantity;
       } else if (input.type === StockMovementType.ADJUSTMENT) {
-        if (input.quantity < 0) {
-          throw new BadRequestException('Adjusted quantity cannot be negative');
-        }
-        if (input.quantity < defectiveQty) {
+        const protectedQuantity = defectiveQty + reservedQty;
+        if (input.quantity < protectedQuantity) {
           throw new BadRequestException(
-            `Cannot adjust below defective quantity (${defectiveQty}). Scrap defective units first.`,
+            `Cannot adjust below protected quantity (${protectedQuantity}: ${defectiveQty} defective + ${reservedQty} reserved). Resolve defective units or reservations first.`,
           );
         }
         nextQuantity = input.quantity;

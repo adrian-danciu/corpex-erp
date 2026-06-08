@@ -25,6 +25,18 @@ export class DashboardMetrics {
 
   @Field(() => Float)
   totalPaidAmount: number;
+
+  @Field(() => Int)
+  totalSupplierInvoices: number;
+
+  @Field(() => Int)
+  overdueSupplierInvoices: number;
+
+  @Field(() => Float)
+  totalPayableAmount: number;
+
+  @Field(() => Float)
+  totalSupplierPaidAmount: number;
 }
 
 @ObjectType()

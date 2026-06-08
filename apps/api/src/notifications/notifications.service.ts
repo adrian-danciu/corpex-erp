@@ -8,6 +8,7 @@ import {
   NotificationType,
   Department,
   Notification as PrismaNotification,
+  ProjectMemberRole,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaginationInput } from '../common/dto/pagination.input';
@@ -118,6 +119,26 @@ export class NotificationsService {
 
   async getHrWatchers(): Promise<string[]> {
     return this.usersInDepartments([Department.HR, Department.MANAGEMENT]);
+  }
+
+  async getFinanceWatchers(projectId?: string | null): Promise<string[]> {
+    const recipients = new Set(
+      await this.usersInDepartments([Department.FINANCE, Department.MANAGEMENT]),
+    );
+
+    if (projectId) {
+      const projectManagers = await this.prisma.projectMember.findMany({
+        where: {
+          projectId,
+          role: ProjectMemberRole.PROJECT_MANAGER,
+          leftAt: null,
+        },
+        select: { userId: true },
+      });
+      projectManagers.forEach((manager) => recipients.add(manager.userId));
+    }
+
+    return [...recipients];
   }
 
   // ─── Public emission helpers (called by other modules) ─────────────────
@@ -251,6 +272,32 @@ export class NotificationsService {
         linkPath: `/stock/products`,
         entityType: NotificationEntityType.PRODUCT,
         entityId: input.productId,
+      })),
+    );
+  }
+
+  async notifyInvoiceOverdue(input: {
+    invoiceId: string;
+    formattedNumber: string;
+    partnerName: string;
+    isClientInvoice: boolean;
+    projectId?: string | null;
+    outstandingAmount: number;
+  }): Promise<void> {
+    const recipients = await this.getFinanceWatchers(
+      input.isClientInvoice ? input.projectId : null,
+    );
+    if (!recipients.length) return;
+
+    await this.emit(
+      recipients.map((recipientId) => ({
+        recipientId,
+        type: NotificationType.INVOICE_OVERDUE,
+        title: `${input.isClientInvoice ? 'Client' : 'Supplier'} invoice ${input.formattedNumber} is overdue`,
+        body: `${input.partnerName}: ${input.outstandingAmount.toFixed(2)} EUR outstanding`,
+        linkPath: `/finance/invoices/${input.invoiceId}`,
+        entityType: NotificationEntityType.INVOICE,
+        entityId: input.invoiceId,
       })),
     );
   }

@@ -39,12 +39,22 @@ export class ReportingResolver {
 
   @Query(() => [FinanceAgingBucket], {
     name: 'financeAgingSummary',
-    description: 'Aging analysis for outstanding invoice amounts',
+    description: 'Aging analysis for outstanding client receivables',
   })
   @UseGuards(JwtAuthGuard, DepartmentGuard)
   @RequireModule('finance', 'read')
   async getFinanceAgingSummary(): Promise<FinanceAgingBucket[]> {
     return this.reportingService.getFinanceAgingSummary();
+  }
+
+  @Query(() => [FinanceAgingBucket], {
+    name: 'supplierAgingSummary',
+    description: 'Aging analysis for outstanding supplier payables',
+  })
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('finance', 'read')
+  async getSupplierAgingSummary(): Promise<FinanceAgingBucket[]> {
+    return this.reportingService.getSupplierAgingSummary();
   }
 
   @Query(() => [EmployeeReportRow], { name: 'employeeReport' })

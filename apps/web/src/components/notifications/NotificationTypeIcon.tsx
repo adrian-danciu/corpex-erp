@@ -7,6 +7,7 @@ import {
   PackageMinus,
   Bell,
   FileWarning,
+  ReceiptText,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { NotificationType } from "@/types/notifications.types";
@@ -20,6 +21,7 @@ const ICON_MAP: Record<NotificationType, LucideIcon> = {
   FLEET_DOCUMENT_EXPIRING: CarFront,
   EMPLOYEE_DOCUMENT_EXPIRING: FileWarning,
   STOCK_BELOW_MINIMUM: PackageMinus,
+  INVOICE_OVERDUE: ReceiptText,
 };
 
 const COLOR_MAP: Record<NotificationType, string> = {
@@ -30,6 +32,7 @@ const COLOR_MAP: Record<NotificationType, string> = {
   FLEET_DOCUMENT_EXPIRING: "text-amber-600 bg-amber-50",
   EMPLOYEE_DOCUMENT_EXPIRING: "text-amber-600 bg-amber-50",
   STOCK_BELOW_MINIMUM: "text-orange-600 bg-orange-50",
+  INVOICE_OVERDUE: "text-red-600 bg-red-50",
 };
 
 interface NotificationTypeIconProps {

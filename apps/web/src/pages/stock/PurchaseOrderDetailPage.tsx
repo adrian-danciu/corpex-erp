@@ -48,7 +48,7 @@ import { useAuthStore } from "@/stores/auth.store";
 import { canAccess } from "@/lib/permissions";
 import {
   PurchaseOrderStatus,
-  type PurchaseOrder,
+  type PurchaseOrderQueryResult,
 } from "@/types/purchaseOrder.types";
 import { PurchaseOrderStatusBadge } from "@/components/stock/PurchaseOrderStatusBadge";
 import { RecordReceptionSheet } from "@/components/stock/RecordReceptionSheet";
@@ -64,9 +64,9 @@ export default function PurchaseOrderDetailPage() {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
 
-  const { data, loading, error } = useQuery<{
-    purchaseOrder: PurchaseOrder;
-  }>(GET_PURCHASE_ORDER_QUERY, {
+  const { data, loading, error } = useQuery<PurchaseOrderQueryResult>(
+    GET_PURCHASE_ORDER_QUERY,
+    {
     variables: { id },
     skip: !id,
     fetchPolicy: "cache-and-network",

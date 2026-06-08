@@ -37,6 +37,22 @@ export interface AuthResponse {
   user: User;
 }
 
+export interface LoginMutationResult {
+  login: AuthResponse;
+}
+
+export interface CreateUserMutationResult {
+  createUser: User;
+}
+
+export interface ChangePasswordMutationResult {
+  changePassword: User;
+}
+
+export interface UpdateProfilePictureMutationResult {
+  updateProfilePicture: User;
+}
+
 export interface AuthState {
   user: User | null;
   accessToken: string | null;

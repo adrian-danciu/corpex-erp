@@ -15,15 +15,14 @@ import { Pagination } from "@/components/common/Pagination";
 import { VehicleStatusBadge } from "@/components/fleet/VehicleStatusBadge";
 import { usePagination } from "@/hooks/usePagination";
 import { GET_VEHICLES_QUERY } from "@/graphql/queries/fleet.queries";
-import type { Vehicle } from "@/types/fleet.types";
-import type { PaginatedResult } from "@/types/pagination.types";
+import type { VehiclesQueryResult } from "@/types/fleet.types";
 import { PageLoading } from "@/components/ui/page-loading";
 
 export default function VehiclesPage() {
   const navigate = useNavigate();
   const { page, pageSize, skip, take, setPage } = usePagination();
 
-  const { data, loading, error } = useQuery<{ vehicles: PaginatedResult<Vehicle> }>(
+  const { data, loading, error } = useQuery<VehiclesQueryResult>(
     GET_VEHICLES_QUERY,
     { variables: { pagination: { skip, take } }, fetchPolicy: "cache-and-network" },
   );

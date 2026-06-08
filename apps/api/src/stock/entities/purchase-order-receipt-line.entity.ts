@@ -15,6 +15,12 @@ export class PurchaseOrderReceiptLine {
   @Field(() => Float)
   qtyReceived: number;
 
+  @Field(() => Float, { nullable: true })
+  invoicedQty?: number;
+
+  @Field(() => Float, { nullable: true })
+  remainingInvoiceQty?: number;
+
   @Field(() => PurchaseOrderLine, { nullable: true })
   orderLine?: PurchaseOrderLine;
 }

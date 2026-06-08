@@ -9,6 +9,7 @@ import {
   type ProjectTask,
   type ProjectTaskStatus,
 } from "@/types/project.types";
+import { formatDate } from "@/lib/formatters";
 
 const PRIORITY_BADGE: Record<ProjectTaskPriority, string> = {
   LOW: "bg-slate-100 text-slate-700",
@@ -95,7 +96,7 @@ export function TaskCard({
       </div>
       {task.dueDate && (
         <div className="text-xs text-slate-500 mt-1">
-          Due: {new Date(task.dueDate).toLocaleDateString()}
+          Due: {formatDate(task.dueDate)}
         </div>
       )}
     </div>

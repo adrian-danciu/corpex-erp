@@ -37,6 +37,8 @@ const PURCHASE_ORDER_RECEIPT_FIELDS = `
     receiptId
     orderLineId
     qtyReceived
+    invoicedQty
+    remainingInvoiceQty
     orderLine {
       id
       productId
@@ -148,6 +150,8 @@ export const GET_PURCHASE_ORDERS_QUERY = gql`
             receiptId
             orderLineId
             qtyReceived
+            invoicedQty
+            remainingInvoiceQty
             orderLine {
               id
               productId

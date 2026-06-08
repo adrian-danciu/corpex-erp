@@ -1,175 +1,32 @@
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useQuery } from "@apollo/client/react";
-import { useMutationWithToast } from "@/hooks/useMutationWithToast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertCircle, ArrowLeft, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  ArrowLeft,
-  Send,
-  CreditCard,
-  XCircle,
-  Receipt,
-  Building2,
-  Loader2,
-  AlertCircle,
-  Printer,
-} from "lucide-react";
 import { PageLoading } from "@/components/ui/page-loading";
-import InvoiceStatusBadge from "@/components/finance/InvoiceStatusBadge";
-import { InvoiceStatus, InvoiceType } from "@/types/finance.types";
-import type {
-  Invoice,
-  InvoiceItem,
-  InvoiceQueryResult,
-  Payment,
-  RecordPaymentFormValues,
-} from "@/types/finance.types";
-import {
-  GET_INVOICE_QUERY,
-  GET_INVOICES_QUERY,
-  UPDATE_INVOICE_STATUS_MUTATION,
-  CREATE_PAYMENT_MUTATION,
-  DELETE_INVOICE_MUTATION,
-} from "@/graphql/mutations/finance.mutations";
-import { downloadBlob } from "@/lib/download";
-import { formatCurrency, formatDate } from "@/lib/formatters";
-import { getInvoiceListPath } from "@/lib/invoice-direction";
-
-function PaymentDialog({
-  invoice,
-  onRecordPayment,
-  loading: paymentLoading,
-  buttonLabel = "Record Payment",
-  title = "Record Payment",
-  outstandingLabel = "Outstanding",
-}: {
-  invoice: Invoice;
-  onRecordPayment: (data: RecordPaymentFormValues) => void;
-  loading?: boolean;
-  buttonLabel?: string;
-  title?: string;
-  outstandingLabel?: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const [amount, setAmount] = useState(String(invoice.total - invoice.paidAmount));
-  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split("T")[0]);
-  const [paymentMethod, setPaymentMethod] = useState("BANK_TRANSFER");
-  const [reference, setReference] = useState("");
-
-  const handleSubmit = () => {
-    onRecordPayment({ amount: parseFloat(amount), paymentDate, paymentMethod, reference });
-    setOpen(false);
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="gap-2">
-          <CreditCard className="h-4 w-4" />
-          {buttonLabel}
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>
-            {outstandingLabel}: {formatCurrency(invoice.total - invoice.paidAmount, invoice.currency)}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label>Amount *</Label>
-            <Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label>Payment Date *</Label>
-            <Input type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label>Payment Method *</Label>
-            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
-                <SelectItem value="CASH">Cash</SelectItem>
-                <SelectItem value="CARD">Card</SelectItem>
-                <SelectItem value="OTHER">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Reference</Label>
-            <Input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Bank ref / receipt #" />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={paymentLoading}>
-            {paymentLoading ? "Recording..." : buttonLabel}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { InvoiceDetailHeader } from "./invoice-detail/InvoiceDetailHeader";
+import { InvoicePaymentsTab } from "./invoice-detail/InvoicePaymentsTab";
+import { InvoiceSummary } from "./invoice-detail/InvoiceSummary";
+import { useInvoiceDetailController } from "./invoice-detail/useInvoiceDetailController";
 
 export default function InvoiceDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-
-  const { data, loading, error, refetch } = useQuery<InvoiceQueryResult>(GET_INVOICE_QUERY, {
-    variables: { id },
-    skip: !id,
-  });
-
-  const [createPayment, { loading: paymentLoading }] = useMutationWithToast(
-    CREATE_PAYMENT_MUTATION,
-    {
-      successMessage: "Payment recorded",
-      onCompleted: () => void refetch(),
-    },
-  );
-
-  const [updateStatus] = useMutationWithToast(UPDATE_INVOICE_STATUS_MUTATION, {
-    refetchQueries: [{ query: GET_INVOICES_QUERY }],
-    successMessage: "Invoice status updated",
-    onCompleted: () => void refetch(),
-  });
-
-  const [deleteInvoice, { loading: deleting }] = useMutationWithToast(
-    DELETE_INVOICE_MUTATION,
-    {
-      refetchQueries: [{ query: GET_INVOICES_QUERY }],
-      successMessage: "Invoice deleted",
-      onCompleted: () => navigate(invoice ? getInvoiceListPath(invoice.isClientInvoice) : "/finance/client-invoices"),
-    },
-  );
-
-  const [pdfLoading, setPdfLoading] = useState(false);
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const controller = useInvoiceDetailController();
+  const {
+    invoice,
+    loading,
+    error,
+    remaining,
+    labels,
+    deleting,
+    paymentLoading,
+    cancelDialogOpen,
+    deleteDialogOpen,
+    goBack,
+    recordPayment,
+    confirmCancel,
+    confirmDelete,
+    setCancelDialogOpen,
+    setDeleteDialogOpen,
+  } = controller;
 
   if (loading) {
     return <PageLoading message="Loading invoice..." />;
@@ -178,147 +35,35 @@ export default function InvoiceDetailPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-red-500">
-        <AlertCircle className="h-8 w-8 mb-2" />
+        <AlertCircle className="mb-2 h-8 w-8" />
         <p>Failed to load invoice</p>
       </div>
     );
   }
 
-  const invoice = data?.invoice;
-  const backPath = invoice ? getInvoiceListPath(invoice.isClientInvoice) : "/finance/client-invoices";
-
   if (!invoice) {
     return (
       <div className="space-y-6">
-        <Button variant="ghost" onClick={() => navigate(backPath)} className="gap-2">
-          <ArrowLeft className="h-4 w-4" /> Back to Invoices
+        <Button variant="ghost" onClick={goBack} className="gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          Back to Invoices
         </Button>
-        <div className="text-center py-12 text-slate-500">
-          <Receipt className="h-12 w-12 mx-auto mb-4 text-slate-300" />
+        <div className="py-12 text-center text-slate-500">
+          <Receipt className="mx-auto mb-4 h-12 w-12 text-slate-300" />
           <p className="text-lg font-medium">Invoice not found</p>
-          <p className="text-sm mt-1">This invoice may not exist or you may not have access.</p>
+          <p className="mt-1 text-sm">
+            This invoice may not exist or you may not have access.
+          </p>
         </div>
       </div>
     );
   }
 
-  const remaining = invoice.total - invoice.paidAmount;
-  const isClientInvoice = invoice.isClientInvoice;
-  const paymentButtonLabel = isClientInvoice ? "Record Collection" : "Record Payment";
-  const paymentDialogTitle = isClientInvoice ? "Record Collection" : "Record Supplier Payment";
-  const paidLabel = isClientInvoice ? "Collected" : "Paid Out";
-  const remainingLabel = isClientInvoice ? "Outstanding" : "Still Owed";
-  const emptyPaymentText = isClientInvoice
-    ? "Record a collection to track progress."
-    : "Record a supplier payment to track progress.";
-  const statusAdvanceLabel = isClientInvoice ? "Mark as Sent" : "Mark as Received";
-
-  const handlePrint = async () => {
-    setPdfLoading(true);
-    try {
-      const [{ pdf }, { InvoicePDF }] = await Promise.all([
-        import("@react-pdf/renderer"),
-        import("@/components/finance/InvoicePDF"),
-      ]);
-      const blob = await pdf(<InvoicePDF invoice={invoice} />).toBlob();
-      downloadBlob(
-        blob,
-        `invoice-${invoice.series}-${String(invoice.number).padStart(4, "0")}.pdf`,
-      );
-    } finally {
-      setPdfLoading(false);
-    }
-  };
-
-  const handleRecordPayment = (data: RecordPaymentFormValues) => {
-    createPayment({
-      variables: {
-        createPaymentInput: {
-          invoiceId: invoice.id,
-          amount: data.amount,
-          paymentDate: data.paymentDate,
-          paymentMethod: data.paymentMethod,
-          reference: data.reference || undefined,
-        },
-      },
-    });
-  };
-
-  const handleMarkAsSent = () => {
-    updateStatus({
-      variables: {
-        updateInvoiceStatusInput: {
-          id: invoice.id,
-          status: InvoiceStatus.SENT,
-        },
-      },
-    });
-  };
-
-  const confirmCancel = () => {
-    updateStatus({
-      variables: {
-        updateInvoiceStatusInput: {
-          id: invoice.id,
-          status: InvoiceStatus.CANCELLED,
-        },
-      },
-    });
-    setCancelDialogOpen(false);
-  };
-
-  const confirmDelete = () => {
-    deleteInvoice({ variables: { id: invoice.id } });
-    setDeleteDialogOpen(false);
-  };
+  const invoiceNumber = `${invoice.series}-${String(invoice.number).padStart(4, "0")}`;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(backPath)}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold text-slate-900">
-                {invoice.series}-{String(invoice.number).padStart(4, "0")}
-              </h1>
-              <InvoiceStatusBadge status={invoice.status} />
-            </div>
-            <p className="text-slate-600 mt-1">
-              {invoice.invoiceType === InvoiceType.FISCAL ? "Fiscal Invoice" : "Proforma Invoice"} — {invoice.isClientInvoice ? "Issued to client" : "Received from supplier"}
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={handlePrint} disabled={pdfLoading}>
-            {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
-            {pdfLoading ? "Generating..." : "Download PDF"}
-          </Button>
-          {invoice.status === InvoiceStatus.DRAFT && (
-            <Button variant="outline" className="gap-2" onClick={handleMarkAsSent}>
-              <Send className="h-4 w-4" /> {statusAdvanceLabel}
-            </Button>
-          )}
-          {(invoice.status === InvoiceStatus.SENT || invoice.status === InvoiceStatus.PARTIALLY_PAID || invoice.status === InvoiceStatus.OVERDUE) && (
-            <PaymentDialog
-              invoice={invoice}
-              onRecordPayment={handleRecordPayment}
-              loading={paymentLoading}
-              buttonLabel={paymentButtonLabel}
-              title={paymentDialogTitle}
-              outstandingLabel={remainingLabel}
-            />
-          )}
-          {invoice.status !== InvoiceStatus.CANCELLED && invoice.status !== InvoiceStatus.PAID && (
-            <Button variant="destructive" className="gap-2" onClick={() => setCancelDialogOpen(true)}>
-              <XCircle className="h-4 w-4" /> Cancel
-            </Button>
-          )}
-        </div>
-      </div>
+      <InvoiceDetailHeader {...controller} />
 
       <Tabs defaultValue="details">
         <TabsList>
@@ -328,263 +73,46 @@ export default function InvoiceDetailPage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="details" className="space-y-6 mt-4">
-          {/* Summary Cards */}
-          <div className="grid gap-4 md:grid-cols-4">
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-sm text-slate-500">Total</p>
-                <p className="text-2xl font-bold">{formatCurrency(invoice.total, invoice.currency)}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-sm text-slate-500">{paidLabel}</p>
-                <p className="text-2xl font-bold text-green-700">{formatCurrency(invoice.paidAmount, invoice.currency)}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-sm text-slate-500">{remainingLabel}</p>
-                <p className="text-2xl font-bold text-amber-700">{formatCurrency(remaining, invoice.currency)}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-sm text-slate-500">Due Date</p>
-                <p className="text-2xl font-bold">{formatDate(invoice.dueDate)}</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Partner Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
-                  Partner
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <p className="font-medium text-lg">{invoice.partner.name}</p>
-                <p className="text-sm text-slate-600 font-mono">CUI: {invoice.partner.cui}</p>
-                {invoice.partner.regCom && <p className="text-sm text-slate-600">Reg. Com.: {invoice.partner.regCom}</p>}
-                <p className="text-sm text-slate-600">{invoice.partner.address}</p>
-                <p className="text-sm text-slate-600">{invoice.partner.city}, {invoice.partner.country}</p>
-                {invoice.partner.bankAccount && (
-                  <p className="text-sm text-slate-600 font-mono">IBAN: {invoice.partner.bankAccount}</p>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Invoice Dates */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Invoice Info</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <p className="text-sm text-slate-500">Issue Date</p>
-                    <p className="font-medium">{formatDate(invoice.issueDate)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500">Due Date</p>
-                    <p className="font-medium">{formatDate(invoice.dueDate)}</p>
-                  </div>
-                  {invoice.deliveryDate && (
-                    <div>
-                      <p className="text-sm text-slate-500">Delivery Date</p>
-                      <p className="font-medium">{formatDate(invoice.deliveryDate)}</p>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-sm text-slate-500">Currency</p>
-                    <p className="font-medium">{invoice.currency}</p>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Created By</p>
-                  <p className="font-medium">{invoice.createdBy.firstName} {invoice.createdBy.lastName}</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Line Items */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Line Items</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b text-left text-sm font-medium text-slate-600">
-                      <th className="pb-3">#</th>
-                      <th className="pb-3">Description</th>
-                      <th className="pb-3 text-right">Qty</th>
-                      <th className="pb-3">Unit</th>
-                      <th className="pb-3 text-right">Unit Price</th>
-                      <th className="pb-3 text-right">VAT %</th>
-                      <th className="pb-3 text-right">Amount</th>
-                      <th className="pb-3 text-right">VAT</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-sm">
-                    {invoice.items.map((item: InvoiceItem, index: number) => (
-                      <tr key={item.id} className="border-b">
-                        <td className="py-3 text-slate-500">{index + 1}</td>
-                        <td className="py-3">{item.description}</td>
-                        <td className="py-3 text-right">{item.quantity}</td>
-                        <td className="py-3">{item.unit}</td>
-                        <td className="py-3 text-right">{formatCurrency(item.unitPrice, invoice.currency)}</td>
-                        <td className="py-3 text-right">{item.vatRate}%</td>
-                        <td className="py-3 text-right font-medium">{formatCurrency(item.amount, invoice.currency)}</td>
-                        <td className="py-3 text-right">{formatCurrency(item.vatAmount, invoice.currency)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <Separator className="my-4" />
-              <div className="flex justify-end">
-                <div className="w-72 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Subtotal:</span>
-                    <span className="font-medium">{formatCurrency(invoice.subtotal, invoice.currency)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">VAT:</span>
-                    <span className="font-medium">{formatCurrency(invoice.vatTotal, invoice.currency)}</span>
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between text-lg font-bold">
-                    <span>Total:</span>
-                    <span>{formatCurrency(invoice.total, invoice.currency)}</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Notes */}
-          {invoice.notes && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Notes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-slate-700">{invoice.notes}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Delete */}
-          <div className="flex justify-end">
-            <Button variant="outline" className="text-red-600 hover:text-red-700" onClick={() => setDeleteDialogOpen(true)} disabled={deleting}>
-              {deleting ? "Deleting..." : "Delete Invoice"}
-            </Button>
-          </div>
+        <TabsContent value="details" className="mt-4 space-y-6">
+          <InvoiceSummary
+            invoice={invoice}
+            remaining={remaining}
+            paidLabel={labels.paid}
+            remainingLabel={labels.remaining}
+            deleting={deleting}
+            onDelete={() => setDeleteDialogOpen(true)}
+          />
         </TabsContent>
 
         <TabsContent value="payments" className="mt-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Payment History</CardTitle>
-              {remaining > 0 && (
-                <PaymentDialog
-                  invoice={invoice}
-                  onRecordPayment={handleRecordPayment}
-                  loading={paymentLoading}
-                  buttonLabel={paymentButtonLabel}
-                  title={paymentDialogTitle}
-                  outstandingLabel={remainingLabel}
-                />
-              )}
-            </CardHeader>
-            <CardContent>
-              {invoice.payments.length === 0 ? (
-                <div className="text-center py-8 text-slate-500">
-                  <CreditCard className="h-10 w-10 mx-auto mb-3 text-slate-300" />
-                  <p className="font-medium">No payments recorded</p>
-                  <p className="text-sm mt-1">{emptyPaymentText}</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b text-left text-sm font-medium text-slate-600">
-                        <th className="pb-3">Date</th>
-                        <th className="pb-3 text-right">Amount</th>
-                        <th className="pb-3">Method</th>
-                        <th className="pb-3">Reference</th>
-                        <th className="pb-3">Recorded By</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-sm">
-                      {invoice.payments.map((payment: Payment) => (
-                        <tr key={payment.id} className="border-b">
-                          <td className="py-3">{formatDate(payment.paymentDate)}</td>
-                          <td className="py-3 text-right font-medium text-green-700">
-                            {formatCurrency(payment.amount, invoice.currency)}
-                          </td>
-                          <td className="py-3 text-slate-600">
-                            {payment.paymentMethod.replace("_", " ")}
-                          </td>
-                          <td className="py-3 text-slate-600 font-mono text-xs">
-                            {payment.reference || "—"}
-                          </td>
-                          <td className="py-3 text-slate-600">
-                            {payment.createdBy.firstName} {payment.createdBy.lastName}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* Payment Summary */}
-              <Separator className="my-4" />
-              <div className="flex justify-end">
-                <div className="w-64 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Invoice Total:</span>
-                    <span>{formatCurrency(invoice.total, invoice.currency)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm text-green-700">
-                    <span>{paidLabel}:</span>
-                    <span>{formatCurrency(invoice.paidAmount, invoice.currency)}</span>
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between font-bold">
-                    <span>{remainingLabel}:</span>
-                    <span className={remaining > 0 ? "text-amber-700" : "text-green-700"}>
-                      {formatCurrency(remaining, invoice.currency)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <InvoicePaymentsTab
+            invoice={invoice}
+            remaining={remaining}
+            paidLabel={labels.paid}
+            remainingLabel={labels.remaining}
+            emptyPaymentText={labels.emptyPayment}
+            paymentButtonLabel={labels.paymentButton}
+            paymentDialogTitle={labels.paymentDialog}
+            paymentLoading={paymentLoading}
+            onRecordPayment={recordPayment}
+          />
         </TabsContent>
       </Tabs>
+
       <ConfirmationDialog
         open={cancelDialogOpen}
         onOpenChange={setCancelDialogOpen}
         title="Cancel invoice?"
-        description={`This will mark invoice ${invoice.series}-${String(invoice.number).padStart(4, "0")} as cancelled. It will no longer count as active billing, but its history will remain visible.`}
+        description={`This will mark invoice ${invoiceNumber} as cancelled. It will no longer count as active billing, but its history will remain visible.`}
         confirmLabel="Cancel invoice"
         onConfirm={confirmCancel}
       />
       <ConfirmationDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Delete invoice?"
-        description={`This permanently deletes invoice ${invoice.series}-${String(invoice.number).padStart(4, "0")} and its line items. This action cannot be undone.`}
-        confirmLabel="Delete invoice"
+        title="Delete draft invoice?"
+        description={`This permanently deletes draft ${invoiceNumber} and its line items. This action cannot be undone.`}
+        confirmLabel="Delete draft"
         loading={deleting}
         onConfirm={confirmDelete}
       />

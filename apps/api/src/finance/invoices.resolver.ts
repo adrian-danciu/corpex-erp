@@ -12,6 +12,7 @@ import { User } from '../users/entities/user.entity';
 import { PaginationInput } from '../common/dto/pagination.input';
 import { PaginatedInvoice } from './dto/paginated-invoice.dto';
 import { InvoiceLineDraft } from './entities/invoice-line-draft.entity';
+import { FinanceOverview } from './entities/finance-overview.entity';
 import { normalizePagination } from '../common/pagination';
 
 @Resolver(() => Invoice)
@@ -45,6 +46,16 @@ export class InvoicesResolver {
   @RequireModule('finance', 'read')
   async findOneInvoice(@Args('id') id: string): Promise<Invoice | null> {
     return this.invoicesService.findOne(id);
+  }
+
+  @Query(() => FinanceOverview, {
+    name: 'financeOverview',
+    description: 'Complete finance overview totals across all invoices',
+  })
+  @UseGuards(JwtAuthGuard, DepartmentGuard)
+  @RequireModule('finance', 'read')
+  async getFinanceOverview(): Promise<FinanceOverview> {
+    return this.invoicesService.getFinanceOverview();
   }
 
   @Mutation(() => Invoice, { description: 'Create a new invoice' })

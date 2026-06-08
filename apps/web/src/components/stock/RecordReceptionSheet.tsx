@@ -33,6 +33,7 @@ import {
 import type {
   PurchaseOrder,
   PurchaseOrderReceipt,
+  RecordPurchaseOrderReceiptMutationResult,
 } from "@/types/purchaseOrder.types";
 
 interface Props {
@@ -84,9 +85,10 @@ export function RecordReceptionSheet({ order, open, onClose, onSaved }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, order.id]);
 
-  const [recordReceipt] = useMutationWithToast<{
-    recordPurchaseOrderReceipt: PurchaseOrderReceipt;
-  }>(RECORD_PURCHASE_ORDER_RECEIPT_MUTATION, {
+  const [recordReceipt] =
+    useMutationWithToast<RecordPurchaseOrderReceiptMutationResult>(
+      RECORD_PURCHASE_ORDER_RECEIPT_MUTATION,
+      {
     successMessage: (d) =>
       `Reception ${d.recordPurchaseOrderReceipt.formattedNumber} recorded`,
     refetchQueries: [

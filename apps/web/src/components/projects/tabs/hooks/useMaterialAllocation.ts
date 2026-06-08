@@ -12,12 +12,16 @@ import {
   GET_PRODUCT_STOCK_BY_PRODUCT_QUERY,
   GET_WAREHOUSES_QUERY,
 } from "@/graphql/mutations/stock.mutations";
-import type { PaginatedResult } from "@/types/pagination.types";
-import type { Project, ProjectMaterial } from "@/types/project.types";
 import type {
-  Product,
+  Project,
+  ProjectMaterial,
+  ProjectMaterialsQueryResult,
+} from "@/types/project.types";
+import type {
   ProductStockBreakdown,
-  Warehouse,
+  ProductStockByProductQueryResult,
+  ProductsQueryResult,
+  WarehousesQueryResult,
 } from "@/types/stock.types";
 
 interface PurchaseDraft {
@@ -43,28 +47,30 @@ export function useMaterialAllocation(project: Project) {
 
   const variables = { projectId: project.id };
 
-  const { data, refetch } = useQuery<{
-    projectMaterials: ProjectMaterial[];
-  }>(GET_PROJECT_MATERIALS_QUERY, {
+  const { data, refetch } = useQuery<ProjectMaterialsQueryResult>(
+    GET_PROJECT_MATERIALS_QUERY,
+    {
     variables,
     fetchPolicy: "cache-and-network",
   });
 
-  const { data: productsData } = useQuery<{
-    products: PaginatedResult<Product>;
-  }>(GET_PRODUCTS_QUERY, {
+  const { data: productsData } = useQuery<ProductsQueryResult>(
+    GET_PRODUCTS_QUERY,
+    {
     variables: { pagination: { skip: 0, take: 200 } },
   });
 
-  const { data: warehousesData } = useQuery<{
-    warehouses: PaginatedResult<Warehouse>;
-  }>(GET_WAREHOUSES_QUERY, {
+  const { data: warehousesData } = useQuery<WarehousesQueryResult>(
+    GET_WAREHOUSES_QUERY,
+    {
     variables: { pagination: { skip: 0, take: 50 } },
   });
 
-  const [fetchProductStock, { data: stockBreakdownData }] = useLazyQuery<{
-    productStockByProduct: ProductStockBreakdown[];
-  }>(GET_PRODUCT_STOCK_BY_PRODUCT_QUERY, { fetchPolicy: "network-only" });
+  const [fetchProductStock, { data: stockBreakdownData }] =
+    useLazyQuery<ProductStockByProductQueryResult>(
+      GET_PRODUCT_STOCK_BY_PRODUCT_QUERY,
+      { fetchPolicy: "network-only" },
+    );
 
   const stockByWarehouse = useMemo(() => {
     const map = new Map<string, ProductStockBreakdown>();

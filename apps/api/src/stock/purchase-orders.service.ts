@@ -4,7 +4,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PartnerType, Prisma, PurchaseOrderStatus } from '@prisma/client';
+import {
+  InvoiceItemSourceType,
+  InvoiceStatus,
+  PartnerType,
+  Prisma,
+  PurchaseOrderStatus,
+} from '@prisma/client';
 import { PaginationInput } from '../common/dto/pagination.input';
 import { IPaginatedType } from '../common/dto/pagination-result.dto';
 import { toPaginatedResult } from '../common/pagination';
@@ -45,6 +51,10 @@ const DEFAULT_INCLUDE = {
     orderBy: { createdAt: 'desc' } as const,
   },
 } satisfies Prisma.PurchaseOrderInclude;
+
+type PurchaseOrderWithDefaultInclude = Prisma.PurchaseOrderGetPayload<{
+  include: typeof DEFAULT_INCLUDE;
+}>;
 
 @Injectable()
 export class PurchaseOrdersService {
@@ -91,7 +101,10 @@ export class PurchaseOrdersService {
       this.prisma.purchaseOrder.count({ where }),
     ]);
 
-    return toPaginatedResult(items, total, pagination);
+    const itemsWithInvoiceAvailability =
+      await this.addReceiptInvoiceAvailability(items);
+
+    return toPaginatedResult(itemsWithInvoiceAvailability, total, pagination);
   }
 
   async getById(id: string): Promise<PurchaseOrder> {
@@ -102,7 +115,51 @@ export class PurchaseOrdersService {
     if (!order) {
       throw new NotFoundException(`Purchase order ${id} not found`);
     }
-    return order;
+    const [orderWithInvoiceAvailability] =
+      await this.addReceiptInvoiceAvailability([order]);
+    return orderWithInvoiceAvailability;
+  }
+
+  private async addReceiptInvoiceAvailability(
+    orders: PurchaseOrderWithDefaultInclude[],
+  ) {
+    const receiptLineIds = orders.flatMap((order) =>
+      order.receipts.flatMap((receipt) => receipt.lines.map((line) => line.id)),
+    );
+    if (receiptLineIds.length === 0) return orders;
+
+    const invoicedLines = await this.prisma.invoiceItem.findMany({
+      where: {
+        sourceType: InvoiceItemSourceType.PURCHASE_RECEIPT_LINE,
+        sourceId: { in: receiptLineIds },
+        invoice: { status: { not: InvoiceStatus.CANCELLED } },
+      },
+      select: { sourceId: true, quantity: true },
+    });
+    const invoicedQtyByReceiptLine = new Map<string, number>();
+
+    for (const line of invoicedLines) {
+      if (!line.sourceId) continue;
+      invoicedQtyByReceiptLine.set(
+        line.sourceId,
+        (invoicedQtyByReceiptLine.get(line.sourceId) ?? 0) + line.quantity,
+      );
+    }
+
+    return orders.map((order) => ({
+      ...order,
+      receipts: order.receipts.map((receipt) => ({
+        ...receipt,
+        lines: receipt.lines.map((line) => {
+          const invoicedQty = invoicedQtyByReceiptLine.get(line.id) ?? 0;
+          return {
+            ...line,
+            invoicedQty,
+            remainingInvoiceQty: Math.max(0, line.qtyReceived - invoicedQty),
+          };
+        }),
+      })),
+    }));
   }
 
   async create(

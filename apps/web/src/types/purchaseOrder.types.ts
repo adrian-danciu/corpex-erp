@@ -30,6 +30,8 @@ export interface PurchaseOrderReceiptLine {
   receiptId: string;
   orderLineId: string;
   qtyReceived: number;
+  invoicedQty: number;
+  remainingInvoiceQty: number;
   orderLine?: Pick<PurchaseOrderLine, "id" | "productId" | "unitCost"> & {
     product?: Pick<Product, "id" | "sku" | "name" | "unit"> | null;
   };
@@ -91,4 +93,28 @@ export interface InTransitRow {
   qtyInTransit: number;
   earliestExpectedDate?: string | null;
   orderIds: string[];
+}
+
+export interface PurchaseOrdersQueryResult {
+  purchaseOrders: import("./pagination.types").PaginatedResult<PurchaseOrder>;
+}
+
+export interface PurchaseOrderQueryResult {
+  purchaseOrder: PurchaseOrder;
+}
+
+export interface InTransitSummaryQueryResult {
+  inTransitSummary: InTransitProductSummary[];
+}
+
+export interface InTransitStockQueryResult {
+  inTransitStock: InTransitRow[];
+}
+
+export interface CreatePurchaseOrderMutationResult {
+  createPurchaseOrder: PurchaseOrder;
+}
+
+export interface RecordPurchaseOrderReceiptMutationResult {
+  recordPurchaseOrderReceipt: PurchaseOrderReceipt;
 }

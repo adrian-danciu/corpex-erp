@@ -19,6 +19,7 @@ import { GET_EMPLOYEES_QUERY } from "@/graphql/mutations/employee.mutations";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { toastError, toastSuccess } from "@/lib/toast";
 import { getApiBaseUrl } from "@/lib/api-url";
+import { formatBytes } from "@/lib/formatters";
 import type {
   EmployeeDocument,
   EmployeeDocumentsQueryResult,
@@ -51,12 +52,6 @@ const DOCUMENT_TYPE_LABELS: Record<EmployeeDocumentType, string> = {
   [EmployeeDocumentType.TRAINING]: "Training",
   [EmployeeDocumentType.OTHER]: "Other",
 };
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
 
 export default function DocumentsPage() {
   const apiBaseUrl = getApiBaseUrl();

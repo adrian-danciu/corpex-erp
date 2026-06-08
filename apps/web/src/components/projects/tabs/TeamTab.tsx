@@ -44,10 +44,10 @@ import { GET_EMPLOYEES_QUERY } from "@/graphql/mutations/employee.mutations";
 import {
   ProjectMemberRole,
   type Project,
-  type ProjectMember,
+  type ProjectMembersQueryResult,
 } from "@/types/project.types";
-import type { Employee } from "@/types/hr.types";
-import type { PaginatedResult } from "@/types/pagination.types";
+import type { Employee, EmployeesQueryResult } from "@/types/hr.types";
+import { formatDate } from "@/lib/formatters";
 
 interface Props {
   project: Project;
@@ -63,16 +63,16 @@ export function TeamTab({ project, isProjectManager, onChange }: Props) {
   );
   const [errorMessage, setErrorMessage] = useState("");
 
-  const { data: membersData, refetch } = useQuery<{
-    projectMembers: ProjectMember[];
-  }>(GET_PROJECT_MEMBERS_QUERY, {
+  const { data: membersData, refetch } = useQuery<ProjectMembersQueryResult>(
+    GET_PROJECT_MEMBERS_QUERY,
+    {
     variables: { projectId: project.id },
     fetchPolicy: "cache-and-network",
   });
 
-  const { data: employeesData } = useQuery<{
-    employees: PaginatedResult<Employee>;
-  }>(GET_EMPLOYEES_QUERY, {
+  const { data: employeesData } = useQuery<EmployeesQueryResult>(
+    GET_EMPLOYEES_QUERY,
+    {
     variables: { pagination: { skip: 0, take: 200 } },
   });
 
@@ -202,7 +202,7 @@ export function TeamTab({ project, isProjectManager, onChange }: Props) {
                       )}
                     </TableCell>
                     <TableCell className="text-slate-600">
-                      {new Date(m.joinedAt).toLocaleDateString()}
+                      {formatDate(m.joinedAt)}
                     </TableCell>
                     <TableCell className="text-right">
                       {isProjectManager && (

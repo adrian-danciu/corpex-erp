@@ -32,7 +32,10 @@ export class ReportingService {
       totalEmployees,
       pendingLeaveRequests,
       approvedLeaveThisMonth,
-      invoiceStats,
+      clientInvoiceStats,
+      supplierInvoiceStats,
+      overdueInvoices,
+      overdueSupplierInvoices,
     ] = await Promise.all([
       this.prisma.user.count(),
       this.prisma.employee.count(),
@@ -52,6 +55,7 @@ export class ReportingService {
         _count: { id: true },
         _sum: { total: true, paidAmount: true },
         where: {
+          isClientInvoice: true,
           status: {
             in: [
               InvoiceStatus.DRAFT,
@@ -63,21 +67,49 @@ export class ReportingService {
           },
         },
       }),
+      this.prisma.invoice.aggregate({
+        _count: { id: true },
+        _sum: { total: true, paidAmount: true },
+        where: {
+          isClientInvoice: false,
+          status: {
+            in: [
+              InvoiceStatus.DRAFT,
+              InvoiceStatus.SENT,
+              InvoiceStatus.PAID,
+              InvoiceStatus.PARTIALLY_PAID,
+              InvoiceStatus.OVERDUE,
+            ],
+          },
+        },
+      }),
+      this.prisma.invoice.count({
+        where: {
+          isClientInvoice: true,
+          status: InvoiceStatus.OVERDUE,
+        },
+      }),
+      this.prisma.invoice.count({
+        where: {
+          isClientInvoice: false,
+          status: InvoiceStatus.OVERDUE,
+        },
+      }),
     ]);
-
-    const overdueInvoices = await this.prisma.invoice.count({
-      where: { status: InvoiceStatus.OVERDUE },
-    });
 
     return {
       totalUsers,
       totalEmployees,
       pendingLeaveRequests,
       approvedLeaveThisMonth,
-      totalInvoices: invoiceStats._count.id ?? 0,
+      totalInvoices: clientInvoiceStats._count.id ?? 0,
       overdueInvoices,
-      totalInvoicedAmount: invoiceStats._sum.total ?? 0,
-      totalPaidAmount: invoiceStats._sum.paidAmount ?? 0,
+      totalInvoicedAmount: clientInvoiceStats._sum.total ?? 0,
+      totalPaidAmount: clientInvoiceStats._sum.paidAmount ?? 0,
+      totalSupplierInvoices: supplierInvoiceStats._count.id ?? 0,
+      overdueSupplierInvoices,
+      totalPayableAmount: supplierInvoiceStats._sum.total ?? 0,
+      totalSupplierPaidAmount: supplierInvoiceStats._sum.paidAmount ?? 0,
     };
   }
 
@@ -94,9 +126,20 @@ export class ReportingService {
   }
 
   async getFinanceAgingSummary(): Promise<FinanceAgingBucket[]> {
+    return this.getInvoiceAgingSummary(true);
+  }
+
+  async getSupplierAgingSummary(): Promise<FinanceAgingBucket[]> {
+    return this.getInvoiceAgingSummary(false);
+  }
+
+  private async getInvoiceAgingSummary(
+    isClientInvoice: boolean,
+  ): Promise<FinanceAgingBucket[]> {
     const now = new Date();
     const invoices = await this.prisma.invoice.findMany({
       where: {
+        isClientInvoice,
         status: {
           in: [
             InvoiceStatus.SENT,
@@ -174,34 +217,25 @@ export class ReportingService {
   }
 
   async getStockReport(): Promise<StockReportRow[]> {
-    const movements = await this.prisma.stockMovement.findMany({
+    const stockBalances = await this.prisma.productStock.findMany({
+      where: { quantity: { gt: 0 } },
       include: {
         product: { select: { id: true, name: true, sku: true } },
         warehouse: { select: { name: true } },
       },
+      orderBy: [
+        { product: { name: 'asc' } },
+        { warehouse: { name: 'asc' } },
+      ],
     });
 
-    const stockMap = new Map<string, StockReportRow>();
-
-    for (const m of movements) {
-      const key = `${m.productId}-${m.warehouseId}`;
-      const existing = stockMap.get(key);
-      const delta = m.type === 'IN' ? m.quantity : -m.quantity;
-
-      if (existing) {
-        existing.quantity += delta;
-      } else {
-        stockMap.set(key, {
-          productId: m.product.id,
-          productName: m.product.name,
-          sku: m.product.sku,
-          warehouseName: m.warehouse.name,
-          quantity: delta,
-        });
-      }
-    }
-
-    return Array.from(stockMap.values()).filter((r) => r.quantity > 0);
+    return stockBalances.map((stock) => ({
+      productId: stock.product.id,
+      productName: stock.product.name,
+      sku: stock.product.sku,
+      warehouseName: stock.warehouse.name,
+      quantity: stock.quantity,
+    }));
   }
 
   async getFleetReport(): Promise<FleetReportRow[]> {

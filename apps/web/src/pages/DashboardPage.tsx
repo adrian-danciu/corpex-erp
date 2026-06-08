@@ -2,6 +2,7 @@ import { useQuery } from "@apollo/client/react";
 import { AlertCircle, Briefcase, Users as UsersIcon, FileText, AlertTriangle } from "lucide-react";
 import { PageLoading } from "@/components/ui/page-loading";
 import { FleetExpiryWidget } from "@/components/dashboard/FleetExpiryWidget";
+import { FinanceAgingChart } from "@/components/dashboard/FinanceAgingChart";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { MyProjectsWidget } from "@/components/dashboard/MyProjectsWidget";
 import { MyTasksWidget } from "@/components/dashboard/MyTasksWidget";
@@ -13,12 +14,19 @@ import {
   DASHBOARD_METRICS_QUERY,
   FINANCE_AGING_DASHBOARD_QUERY,
   HR_LEAVE_SUMMARY_DASHBOARD_QUERY,
+  SUPPLIER_AGING_DASHBOARD_QUERY,
 } from "@/graphql/queries/dashboard.queries";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from "recharts";
 import type { PieLabelRenderProps } from "recharts";
+import type {
+  DashboardMetricsQueryResult,
+  FinanceAgingQueryResult,
+  HrLeaveSummaryQueryResult,
+  SupplierAgingQueryResult,
+} from "@/types/report.types";
 
 const LEAVE_COLORS: Record<string, string> = {
   PENDING: "#f59e0b",
@@ -30,29 +38,32 @@ const LEAVE_COLORS: Record<string, string> = {
 export default function DashboardPage() {
   const { user } = useAuthStore();
 
-  const { data, loading, error } = useQuery<{
-    dashboardMetrics: {
-      totalUsers: number;
-      totalEmployees: number;
-      pendingLeaveRequests: number;
-      approvedLeaveThisMonth: number;
-      totalInvoices: number;
-      overdueInvoices: number;
-      totalInvoicedAmount: number;
-      totalPaidAmount: number;
-    };
-  }>(DASHBOARD_METRICS_QUERY);
+  const { data, loading, error } = useQuery<DashboardMetricsQueryResult>(
+    DASHBOARD_METRICS_QUERY,
+  );
 
-  const { data: hrData } = useQuery<{ hrLeaveSummary: { status: string; count: number }[] }>(HR_LEAVE_SUMMARY_DASHBOARD_QUERY);
-  const { data: agingData } = useQuery<{ financeAgingSummary: { label: string; amount: number; invoiceCount: number }[] }>(FINANCE_AGING_DASHBOARD_QUERY);
+  const { data: hrData } = useQuery<HrLeaveSummaryQueryResult>(
+    HR_LEAVE_SUMMARY_DASHBOARD_QUERY,
+  );
+  const { data: agingData } = useQuery<FinanceAgingQueryResult>(
+    FINANCE_AGING_DASHBOARD_QUERY,
+  );
+  const { data: supplierAgingData } = useQuery<SupplierAgingQueryResult>(
+    SUPPLIER_AGING_DASHBOARD_QUERY,
+  );
 
   const metrics = data?.dashboardMetrics;
   const leaveRows = hrData?.hrLeaveSummary ?? [];
   const agingRows = agingData?.financeAgingSummary ?? [];
+  const supplierAgingRows = supplierAgingData?.supplierAgingSummary ?? [];
 
   const outstanding = metrics ? metrics.totalInvoicedAmount - metrics.totalPaidAmount : 0;
   const financeBarData = metrics
     ? [{ name: "Paid", value: metrics.totalPaidAmount }, { name: "Outstanding", value: outstanding }]
+    : [];
+  const supplierOutstanding = metrics ? metrics.totalPayableAmount - metrics.totalSupplierPaidAmount : 0;
+  const supplierFinanceBarData = metrics
+    ? [{ name: "Paid", value: metrics.totalSupplierPaidAmount }, { name: "Outstanding", value: supplierOutstanding }]
     : [];
 
   return (
@@ -101,25 +112,25 @@ export default function DashboardPage() {
               sub="Approved in current month"
             />
             <KpiCard
-              title="Total Invoices"
+              title="Client Invoices"
               value={metrics.totalInvoices}
-              sub="Across all partners"
+              sub="Active receivable invoices"
               icon={<FileText className="h-4 w-4 text-muted-foreground" />}
             />
             <KpiCard
-              title="Overdue Invoices"
+              title="Overdue Client Invoices"
               value={metrics.overdueInvoices}
               sub="Past due date, unpaid"
               accent={metrics.overdueInvoices > 0 ? "text-red-600" : ""}
               icon={<AlertTriangle className="h-4 w-4 text-muted-foreground" />}
             />
             <KpiCard
-              title="Total Invoiced"
+              title="Total Client Invoiced"
               value={formatCurrency(metrics.totalInvoicedAmount, "EUR", {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0,
               })}
-              sub="Sum of all invoice totals"
+              sub="Sum of client invoice totals"
             />
             <KpiCard
               title="Total Collected"
@@ -130,6 +141,75 @@ export default function DashboardPage() {
               sub="Payments received"
               accent="text-green-700"
             />
+            <KpiCard
+              title="Supplier Invoices"
+              value={metrics.totalSupplierInvoices}
+              sub="Active payable invoices"
+              icon={<FileText className="h-4 w-4 text-muted-foreground" />}
+            />
+            <KpiCard
+              title="Overdue Supplier Invoices"
+              value={metrics.overdueSupplierInvoices}
+              sub="Past due date, unpaid"
+              accent={metrics.overdueSupplierInvoices > 0 ? "text-red-600" : ""}
+              icon={<AlertTriangle className="h-4 w-4 text-muted-foreground" />}
+            />
+            <KpiCard
+              title="Total Supplier Invoiced"
+              value={formatCurrency(metrics.totalPayableAmount, "EUR", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              })}
+              sub="Sum of supplier invoice totals"
+            />
+            <KpiCard
+              title="Total Paid to Suppliers"
+              value={formatCurrency(metrics.totalSupplierPaidAmount, "EUR", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              })}
+              sub="Supplier payments recorded"
+              accent="text-blue-700"
+            />
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Finance – Supplier Paid vs Outstanding</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={supplierFinanceBarData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={80}
+                      dataKey="value"
+                      label={false}
+                      labelLine={false}
+                    >
+                      <Cell fill="#3b82f6" />
+                      <Cell fill="#f59e0b" />
+                    </Pie>
+                    <Tooltip formatter={(v) => formatCurrency(Number(v), "EUR", {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    })} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <FinanceAgingChart
+              title="Finance – Supplier Payables Aging (EUR)"
+              rows={supplierAgingRows}
+              emptyLabel="No outstanding supplier invoices"
+              barColor="#3b82f6"
+              barName="Payable"
+            />
           </div>
 
           {/* Charts row */}
@@ -137,7 +217,7 @@ export default function DashboardPage() {
             {/* Finance: Paid vs Outstanding */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Finance – Collected vs Outstanding</CardTitle>
+                <CardTitle className="text-base">Finance – Client Collected vs Outstanding</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={200}>
@@ -200,30 +280,14 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Finance: Aging buckets */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Finance – Invoice Aging (EUR)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {agingRows.every((r) => r.amount === 0) ? (
-                  <div className="flex items-center justify-center h-[200px] text-sm text-slate-400">No outstanding invoices</div>
-                ) : (
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={agingRows} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                      <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                      <Tooltip formatter={(v) => formatCurrency(Number(v), "EUR", {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0,
-                      })} />
-                      <Bar dataKey="amount" fill="#ef4444" radius={[4, 4, 0, 0]} name="Outstanding" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </CardContent>
-            </Card>
+            {/* Finance: Receivables aging buckets */}
+            <FinanceAgingChart
+              title="Finance – Client Receivables Aging (EUR)"
+              rows={agingRows}
+              emptyLabel="No outstanding client invoices"
+              barColor="#ef4444"
+              barName="Receivable"
+            />
           </div>
 
           {/* Notifications + Project widgets */}

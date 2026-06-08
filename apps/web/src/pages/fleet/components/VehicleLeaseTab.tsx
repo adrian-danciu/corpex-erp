@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table";
 import type { Vehicle } from "@/types/fleet.types";
 import type { useVehicleDetailController } from "../hooks/useVehicleDetailController";
+import { formatCurrency, formatDate } from "@/lib/formatters";
 
 type VehicleDetailController = ReturnType<typeof useVehicleDetailController>;
 
@@ -90,16 +91,13 @@ export function VehicleLeaseTab({
                       {lease.provider}
                     </TableCell>
                     <TableCell>
-                      {new Date(lease.startDate).toLocaleDateString("ro-RO")}
+                      {formatDate(lease.startDate)}
                     </TableCell>
                     <TableCell>
-                      {new Date(lease.endDate).toLocaleDateString("ro-RO")}
+                      {formatDate(lease.endDate)}
                     </TableCell>
                     <TableCell>
-                      {lease.monthlyRate.toLocaleString("ro-RO", {
-                        style: "currency",
-                        currency: "EUR",
-                      })}
+                      {formatCurrency(lease.monthlyRate)}
                     </TableCell>
                     <TableCell className="text-slate-600">
                       {lease.notes ?? "—"}

@@ -8,6 +8,7 @@ import type { TaskPermissions } from "@/lib/projectTaskPermissions";
 import { InlineEditSelect } from "../inline-edit/InlineEditSelect";
 import { InlineEditTextarea } from "../inline-edit/InlineEditTextarea";
 import { Field, SectionHeading, StaticValue } from "./TaskDetailPrimitives";
+import { formatDate, formatDateTime } from "@/lib/formatters";
 
 const UNASSIGNED_VALUE = "__unassigned__";
 
@@ -125,9 +126,7 @@ export function TaskFieldsPanel({
               />
             ) : (
               <StaticValue>
-                {task.dueDate
-                  ? new Date(task.dueDate).toLocaleDateString()
-                  : "—"}
+                {formatDate(task.dueDate)}
               </StaticValue>
             )}
           </Field>
@@ -139,12 +138,12 @@ export function TaskFieldsPanel({
             </StaticValue>
           </Field>
           <Field label="Created">
-            <StaticValue>{new Date(task.createdAt).toLocaleString()}</StaticValue>
+            <StaticValue>{formatDateTime(task.createdAt)}</StaticValue>
           </Field>
           {task.completedAt && (
             <Field label="Completed">
               <StaticValue>
-                {new Date(task.completedAt).toLocaleString()}
+                {formatDateTime(task.completedAt)}
               </StaticValue>
             </Field>
           )}

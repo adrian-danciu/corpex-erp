@@ -10,8 +10,11 @@ import {
   GET_CURRENT_PROJECT_FOR_VEHICLE_QUERY,
   GET_PROJECTS_QUERY,
 } from "@/graphql/mutations/project.queries";
-import type { Project } from "@/types/project.types";
-import type { Vehicle } from "@/types/fleet.types";
+import type {
+  CurrentProjectForVehicleQueryResult,
+  ProjectsQueryResult,
+} from "@/types/project.types";
+import type { VehicleQueryResult } from "@/types/fleet.types";
 import { useVehicleDetailController } from "./hooks/useVehicleDetailController";
 import { VehicleDocumentsTab } from "./components/VehicleDocumentsTab";
 import { VehicleEditDialog } from "./components/VehicleEditDialog";
@@ -24,22 +27,20 @@ export default function VehicleDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { data, loading, error, refetch } = useQuery<{ vehicle: Vehicle }>(GET_VEHICLE_QUERY, {
+  const { data, loading, error, refetch } = useQuery<VehicleQueryResult>(GET_VEHICLE_QUERY, {
     variables: { id },
     fetchPolicy: "cache-and-network",
   });
 
   const refetchVehicle = () => refetch();
 
-  const { data: currentProjectData } = useQuery<{
-    currentProjectForVehicle: Pick<Project, "id" | "code" | "name"> | null;
-  }>(GET_CURRENT_PROJECT_FOR_VEHICLE_QUERY, {
+  const { data: currentProjectData } = useQuery<CurrentProjectForVehicleQueryResult>(GET_CURRENT_PROJECT_FOR_VEHICLE_QUERY, {
     variables: { vehicleId: id },
     skip: !id,
   });
   const currentProject = currentProjectData?.currentProjectForVehicle ?? null;
 
-  const { data: projectsData } = useQuery<{ projects: Project[] }>(
+  const { data: projectsData } = useQuery<ProjectsQueryResult>(
     GET_PROJECTS_QUERY,
     { variables: { filter: {} } },
   );

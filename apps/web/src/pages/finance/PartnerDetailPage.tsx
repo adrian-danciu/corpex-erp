@@ -10,6 +10,7 @@ import { PageLoading } from "@/components/ui/page-loading";
 import PartnerTypeBadge from "@/components/finance/PartnerTypeBadge";
 import type { PartnerQueryResult } from "@/types/finance.types";
 import { GET_PARTNER_QUERY, GET_PARTNERS_QUERY, DELETE_PARTNER_MUTATION } from "@/graphql/mutations/finance.mutations";
+import { formatDate } from "@/lib/formatters";
 
 export default function PartnerDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -202,8 +203,8 @@ export default function PartnerDetailPage() {
       <Card>
         <CardContent className="pt-6">
           <div className="flex gap-6 text-sm text-slate-500">
-            <p>Created: {new Date(partner.createdAt).toLocaleDateString("ro-RO")}</p>
-            <p>Last Updated: {new Date(partner.updatedAt).toLocaleDateString("ro-RO")}</p>
+            <p>Created: {formatDate(partner.createdAt)}</p>
+            <p>Last Updated: {formatDate(partner.updatedAt)}</p>
           </div>
         </CardContent>
       </Card>

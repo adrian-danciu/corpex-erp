@@ -11,6 +11,7 @@ import { useQuery, useApolloClient } from "@apollo/client/react";
 import {
   ProjectTaskStatus,
   type Project,
+  type ProjectTasksQueryResult,
   type ProjectTask,
 } from "@/types/project.types";
 import { GET_PROJECT_TASKS_QUERY } from "@/graphql/mutations/project.queries";
@@ -74,7 +75,7 @@ export function TaskBoard({ project, isProjectManager }: Props) {
     user?.role === "ADMIN" || user?.department === "MANAGEMENT";
 
   const variables = { projectId: project.id };
-  const { data, loading } = useQuery<{ projectTasks: ProjectTask[] }>(
+  const { data, loading } = useQuery<ProjectTasksQueryResult>(
     GET_PROJECT_TASKS_QUERY,
     { variables, fetchPolicy: "cache-first" },
   );

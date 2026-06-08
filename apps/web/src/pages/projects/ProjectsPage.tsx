@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/table";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { GET_PROJECTS_QUERY } from "@/graphql/mutations/project.queries";
-import type { Project } from "@/types/project.types";
+import type { ProjectsQueryResult } from "@/types/project.types";
 import { ProjectStatus } from "@/types/project.types";
 import { useAuthStore } from "@/stores/auth.store";
 import { canAccess } from "@/lib/permissions";
@@ -44,7 +44,7 @@ export default function ProjectsPage() {
     : ALL_STATUSES;
   const onlyMine = getFilter("onlyMine") === "true";
 
-  const { data, loading, error } = useQuery<{ projects: Project[] }>(
+  const { data, loading, error } = useQuery<ProjectsQueryResult>(
     GET_PROJECTS_QUERY,
     {
       variables: {

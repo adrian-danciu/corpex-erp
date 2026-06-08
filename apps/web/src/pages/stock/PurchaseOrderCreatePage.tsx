@@ -32,11 +32,13 @@ import {
 } from "@/lib/schemas/purchaseOrder.schema";
 import {
   PartnerType,
-  type Partner,
+  type PartnersQueryResult,
 } from "@/types/finance.types";
-import type { PaginatedResult } from "@/types/pagination.types";
-import type { PurchaseOrder } from "@/types/purchaseOrder.types";
-import type { Product, Warehouse } from "@/types/stock.types";
+import type { CreatePurchaseOrderMutationResult } from "@/types/purchaseOrder.types";
+import type {
+  ProductsQueryResult,
+  WarehousesQueryResult,
+} from "@/types/stock.types";
 import { PurchaseOrderLineEditor } from "@/components/stock/PurchaseOrderLineEditor";
 
 export default function PurchaseOrderCreatePage() {
@@ -48,23 +50,23 @@ export default function PurchaseOrderCreatePage() {
   const prefillUnitCost = Number(searchParams.get("unitCost") ?? "0") || 0;
   const fromProject = searchParams.get("fromProject");
 
-  const { data: partnersData } = useQuery<{
-    partners: PaginatedResult<Partner>;
-  }>(GET_PARTNERS_QUERY, {
+  const { data: partnersData } = useQuery<PartnersQueryResult>(
+    GET_PARTNERS_QUERY,
+    {
     variables: { pagination: { skip: 0, take: 200 } },
     fetchPolicy: "cache-first",
   });
 
-  const { data: warehousesData } = useQuery<{
-    warehouses: PaginatedResult<Warehouse>;
-  }>(GET_WAREHOUSES_QUERY, {
+  const { data: warehousesData } = useQuery<WarehousesQueryResult>(
+    GET_WAREHOUSES_QUERY,
+    {
     variables: { pagination: { skip: 0, take: 100 } },
     fetchPolicy: "cache-first",
   });
 
-  const { data: productsData } = useQuery<{
-    products: PaginatedResult<Product>;
-  }>(GET_PRODUCTS_QUERY, {
+  const { data: productsData } = useQuery<ProductsQueryResult>(
+    GET_PRODUCTS_QUERY,
+    {
     variables: { pagination: { skip: 0, take: 500 } },
     fetchPolicy: "cache-first",
   });
@@ -114,9 +116,10 @@ export default function PurchaseOrderCreatePage() {
     formState: { errors, isSubmitting },
   } = methods;
 
-  const [createPurchaseOrder] = useMutationWithToast<{
-    createPurchaseOrder: PurchaseOrder;
-  }>(CREATE_PURCHASE_ORDER_MUTATION, {
+  const [createPurchaseOrder] =
+    useMutationWithToast<CreatePurchaseOrderMutationResult>(
+      CREATE_PURCHASE_ORDER_MUTATION,
+      {
     successMessage: (d) => `${d.createPurchaseOrder.formattedNumber} created`,
     refetchQueries: [{ query: GET_PURCHASE_ORDERS_QUERY }],
   });

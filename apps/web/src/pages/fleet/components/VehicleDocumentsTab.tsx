@@ -31,6 +31,7 @@ import {
 } from "@/lib/schemas/fleet.schema";
 import type { Vehicle } from "@/types/fleet.types";
 import type { useVehicleDetailController } from "../hooks/useVehicleDetailController";
+import { formatDate } from "@/lib/formatters";
 
 type VehicleDetailController = ReturnType<typeof useVehicleDetailController>;
 
@@ -101,12 +102,10 @@ export function VehicleDocumentsTab({
                       <DocumentTypeBadge type={doc.type} />
                     </TableCell>
                     <TableCell>
-                      {new Date(doc.expiryDate).toLocaleDateString("ro-RO")}
+                      {formatDate(doc.expiryDate)}
                     </TableCell>
                     <TableCell>
-                      {doc.issuedDate
-                        ? new Date(doc.issuedDate).toLocaleDateString("ro-RO")
-                        : "—"}
+                      {formatDate(doc.issuedDate)}
                     </TableCell>
                     <TableCell className="text-slate-600">
                       {doc.provider ?? "—"}

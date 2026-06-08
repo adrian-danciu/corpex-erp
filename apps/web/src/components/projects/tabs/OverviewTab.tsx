@@ -21,8 +21,9 @@ import { TRANSITION_PROJECT_STATUS_MUTATION } from "@/graphql/mutations/project.
 import {
   ProjectStatus,
   type Project,
-  type ProjectCostRollup,
+  type ProjectCostRollupQueryResult,
 } from "@/types/project.types";
+import { formatDate } from "@/lib/formatters";
 
 const STATUS_OPTIONS_BY_CURRENT: Record<ProjectStatus, ProjectStatus[]> = {
   PLANNING: [ProjectStatus.ACTIVE, ProjectStatus.CANCELLED],
@@ -46,15 +47,10 @@ interface Props {
   onChange: () => void;
 }
 
-function formatDate(value?: string | null) {
-  if (!value) return "—";
-  return new Date(value).toLocaleDateString();
-}
-
 export function OverviewTab({ project, isProjectManager, onChange }: Props) {
-  const { data: rollupData } = useQuery<{
-    projectCostRollup: ProjectCostRollup;
-  }>(GET_PROJECT_COST_ROLLUP_QUERY, {
+  const { data: rollupData } = useQuery<ProjectCostRollupQueryResult>(
+    GET_PROJECT_COST_ROLLUP_QUERY,
+    {
     variables: { projectId: project.id },
     fetchPolicy: "cache-and-network",
   });

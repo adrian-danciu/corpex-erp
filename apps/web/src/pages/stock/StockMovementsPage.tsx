@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { GET_STOCK_MOVEMENTS_QUERY } from "@/graphql/mutations/stock.mutations";
-import type { StockMovement } from "@/types/stock.types";
+import type { StockMovementsQueryResult } from "@/types/stock.types";
 import { usePagination } from "@/hooks/usePagination";
 
 export default function StockMovementsPage() {
@@ -21,7 +21,7 @@ export default function StockMovementsPage() {
     data: movementsData,
     loading,
     error,
-  } = useQuery<{ stockMovements: StockMovement[] }>(GET_STOCK_MOVEMENTS_QUERY, {
+  } = useQuery<StockMovementsQueryResult>(GET_STOCK_MOVEMENTS_QUERY, {
     variables: { pagination: { skip, take } },
     fetchPolicy: "cache-and-network",
   });

@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { User } from "@/types/auth.types";
+import type { ChangePasswordMutationResult } from "@/types/auth.types";
 
 interface ChangePasswordValues {
   currentPassword: string;
@@ -27,9 +27,10 @@ export default function ChangePasswordPage() {
     formState: { errors },
   } = useForm<ChangePasswordValues>();
 
-  const [changePassword, { loading }] = useMutationWithToast<{
-    changePassword: User;
-  }>(CHANGE_PASSWORD_MUTATION, {
+  const [changePassword, { loading }] =
+    useMutationWithToast<ChangePasswordMutationResult>(
+      CHANGE_PASSWORD_MUTATION,
+      {
     successMessage: "Password updated",
     onCompleted: (data) => {
       updateUser(data.changePassword);

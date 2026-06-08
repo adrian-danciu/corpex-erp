@@ -5,14 +5,16 @@ export type NotificationType =
   | "PROJECT_TASK_ASSIGNED"
   | "FLEET_DOCUMENT_EXPIRING"
   | "EMPLOYEE_DOCUMENT_EXPIRING"
-  | "STOCK_BELOW_MINIMUM";
+  | "STOCK_BELOW_MINIMUM"
+  | "INVOICE_OVERDUE";
 
 export type NotificationEntityType =
   | "LEAVE_REQUEST"
   | "PROJECT_TASK"
   | "VEHICLE_DOCUMENT"
   | "EMPLOYEE_DOCUMENT"
-  | "PRODUCT";
+  | "PRODUCT"
+  | "INVOICE";
 
 export interface Notification {
   id: string;

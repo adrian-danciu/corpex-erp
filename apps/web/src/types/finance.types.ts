@@ -32,6 +32,7 @@ export enum InvoiceItemSourceType {
   PROJECT_MATERIAL = "PROJECT_MATERIAL",
   PROJECT_SERVICE = "PROJECT_SERVICE",
   VEHICLE_EXPENSE = "VEHICLE_EXPENSE",
+  PURCHASE_RECEIPT_LINE = "PURCHASE_RECEIPT_LINE",
   MANUAL = "MANUAL",
 }
 
@@ -108,6 +109,17 @@ export interface Invoice {
   payments: Payment[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface FinanceOverview {
+  totalReceivable: number;
+  totalPayable: number;
+  overdueAmount: number;
+  invoicesThisMonth: number;
+}
+
+export interface FinanceOverviewQueryResult {
+  financeOverview: FinanceOverview;
 }
 
 // Input types for mutations

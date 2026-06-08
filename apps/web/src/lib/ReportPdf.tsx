@@ -1,5 +1,6 @@
 import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { ExportColumn } from "@/lib/report-export.types";
+import { formatDateTime } from "@/lib/formatters";
 
 const pdfStyles = StyleSheet.create({
   page: {
@@ -67,7 +68,7 @@ export function ReportPdf({
   columns: ExportColumn[];
   rows: string[][];
 }) {
-  const generatedAt = new Date().toLocaleString("ro-RO");
+  const generatedAt = formatDateTime(new Date());
 
   return (
     <Document title={title}>

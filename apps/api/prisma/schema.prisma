@@ -403,6 +403,7 @@ enum InvoiceItemSourceType {
   PROJECT_MATERIAL
   PROJECT_SERVICE
   VEHICLE_EXPENSE
+  PURCHASE_RECEIPT_LINE
   MANUAL
 }
 
@@ -758,6 +759,7 @@ enum NotificationType {
   FLEET_DOCUMENT_EXPIRING
   EMPLOYEE_DOCUMENT_EXPIRING
   STOCK_BELOW_MINIMUM
+  INVOICE_OVERDUE
 }
 
 enum PayrollStatus {
@@ -772,6 +774,7 @@ enum NotificationEntityType {
   VEHICLE_DOCUMENT
   EMPLOYEE_DOCUMENT
   PRODUCT
+  INVOICE
 }
 
 model PurchaseOrder {

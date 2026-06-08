@@ -21,7 +21,3 @@ export const UNITS: UnitOption[] = [
 ];
 
 export const DEFAULT_UNIT = "pcs";
-
-export function formatQtyWithUnit(qty: number, unit: string): string {
-  return `${qty.toLocaleString()} ${unit}`;
-}

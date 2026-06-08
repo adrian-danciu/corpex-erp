@@ -1,5 +1,6 @@
 import type { PayrollLine, PayrollPeriod } from "@/types/payroll.types";
 import { PayrollStatus } from "@/types/payroll.types";
+export { formatCurrency as formatMoney } from "@/lib/formatters";
 
 const MONTHS = [
   "January",
@@ -15,10 +16,6 @@ const MONTHS = [
   "November",
   "December",
 ];
-
-export function formatMoney(value: number, currency = "EUR") {
-  return value.toLocaleString("ro-RO", { style: "currency", currency });
-}
 
 export function statusClass(status: PayrollStatus) {
   switch (status) {

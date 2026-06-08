@@ -4,12 +4,7 @@ import { useLazyQuery, useQuery } from "@apollo/client/react";
 import { FilePlus2, Plus, Receipt } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -26,30 +21,29 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { GET_INVOICES_QUERY, CREATE_INVOICE_MUTATION } from "@/graphql/mutations/finance.mutations";
+import {
+  GET_INVOICES_QUERY,
+  CREATE_INVOICE_MUTATION,
+} from "@/graphql/mutations/finance.mutations";
 import { GET_PROJECT_COSTS_FOR_INVOICE_QUERY } from "@/graphql/mutations/project.queries";
 import { GET_COMPANY_SETTINGS_QUERY } from "@/graphql/mutations/settings.mutations";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { toastInfo } from "@/lib/toast";
-import type { Invoice } from "@/types/finance.types";
-import type { PaginatedResult } from "@/types/pagination.types";
-import type { InvoiceLineDraft, Project } from "@/types/project.types";
+import { formatDate } from "@/lib/formatters";
+import type { InvoicesQueryResult } from "@/types/finance.types";
+import type {
+  Project,
+  ProjectCostsForInvoiceQueryResult,
+} from "@/types/project.types";
+import type { CompanySettingsQueryResult } from "@/types/settings.types";
+import {
+  dueDateInDays,
+  getInvoiceSourceLabel,
+} from "./invoices/invoice-tab.utils";
 
 interface Props {
   project: Project;
-}
-
-function dueDateInDays(days: number) {
-  const date = new Date();
-  date.setDate(date.getDate() + days);
-  return date.toISOString().split("T")[0];
-}
-
-function sourceLabel(value: InvoiceLineDraft["sourceType"]) {
-  if (value === "PROJECT_MATERIAL") return "Material";
-  if (value === "PROJECT_SERVICE") return "Service";
-  return "Vehicle expense";
 }
 
 export function InvoicesTab({ project }: Props) {
@@ -60,30 +54,25 @@ export function InvoicesTab({ project }: Props) {
     () => new Set(),
   );
 
-  const { data, loading, refetch } = useQuery<{
-    invoices: PaginatedResult<Invoice>;
-  }>(GET_INVOICES_QUERY, {
+  const { data, loading, refetch } = useQuery<InvoicesQueryResult>(
+    GET_INVOICES_QUERY,
+    {
     variables: {
       pagination: { skip: 0, take: 200 },
       isClientInvoice: true,
     },
     fetchPolicy: "cache-and-network",
   });
-  const { data: settingsData } = useQuery<{
-    companySettings: {
-      defaultInvoiceSeries: string;
-      defaultCurrency: string;
-      paymentTermsDays: number;
-    };
-  }>(GET_COMPANY_SETTINGS_QUERY, { fetchPolicy: "cache-first" });
-
-  const [
-    fetchProjectCosts,
-    { data: projectCostsData, loading: loadingCosts },
-  ] = useLazyQuery<{ projectCostsForInvoice: InvoiceLineDraft[] }>(
-    GET_PROJECT_COSTS_FOR_INVOICE_QUERY,
-    { fetchPolicy: "network-only" },
+  const { data: settingsData } = useQuery<CompanySettingsQueryResult>(
+    GET_COMPANY_SETTINGS_QUERY,
+    { fetchPolicy: "cache-first" },
   );
+
+  const [fetchProjectCosts, { data: projectCostsData, loading: loadingCosts }] =
+    useLazyQuery<ProjectCostsForInvoiceQueryResult>(
+      GET_PROJECT_COSTS_FOR_INVOICE_QUERY,
+      { fetchPolicy: "network-only" },
+    );
 
   const [createInvoice, { loading: creatingInvoice }] = useMutationWithToast(
     CREATE_INVOICE_MUTATION,
@@ -122,7 +111,9 @@ export function InvoicesTab({ project }: Props) {
     });
     const nextDrafts = result.data?.projectCostsForInvoice ?? [];
     if (nextDrafts.length === 0) {
-      toastInfo("No unbilled materials, services, or vehicle expenses on this project yet.");
+      toastInfo(
+        "No unbilled materials, services, or vehicle expenses on this project yet.",
+      );
       return;
     }
     setSelectedSources(new Set(nextDrafts.map((draft) => draft.source)));
@@ -237,7 +228,7 @@ export function InvoicesTab({ project }: Props) {
                       <Badge variant="outline">{inv.status}</Badge>
                     </TableCell>
                     <TableCell className="text-slate-600">
-                      {new Date(inv.issueDate).toLocaleDateString()}
+                      {formatDate(inv.issueDate)}
                     </TableCell>
                     <TableCell className="text-right text-slate-900">
                       {inv.total.toLocaleString()} {inv.currency}
@@ -264,7 +255,9 @@ export function InvoicesTab({ project }: Props) {
                     <TableHead className="min-w-[260px]">Description</TableHead>
                     <TableHead className="w-32">Source</TableHead>
                     <TableHead className="w-24 text-right">Qty</TableHead>
-                    <TableHead className="w-32 text-right">Unit price</TableHead>
+                    <TableHead className="w-32 text-right">
+                      Unit price
+                    </TableHead>
                     <TableHead className="w-32 text-right">Total</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -288,7 +281,7 @@ export function InvoicesTab({ project }: Props) {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="whitespace-nowrap">
-                        {sourceLabel(draft.sourceType)}
+                          {getInvoiceSourceLabel(draft.sourceType)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right whitespace-nowrap">

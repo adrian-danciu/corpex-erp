@@ -4,15 +4,14 @@ import { PackageOpen } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { GET_IN_TRANSIT_SUMMARY_QUERY } from "@/graphql/mutations/purchaseOrders.mutations";
-import type { InTransitProductSummary } from "@/types/purchaseOrder.types";
-
-const formatDate = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleDateString() : "—";
+import type { InTransitSummaryQueryResult } from "@/types/purchaseOrder.types";
+import { formatDate } from "@/lib/formatters";
 
 export function InTransitWidget({ limit = 5 }: { limit?: number }) {
-  const { data, loading } = useQuery<{
-    inTransitSummary: InTransitProductSummary[];
-  }>(GET_IN_TRANSIT_SUMMARY_QUERY, { fetchPolicy: "cache-and-network" });
+  const { data, loading } = useQuery<InTransitSummaryQueryResult>(
+    GET_IN_TRANSIT_SUMMARY_QUERY,
+    { fetchPolicy: "cache-and-network" },
+  );
 
   const rows = (data?.inTransitSummary ?? []).slice(0, limit);
   const totalUnits = (data?.inTransitSummary ?? []).reduce(

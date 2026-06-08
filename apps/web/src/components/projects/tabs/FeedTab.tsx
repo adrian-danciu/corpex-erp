@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 import {
   ProjectFeedKind,
   type Project,
-  type ProjectFeedEntry,
+  type ProjectFeedQueryResult,
 } from "@/types/project.types";
 
 interface Props {
@@ -47,9 +47,9 @@ export function FeedTab({ project }: Props) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
-  const { data, refetch } = useQuery<{
-    projectFeed: ProjectFeedEntry[];
-  }>(GET_PROJECT_FEED_QUERY, {
+  const { data, refetch } = useQuery<ProjectFeedQueryResult>(
+    GET_PROJECT_FEED_QUERY,
+    {
     variables: { projectId: project.id, kind: filter },
     fetchPolicy: "cache-and-network",
   });

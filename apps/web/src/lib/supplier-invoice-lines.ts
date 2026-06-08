@@ -14,15 +14,37 @@ export function buildSupplierInvoiceItemsFromReceipts(
 
       return {
         description: `${sku}${product?.name ?? "Received item"} (${receipt.formattedNumber})`,
-        quantity: line.qtyReceived,
+        quantity: line.remainingInvoiceQty ?? line.qtyReceived,
         unit: product?.unit ?? "buc",
         unitPrice: line.orderLine?.unitCost ?? 0,
         vatRate: 19,
-        sourceType: "MANUAL" as const,
+        sourceType: "PURCHASE_RECEIPT_LINE" as const,
         sourceId: line.id,
       };
     }),
   );
+}
+
+export function getAvailableSupplierPurchaseOrders(
+  purchaseOrders: PurchaseOrder[],
+  supplierId: string,
+): PurchaseOrder[] {
+  if (!supplierId) return [];
+
+  return purchaseOrders
+    .filter((purchaseOrder) => purchaseOrder.supplierId === supplierId)
+    .map((purchaseOrder) => ({
+      ...purchaseOrder,
+      receipts: purchaseOrder.receipts
+        .map((receipt) => ({
+          ...receipt,
+          lines: receipt.lines.filter(
+            (line) => (line.remainingInvoiceQty ?? line.qtyReceived) > 0,
+          ),
+        }))
+        .filter((receipt) => receipt.lines.length > 0),
+    }))
+    .filter((purchaseOrder) => purchaseOrder.receipts.length > 0);
 }
 
 export function getSelectedPurchaseOrderReceipts(

@@ -28,10 +28,9 @@ import { canAccess } from "@/lib/permissions";
 import { usePagination } from "@/hooks/usePagination";
 import { useUrlFilters } from "@/hooks/useUrlFilters";
 import { GET_PURCHASE_ORDERS_QUERY } from "@/graphql/mutations/purchaseOrders.mutations";
-import type { PaginatedResult } from "@/types/pagination.types";
 import {
   PurchaseOrderStatus,
-  type PurchaseOrder,
+  type PurchaseOrdersQueryResult,
 } from "@/types/purchaseOrder.types";
 import { PurchaseOrderStatusBadge } from "@/components/stock/PurchaseOrderStatusBadge";
 import { formatDate } from "@/lib/formatters";
@@ -50,9 +49,9 @@ export default function PurchaseOrdersPage() {
   const statusFilter = getFilter("status", ALL_STATUSES);
   const [searchValue, setSearchValue] = useState(search);
 
-  const { data, loading, error } = useQuery<{
-    purchaseOrders: PaginatedResult<PurchaseOrder>;
-  }>(GET_PURCHASE_ORDERS_QUERY, {
+  const { data, loading, error } = useQuery<PurchaseOrdersQueryResult>(
+    GET_PURCHASE_ORDERS_QUERY,
+    {
     variables: {
       pagination: { skip, take },
       filter: {

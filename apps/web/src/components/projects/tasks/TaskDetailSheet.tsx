@@ -31,10 +31,11 @@ import {
 } from "@/graphql/mutations/project.mutations";
 import {
   ProjectTaskStatus,
+  type AddProjectTaskCommentMutationResult,
   type Project,
-  type ProjectFeedEntry,
-  type ProjectTask,
-  type ProjectTaskComment,
+  type ProjectTaskActivityQueryResult,
+  type ProjectTaskCommentsQueryResult,
+  type ProjectTasksQueryResult,
 } from "@/types/project.types";
 import { getTaskPermissions } from "@/lib/projectTaskPermissions";
 import { InlineEditText } from "./inline-edit/InlineEditText";
@@ -63,7 +64,7 @@ export function TaskDetailSheet({
 
   const open = !!taskId;
 
-  const cachedTasks = apollo.readQuery<{ projectTasks: ProjectTask[] }>({
+  const cachedTasks = apollo.readQuery<ProjectTasksQueryResult>({
     query: GET_PROJECT_TASKS_QUERY,
     variables: { projectId: project.id },
   });
@@ -72,17 +73,17 @@ export function TaskDetailSheet({
     [cachedTasks, taskId],
   );
 
-  const { data: commentsData } = useQuery<{
-    projectTaskComments: ProjectTaskComment[];
-  }>(GET_PROJECT_TASK_COMMENTS_QUERY, {
+  const { data: commentsData } = useQuery<ProjectTaskCommentsQueryResult>(
+    GET_PROJECT_TASK_COMMENTS_QUERY,
+    {
     variables: { taskId: taskId ?? "" },
     skip: !taskId,
     fetchPolicy: "cache-and-network",
   });
 
-  const { data: activityData } = useQuery<{
-    projectTaskActivity: ProjectFeedEntry[];
-  }>(GET_PROJECT_TASK_ACTIVITY_QUERY, {
+  const { data: activityData } = useQuery<ProjectTaskActivityQueryResult>(
+    GET_PROJECT_TASK_ACTIVITY_QUERY,
+    {
     variables: { taskId: taskId ?? "" },
     skip: !taskId,
     fetchPolicy: "cache-and-network",
@@ -94,9 +95,10 @@ export function TaskDetailSheet({
   const [updateTask] = useMutation(UPDATE_PROJECT_TASK_MUTATION);
   const [transitionTask] = useMutation(TRANSITION_PROJECT_TASK_MUTATION);
 
-  const [addComment] = useMutationWithToast<{
-    addProjectTaskComment: ProjectTaskComment;
-  }>(ADD_PROJECT_TASK_COMMENT_MUTATION, {
+  const [addComment] =
+    useMutationWithToast<AddProjectTaskCommentMutationResult>(
+      ADD_PROJECT_TASK_COMMENT_MUTATION,
+      {
     successMessage: undefined,
   });
   const [updateComment] = useMutationWithToast(
@@ -175,7 +177,7 @@ export function TaskDetailSheet({
         variables: { input: { taskId, content } },
         update: (cache, { data }) => {
           if (!data?.addProjectTaskComment) return;
-          cache.updateQuery<{ projectTaskComments: ProjectTaskComment[] }>(
+          cache.updateQuery<ProjectTaskCommentsQueryResult>(
             {
               query: GET_PROJECT_TASK_COMMENTS_QUERY,
               variables: { taskId },
@@ -205,7 +207,7 @@ export function TaskDetailSheet({
       variables: { input: { commentId } },
       update: (cache) => {
         if (!taskId) return;
-        cache.updateQuery<{ projectTaskComments: ProjectTaskComment[] }>(
+        cache.updateQuery<ProjectTaskCommentsQueryResult>(
           {
             query: GET_PROJECT_TASK_COMMENTS_QUERY,
             variables: { taskId },
@@ -226,7 +228,7 @@ export function TaskDetailSheet({
       await deleteTask({
         variables: { input: { taskId } },
         update: (cache) => {
-          cache.updateQuery<{ projectTasks: ProjectTask[] }>(
+          cache.updateQuery<ProjectTasksQueryResult>(
             {
               query: GET_PROJECT_TASKS_QUERY,
               variables: { projectId: project.id },

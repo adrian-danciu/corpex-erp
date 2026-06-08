@@ -1,6 +1,7 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import type { Invoice, InvoiceItem } from "@/types/finance.types";
 import { InvoiceType } from "@/types/finance.types";
+import { formatDate, formatMoney } from "@/lib/formatters";
 
 const styles = StyleSheet.create({
   page: {
@@ -189,14 +190,6 @@ const styles = StyleSheet.create({
   },
 });
 
-function fmt(amount: number, currency = "EUR") {
-  return `${amount.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
-}
-
-function fmtDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("ro-RO");
-}
-
 interface Props {
   invoice: Invoice;
 }
@@ -219,16 +212,16 @@ export function InvoicePDF({ invoice }: Props) {
           <View style={styles.metaRight}>
             <View style={styles.metaRow}>
               <Text style={styles.metaLabel}>Issue Date:</Text>
-              <Text style={styles.metaValue}>{fmtDate(invoice.issueDate)}</Text>
+              <Text style={styles.metaValue}>{formatDate(invoice.issueDate)}</Text>
             </View>
             <View style={styles.metaRow}>
               <Text style={styles.metaLabel}>Due Date:</Text>
-              <Text style={styles.metaValue}>{fmtDate(invoice.dueDate)}</Text>
+              <Text style={styles.metaValue}>{formatDate(invoice.dueDate)}</Text>
             </View>
             {invoice.deliveryDate && (
               <View style={styles.metaRow}>
                 <Text style={styles.metaLabel}>Delivery:</Text>
-                <Text style={styles.metaValue}>{fmtDate(invoice.deliveryDate)}</Text>
+                <Text style={styles.metaValue}>{formatDate(invoice.deliveryDate)}</Text>
               </View>
             )}
             <View style={styles.metaRow}>
@@ -281,10 +274,10 @@ export function InvoicePDF({ invoice }: Props) {
               <Text style={styles.colDesc}>{item.description}</Text>
               <Text style={styles.colQty}>{item.quantity}</Text>
               <Text style={styles.colUnit}>{item.unit}</Text>
-              <Text style={styles.colPrice}>{fmt(item.unitPrice, invoice.currency)}</Text>
+              <Text style={styles.colPrice}>{formatMoney(item.unitPrice, invoice.currency)}</Text>
               <Text style={styles.colVat}>{item.vatRate}%</Text>
-              <Text style={styles.colAmount}>{fmt(item.amount, invoice.currency)}</Text>
-              <Text style={styles.colVatAmt}>{fmt(item.vatAmount, invoice.currency)}</Text>
+              <Text style={styles.colAmount}>{formatMoney(item.amount, invoice.currency)}</Text>
+              <Text style={styles.colVatAmt}>{formatMoney(item.vatAmount, invoice.currency)}</Text>
             </View>
           ))}
         </View>
@@ -294,24 +287,24 @@ export function InvoicePDF({ invoice }: Props) {
           <View style={styles.totalsBox}>
             <View style={styles.totalsRow}>
               <Text style={styles.totalsLabel}>Subtotal:</Text>
-              <Text>{fmt(invoice.subtotal, invoice.currency)}</Text>
+              <Text>{formatMoney(invoice.subtotal, invoice.currency)}</Text>
             </View>
             <View style={styles.totalsRow}>
               <Text style={styles.totalsLabel}>VAT:</Text>
-              <Text>{fmt(invoice.vatTotal, invoice.currency)}</Text>
+              <Text>{formatMoney(invoice.vatTotal, invoice.currency)}</Text>
             </View>
             <View style={styles.totalsDivider} />
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Total:</Text>
-              <Text style={styles.totalValue}>{fmt(invoice.total, invoice.currency)}</Text>
+              <Text style={styles.totalValue}>{formatMoney(invoice.total, invoice.currency)}</Text>
             </View>
             <View style={styles.paidRow}>
               <Text>Paid:</Text>
-              <Text>{fmt(invoice.paidAmount, invoice.currency)}</Text>
+              <Text>{formatMoney(invoice.paidAmount, invoice.currency)}</Text>
             </View>
             <View style={styles.outstandingRow}>
               <Text style={styles.outstandingText}>Outstanding:</Text>
-              <Text style={styles.outstandingText}>{fmt(remaining, invoice.currency)}</Text>
+              <Text style={styles.outstandingText}>{formatMoney(remaining, invoice.currency)}</Text>
             </View>
           </View>
         </View>

@@ -5,8 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { GET_EMPLOYEES_QUERY } from "@/graphql/mutations/employee.mutations";
 import { gql } from "@apollo/client";
-import type { Employee } from "@/types/hr.types";
-import type { PaginatedResult } from "@/types/pagination.types";
+import type { Employee, EmployeesQueryResult } from "@/types/hr.types";
 import type { User } from "@/types/auth.types";
 import UserCreateForm from "@/components/users/UserCreateForm";
 import { PageLoading } from "@/components/ui/page-loading";
@@ -30,9 +29,9 @@ const LINK_EMPLOYEE_USER_MUTATION = gql`
 export default function UsersAdminPage() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
 
-  const { data, loading, error, refetch } = useQuery<{
-    employees: PaginatedResult<Employee>;
-  }>(GET_EMPLOYEES_QUERY, {
+  const { data, loading, error, refetch } = useQuery<EmployeesQueryResult>(
+    GET_EMPLOYEES_QUERY,
+    {
     variables: { pagination: { skip: 0, take: 100 } },
     fetchPolicy: "cache-and-network",
   });
@@ -205,4 +204,3 @@ export default function UsersAdminPage() {
     </div>
   );
 }
-

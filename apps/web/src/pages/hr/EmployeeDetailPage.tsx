@@ -27,6 +27,7 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Edit, Trash2, Users, Calendar, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { EmployeeDocumentsPanel } from "@/components/hr/EmployeeDocumentsPanel";
+import { formatCurrency } from "@/lib/formatters";
 
 function LeaveBar({ remaining, total }: { remaining: number; total: number }) {
   const pct = total > 0 ? Math.max(0, Math.min(100, (remaining / total) * 100)) : 0;
@@ -236,7 +237,7 @@ export default function EmployeeDetailPage() {
               <div>
                 <p className="text-slate-500">Gross Salary</p>
                 <p className="font-medium">
-                  {employee.salary.toLocaleString("ro-RO", { style: "currency", currency: "EUR" })}
+                  {formatCurrency(employee.salary)}
                 </p>
               </div>
               {employee.manager && (

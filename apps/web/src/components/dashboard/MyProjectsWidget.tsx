@@ -10,10 +10,10 @@ import {
 } from "@/components/ui/card";
 import { GET_PROJECTS_QUERY } from "@/graphql/mutations/project.queries";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
-import type { Project } from "@/types/project.types";
+import type { ProjectsQueryResult } from "@/types/project.types";
 
 export function MyProjectsWidget() {
-  const { data, loading } = useQuery<{ projects: Project[] }>(
+  const { data, loading } = useQuery<ProjectsQueryResult>(
     GET_PROJECTS_QUERY,
     { variables: { filter: { onlyMine: true } } },
   );

@@ -29,6 +29,7 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   FLEET_DOCUMENT_EXPIRING: "Document expiring",
   EMPLOYEE_DOCUMENT_EXPIRING: "Employee document expiring",
   STOCK_BELOW_MINIMUM: "Stock low",
+  INVOICE_OVERDUE: "Invoice overdue",
 };
 
 type ReadFilter = "all" | "unread" | "read";

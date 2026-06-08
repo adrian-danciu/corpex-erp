@@ -4,10 +4,10 @@ import { Car } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GET_EXPIRING_DOCUMENTS_QUERY } from "@/graphql/queries/fleet.queries";
-import type { ExpiringDocumentSummary } from "@/types/fleet.types";
+import type { ExpiringDocumentsQueryResult } from "@/types/fleet.types";
 
 export function FleetExpiryWidget() {
-  const { data, loading } = useQuery<{ expiringDocuments: ExpiringDocumentSummary[] }>(
+  const { data, loading } = useQuery<ExpiringDocumentsQueryResult>(
     GET_EXPIRING_DOCUMENTS_QUERY,
     { variables: { daysAhead: 30 } },
   );

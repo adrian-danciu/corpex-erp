@@ -29,8 +29,9 @@ import { CREATE_PROJECT_TASK_MUTATION } from "@/graphql/mutations/project.mutati
 import { GET_PROJECT_TASKS_QUERY } from "@/graphql/mutations/project.queries";
 import {
   ProjectTaskPriority,
+  type CreateProjectTaskMutationResult,
   type Project,
-  type ProjectTask,
+  type ProjectTasksQueryResult,
 } from "@/types/project.types";
 import { TaskBoard } from "@/components/projects/tasks/TaskBoard";
 
@@ -51,9 +52,10 @@ export function TasksTab({ project, isProjectManager }: Props) {
   const [dueDate, setDueDate] = useState("");
   const [error, setError] = useState("");
 
-  const [createTask, { loading: creating }] = useMutationWithToast<{
-    createProjectTask: ProjectTask;
-  }>(CREATE_PROJECT_TASK_MUTATION, {
+  const [createTask, { loading: creating }] =
+    useMutationWithToast<CreateProjectTaskMutationResult>(
+      CREATE_PROJECT_TASK_MUTATION,
+      {
     successMessage: "Task created",
     onCompleted: (data) => {
       setCreateOpen(false);
@@ -62,7 +64,7 @@ export function TasksTab({ project, isProjectManager }: Props) {
       setAssigneeId("");
       setPriority(ProjectTaskPriority.MEDIUM);
       setDueDate("");
-      apollo.cache.updateQuery<{ projectTasks: ProjectTask[] }>(
+      apollo.cache.updateQuery<ProjectTasksQueryResult>(
         {
           query: GET_PROJECT_TASKS_QUERY,
           variables: { projectId: project.id },

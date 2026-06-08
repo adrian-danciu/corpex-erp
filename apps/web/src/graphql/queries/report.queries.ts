@@ -19,6 +19,16 @@ export const FINANCE_AGING_SUMMARY_QUERY = gql`
   }
 `;
 
+export const SUPPLIER_AGING_SUMMARY_QUERY = gql`
+  query SupplierAgingSummary {
+    supplierAgingSummary {
+      label
+      amount
+      invoiceCount
+    }
+  }
+`;
+
 export const EMPLOYEE_REPORT_QUERY = gql`
   query EmployeeReport {
     employeeReport {

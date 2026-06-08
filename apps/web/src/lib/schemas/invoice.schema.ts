@@ -20,7 +20,13 @@ export const invoiceItemSchema = z.object({
   vatRate: z.coerce.number().min(0).max(100).default(19),
   projectId: z.string().optional(),
   sourceType: z
-    .enum(["PROJECT_MATERIAL", "PROJECT_SERVICE", "VEHICLE_EXPENSE", "MANUAL"])
+    .enum([
+      "PROJECT_MATERIAL",
+      "PROJECT_SERVICE",
+      "VEHICLE_EXPENSE",
+      "PURCHASE_RECEIPT_LINE",
+      "MANUAL",
+    ])
     .optional(),
   sourceId: z.string().optional(),
 });

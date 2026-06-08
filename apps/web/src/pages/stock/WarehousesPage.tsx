@@ -21,8 +21,10 @@ import {
   CREATE_WAREHOUSE_MUTATION,
   GET_WAREHOUSES_QUERY,
 } from "@/graphql/mutations/stock.mutations";
-import type { PaginatedResult } from "@/types/pagination.types";
-import type { Warehouse } from "@/types/stock.types";
+import type {
+  CreateWarehouseMutationResult,
+  WarehousesQueryResult,
+} from "@/types/stock.types";
 import { Pagination } from "@/components/common/Pagination";
 import { usePagination } from "@/hooks/usePagination";
 
@@ -38,16 +40,15 @@ export default function WarehousesPage() {
   const { user } = useAuthStore();
   const canWrite = canAccess(user, "stock", "write");
   const { page, pageSize, skip, take, setPage } = usePagination();
-  const { data, loading, error, refetch } = useQuery<{
-    warehouses: PaginatedResult<Warehouse>;
-  }>(GET_WAREHOUSES_QUERY, {
+  const { data, loading, error, refetch } = useQuery<WarehousesQueryResult>(
+    GET_WAREHOUSES_QUERY,
+    {
     variables: { pagination: { skip, take } },
     fetchPolicy: "cache-and-network",
   });
 
-  const [createWarehouse, { loading: creating }] = useMutationWithToast<{
-    createWarehouse: Warehouse;
-  }>(CREATE_WAREHOUSE_MUTATION, {
+  const [createWarehouse, { loading: creating }] =
+    useMutationWithToast<CreateWarehouseMutationResult>(CREATE_WAREHOUSE_MUTATION, {
     successMessage: (data) => `Warehouse "${data.createWarehouse.name}" created`,
   });
 

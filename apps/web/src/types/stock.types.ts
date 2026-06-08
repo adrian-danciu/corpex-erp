@@ -69,3 +69,39 @@ export interface StockOverview {
   lowStockProducts: number;
   totalStockUnits: number;
 }
+
+export interface ProductsQueryResult {
+  products: import("./pagination.types").PaginatedResult<Product>;
+}
+
+export interface WarehousesQueryResult {
+  warehouses: import("./pagination.types").PaginatedResult<Warehouse>;
+}
+
+export interface StockMovementsQueryResult {
+  stockMovements: StockMovement[];
+}
+
+export interface StockOverviewQueryResult {
+  stockOverview: StockOverview;
+}
+
+export interface LowStockProductsQueryResult {
+  lowStockProducts: Product[];
+}
+
+export interface ProductStockByProductQueryResult {
+  productStockByProduct: ProductStockBreakdown[];
+}
+
+export interface CreateWarehouseMutationResult {
+  createWarehouse: Warehouse;
+}
+
+export interface CreateStockMovementMutationResult {
+  createStockMovement: StockMovement;
+}
+
+export interface CreateProductMutationResult {
+  createProduct: Product;
+}

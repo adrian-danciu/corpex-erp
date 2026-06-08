@@ -4,6 +4,7 @@ import {
   DocumentType,
   Employee,
   EmployeeDocument,
+  InvoiceStatus,
   VehicleDocument,
   Vehicle,
 } from '@prisma/client';
@@ -137,6 +138,51 @@ export class NotificationsScheduler {
       } catch (err) {
         this.logger.error(
           `Failed to emit notification for employee document ${doc.id}`,
+          err,
+        );
+      }
+    }
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_6AM)
+  async scanOverdueInvoices(): Promise<void> {
+    this.logger.log('Running daily overdue invoice scan');
+
+    const today = startOfDayUtc(new Date());
+    const candidates = await this.prisma.invoice.findMany({
+      where: {
+        dueDate: { lt: today },
+        status: {
+          in: [InvoiceStatus.SENT, InvoiceStatus.PARTIALLY_PAID],
+        },
+      },
+      include: { partner: true },
+    });
+
+    for (const invoice of candidates) {
+      try {
+        const updated = await this.prisma.invoice.updateMany({
+          where: {
+            id: invoice.id,
+            status: {
+              in: [InvoiceStatus.SENT, InvoiceStatus.PARTIALLY_PAID],
+            },
+          },
+          data: { status: InvoiceStatus.OVERDUE },
+        });
+        if (updated.count === 0) continue;
+
+        await this.notifications.notifyInvoiceOverdue({
+          invoiceId: invoice.id,
+          formattedNumber: `${invoice.series}-${String(invoice.number).padStart(4, '0')}`,
+          partnerName: invoice.partner.name,
+          isClientInvoice: invoice.isClientInvoice,
+          projectId: invoice.projectId,
+          outstandingAmount: Math.max(0, invoice.total - invoice.paidAmount),
+        });
+      } catch (err) {
+        this.logger.error(
+          `Failed to mark invoice ${invoice.id} overdue`,
           err,
         );
       }

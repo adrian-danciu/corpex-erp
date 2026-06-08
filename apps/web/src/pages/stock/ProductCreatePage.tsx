@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CREATE_PRODUCT_MUTATION } from "@/graphql/mutations/stock.mutations";
-import type { Product } from "@/types/stock.types";
+import type { CreateProductMutationResult } from "@/types/stock.types";
 import { UNITS, DEFAULT_UNIT } from "@/lib/units";
 import { useCurrency } from "@/hooks/useCurrency";
 
@@ -31,9 +31,8 @@ interface ProductFormData {
 export default function ProductCreatePage() {
   const navigate = useNavigate();
   const { currency } = useCurrency();
-  const [createProduct, { loading }] = useMutationWithToast<{
-    createProduct: Product;
-  }>(CREATE_PRODUCT_MUTATION, {
+  const [createProduct, { loading }] =
+    useMutationWithToast<CreateProductMutationResult>(CREATE_PRODUCT_MUTATION, {
     successMessage: (data) => `Product "${data.createProduct.name}" created`,
   });
 

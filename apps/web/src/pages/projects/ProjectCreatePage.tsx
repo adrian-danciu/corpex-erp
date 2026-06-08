@@ -23,21 +23,16 @@ import {
 import { CREATE_PROJECT_MUTATION } from "@/graphql/mutations/project.mutations";
 import { GET_PROJECTS_QUERY } from "@/graphql/mutations/project.queries";
 import { GET_PARTNERS_QUERY } from "@/graphql/mutations/finance.mutations";
-import type { Partner } from "@/types/finance.types";
-import type { PaginatedResult } from "@/types/pagination.types";
+import type { PartnersQueryResult } from "@/types/finance.types";
+import type { CreateProjectMutationResult } from "@/types/project.types";
 import { useCurrency } from "@/hooks/useCurrency";
-
-interface CreateProjectMutationResult {
-  createProject: { id: string; code: string; name: string };
-}
 
 export default function ProjectCreatePage() {
   const navigate = useNavigate();
   const { currency: defaultCurrency } = useCurrency();
 
-  const { data: partnersData, loading: partnersLoading } = useQuery<{
-    partners: PaginatedResult<Partner>;
-  }>(GET_PARTNERS_QUERY, {
+  const { data: partnersData, loading: partnersLoading } =
+    useQuery<PartnersQueryResult>(GET_PARTNERS_QUERY, {
     variables: { pagination: { skip: 0, take: 200 } },
   });
 

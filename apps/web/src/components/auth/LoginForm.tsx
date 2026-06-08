@@ -6,7 +6,7 @@ import {
 } from "@/graphql/mutations/notifications.mutations";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import type { User } from "@/types/auth.types";
+import type { LoginMutationResult, User } from "@/types/auth.types";
 import type { Department } from "@/types/auth.types";
 
 function decodeJwtPayload(token: string): { department?: Department | null; position?: string | null } {
@@ -42,9 +42,9 @@ export default function LoginForm() {
     formState: { errors },
   } = useForm<LoginFormValues>();
 
-  const [loginMutation, { loading }] = useMutation<{
-    login: { accessToken: string; refreshToken: string; user: User };
-  }>(LOGIN_MUTATION, {
+  const [loginMutation, { loading }] = useMutation<LoginMutationResult>(
+    LOGIN_MUTATION,
+    {
     onCompleted: (data) => {
       const { accessToken, refreshToken, user } = data.login;
       const { department, position } = decodeJwtPayload(accessToken);

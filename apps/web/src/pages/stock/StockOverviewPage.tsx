@@ -14,17 +14,18 @@ import {
   GET_LOW_STOCK_PRODUCTS_QUERY,
   GET_STOCK_OVERVIEW_QUERY,
 } from "@/graphql/mutations/stock.mutations";
-import type { Product, StockOverview } from "@/types/stock.types";
+import type {
+  LowStockProductsQueryResult,
+  StockOverviewQueryResult,
+} from "@/types/stock.types";
 import { InTransitWidget } from "@/components/stock/InTransitWidget";
 
 export default function StockOverviewPage() {
-  const { data: overviewData, loading: overviewLoading, error: overviewError } = useQuery<{
-    stockOverview: StockOverview;
-  }>(GET_STOCK_OVERVIEW_QUERY);
+  const { data: overviewData, loading: overviewLoading, error: overviewError } =
+    useQuery<StockOverviewQueryResult>(GET_STOCK_OVERVIEW_QUERY);
 
-  const { data: lowStockData, loading: lowStockLoading, error: lowStockError } = useQuery<{
-    lowStockProducts: Product[];
-  }>(GET_LOW_STOCK_PRODUCTS_QUERY);
+  const { data: lowStockData, loading: lowStockLoading, error: lowStockError } =
+    useQuery<LowStockProductsQueryResult>(GET_LOW_STOCK_PRODUCTS_QUERY);
 
   if (overviewLoading || lowStockLoading) {
     return <PageLoading message="Loading stock overview..." />;

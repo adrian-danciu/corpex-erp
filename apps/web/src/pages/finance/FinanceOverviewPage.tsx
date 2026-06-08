@@ -22,9 +22,15 @@ import {
 import { PageLoading } from "@/components/ui/page-loading";
 import { useNavigate } from "react-router-dom";
 import InvoiceStatusBadge from "@/components/finance/InvoiceStatusBadge";
-import { InvoiceStatus } from "@/types/finance.types";
-import type { Invoice, InvoicesQueryResult } from "@/types/finance.types";
-import { GET_INVOICES_QUERY } from "@/graphql/mutations/finance.mutations";
+import type {
+  FinanceOverviewQueryResult,
+  Invoice,
+  InvoicesQueryResult,
+} from "@/types/finance.types";
+import {
+  FINANCE_OVERVIEW_QUERY,
+  RECENT_FINANCE_INVOICES_QUERY,
+} from "@/graphql/queries/finance.queries";
 import { formatCurrency } from "@/lib/formatters";
 
 type RecentInvoiceTableProps = {
@@ -87,20 +93,28 @@ function RecentInvoiceTable({
 
 export default function FinanceOverviewPage() {
   const navigate = useNavigate();
-  const { data, loading, error } = useQuery<InvoicesQueryResult>(
-    GET_INVOICES_QUERY,
-    {
-      variables: {
-        pagination: { take: 50 }, // Fetch more items for overview stats
-      },
-    }
-  );
+  const { data: overviewData, loading: overviewLoading, error: overviewError } =
+    useQuery<FinanceOverviewQueryResult>(FINANCE_OVERVIEW_QUERY);
+  const {
+    data: clientData,
+    loading: clientLoading,
+    error: clientError,
+  } = useQuery<InvoicesQueryResult>(RECENT_FINANCE_INVOICES_QUERY, {
+    variables: { pagination: { take: 5 }, isClientInvoice: true },
+  });
+  const {
+    data: supplierData,
+    loading: supplierLoading,
+    error: supplierError,
+  } = useQuery<InvoicesQueryResult>(RECENT_FINANCE_INVOICES_QUERY, {
+    variables: { pagination: { take: 5 }, isClientInvoice: false },
+  });
 
-  if (loading) {
+  if (overviewLoading || clientLoading || supplierLoading) {
     return <PageLoading message="Loading finance overview..." />;
   }
 
-  if (error) {
+  if (overviewError || clientError || supplierError) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-red-500">
         <AlertCircle className="h-8 w-8 mb-2" />
@@ -109,36 +123,10 @@ export default function FinanceOverviewPage() {
     );
   }
 
-  const invoices = data?.invoices.items || [];
-
-  // Compute stats from real data
-  const clientInvoices = invoices.filter((inv) => inv.isClientInvoice);
-  const supplierInvoices = invoices.filter((inv) => !inv.isClientInvoice);
-
-  const totalReceivable = clientInvoices
-    .filter((inv) => inv.status !== InvoiceStatus.CANCELLED && inv.status !== InvoiceStatus.PAID)
-    .reduce((sum, inv) => sum + (inv.total - inv.paidAmount), 0);
-
-  const totalPayable = supplierInvoices
-    .filter((inv) => inv.status !== InvoiceStatus.CANCELLED && inv.status !== InvoiceStatus.PAID)
-    .reduce((sum, inv) => sum + (inv.total - inv.paidAmount), 0);
-
-  const overdueAmount = invoices
-    .filter((inv) => inv.status === InvoiceStatus.OVERDUE)
-    .reduce((sum, inv) => sum + (inv.total - inv.paidAmount), 0);
-
+  const overview = overviewData?.financeOverview;
+  const recentClientInvoices = clientData?.invoices.items ?? [];
+  const recentSupplierInvoices = supplierData?.invoices.items ?? [];
   const now = new Date();
-  const invoicesThisMonth = invoices.filter((inv) => {
-    const d = new Date(inv.issueDate);
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  }).length;
-
-  const recentClientInvoices = [...clientInvoices]
-    .sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime())
-    .slice(0, 5);
-  const recentSupplierInvoices = [...supplierInvoices]
-    .sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime())
-    .slice(0, 5);
 
   return (
     <div className="space-y-6">
@@ -177,7 +165,7 @@ export default function FinanceOverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-700">
-              {formatCurrency(totalReceivable)}
+              {formatCurrency(overview?.totalReceivable ?? 0)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">From issued invoices</p>
           </CardContent>
@@ -190,7 +178,7 @@ export default function FinanceOverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-700">
-              {formatCurrency(totalPayable)}
+              {formatCurrency(overview?.totalPayable ?? 0)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">To suppliers</p>
           </CardContent>
@@ -203,7 +191,7 @@ export default function FinanceOverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-700">
-              {formatCurrency(overdueAmount)}
+              {formatCurrency(overview?.overdueAmount ?? 0)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Past due date</p>
           </CardContent>
@@ -215,7 +203,7 @@ export default function FinanceOverviewPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{invoicesThisMonth}</div>
+            <div className="text-2xl font-bold">{overview?.invoicesThisMonth ?? 0}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Issued in {now.toLocaleString("en-US", { month: "long", year: "numeric" })}
             </p>

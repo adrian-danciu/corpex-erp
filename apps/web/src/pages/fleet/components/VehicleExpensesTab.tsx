@@ -31,6 +31,7 @@ import {
 import type { Project } from "@/types/project.types";
 import type { Vehicle } from "@/types/fleet.types";
 import type { useVehicleDetailController } from "../hooks/useVehicleDetailController";
+import { formatCurrency, formatDate } from "@/lib/formatters";
 
 type VehicleDetailController = ReturnType<typeof useVehicleDetailController>;
 
@@ -76,10 +77,7 @@ export function VehicleExpensesTab({
             {expenses.length > 0 && (
               <span className="ml-2 text-sm font-normal text-slate-500">
                 Total:{" "}
-                {totalExpenses.toLocaleString("ro-RO", {
-                  style: "currency",
-                  currency: "EUR",
-                })}
+                {formatCurrency(totalExpenses)}
               </span>
             )}
           </CardTitle>
@@ -111,16 +109,13 @@ export function VehicleExpensesTab({
                 {expenses.map((expense) => (
                   <TableRow key={expense.id}>
                     <TableCell>
-                      {new Date(expense.date).toLocaleDateString("ro-RO")}
+                      {formatDate(expense.date)}
                     </TableCell>
                     <TableCell className="capitalize">
                       {expense.type.toLowerCase()}
                     </TableCell>
                     <TableCell className="font-medium">
-                      {expense.amount.toLocaleString("ro-RO", {
-                        style: "currency",
-                        currency: "EUR",
-                      })}
+                      {formatCurrency(expense.amount)}
                     </TableCell>
                     <TableCell className="text-slate-600">
                       {expense.description ?? "—"}

@@ -11,7 +11,7 @@ import { useCurrency } from "@/hooks/useCurrency";
 import {
   ProjectServiceStatus,
   type Project,
-  type ProjectService,
+  type ProjectServicesQueryResult,
 } from "@/types/project.types";
 import { ServiceDialog } from "./services/ServiceDialog";
 import { ServicesTable } from "./services/ServicesTable";
@@ -37,7 +37,7 @@ export function ServicesTab({ project, isProjectManager }: Props) {
   const [error, setError] = useState("");
 
   const variables = { projectId: project.id };
-  const { data, refetch } = useQuery<{ projectServices: ProjectService[] }>(
+  const { data, refetch } = useQuery<ProjectServicesQueryResult>(
     GET_PROJECT_SERVICES_QUERY,
     { variables, fetchPolicy: "cache-and-network" },
   );

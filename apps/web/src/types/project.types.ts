@@ -200,3 +200,71 @@ export interface InvoiceLineDraft {
   vatAmount: number;
   total: number;
 }
+
+export interface ProjectsQueryResult {
+  projects: Project[];
+}
+
+export interface ProjectQueryResult {
+  project: Project;
+}
+
+export interface ProjectFeedQueryResult {
+  projectFeed: ProjectFeedEntry[];
+}
+
+export interface ProjectMembersQueryResult {
+  projectMembers: ProjectMember[];
+}
+
+export interface ProjectMaterialsQueryResult {
+  projectMaterials: ProjectMaterial[];
+}
+
+export interface ProjectServicesQueryResult {
+  projectServices: ProjectService[];
+}
+
+export interface ProjectVehiclesQueryResult {
+  projectVehicles: ProjectVehicleAssignment[];
+}
+
+export interface ProjectTasksQueryResult {
+  projectTasks: ProjectTask[];
+}
+
+export interface ProjectTaskCommentsQueryResult {
+  projectTaskComments: ProjectTaskComment[];
+}
+
+export interface ProjectTaskActivityQueryResult {
+  projectTaskActivity: ProjectFeedEntry[];
+}
+
+export interface AddProjectTaskCommentMutationResult {
+  addProjectTaskComment: ProjectTaskComment;
+}
+
+export interface CreateProjectTaskMutationResult {
+  createProjectTask: ProjectTask;
+}
+
+export interface CreateProjectMutationResult {
+  createProject: Pick<Project, "id" | "code" | "name">;
+}
+
+export interface MyProjectTasksQueryResult {
+  myProjectTasks: ProjectTask[];
+}
+
+export interface ProjectCostsForInvoiceQueryResult {
+  projectCostsForInvoice: InvoiceLineDraft[];
+}
+
+export interface ProjectCostRollupQueryResult {
+  projectCostRollup: ProjectCostRollup;
+}
+
+export interface CurrentProjectForVehicleQueryResult {
+  currentProjectForVehicle: Pick<Project, "id" | "code" | "name"> | null;
+}

@@ -12,7 +12,12 @@ import {
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { useDisclosure } from "@/hooks/useDisclosure";
 import type { ExportColumn } from "@/lib/report-export.types";
-import type { PayrollLine, PayrollPeriod } from "@/types/payroll.types";
+import type {
+  PayrollLine,
+  PayrollPeriod,
+  PayrollPeriodQueryResult,
+  PayrollPeriodsQueryResult,
+} from "@/types/payroll.types";
 import { PayrollStatus } from "@/types/payroll.types";
 
 const MONTHS = [
@@ -52,7 +57,7 @@ export function usePayrollController() {
     loading: periodsLoading,
     error: periodsError,
     refetch: refetchPeriods,
-  } = useQuery<{ payrollPeriods: PayrollPeriod[] }>(GET_PAYROLL_PERIODS_QUERY);
+  } = useQuery<PayrollPeriodsQueryResult>(GET_PAYROLL_PERIODS_QUERY);
 
   const periods = periodsData?.payrollPeriods ?? [];
   const activePeriodId = selectedPeriodId ?? periods[0]?.id ?? null;
@@ -61,7 +66,7 @@ export function usePayrollController() {
     data: periodData,
     loading: periodLoading,
     refetch: refetchPeriod,
-  } = useQuery<{ payrollPeriod: PayrollPeriod }>(GET_PAYROLL_PERIOD_QUERY, {
+  } = useQuery<PayrollPeriodQueryResult>(GET_PAYROLL_PERIOD_QUERY, {
     variables: { id: activePeriodId },
     skip: !activePeriodId,
   });

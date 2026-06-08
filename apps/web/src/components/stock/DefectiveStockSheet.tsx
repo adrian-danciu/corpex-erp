@@ -32,7 +32,10 @@ import {
   MARK_STOCK_DEFECTIVE_MUTATION,
   SCRAP_DEFECTIVE_STOCK_MUTATION,
 } from "@/graphql/mutations/stock.mutations";
-import type { Product, ProductStockBreakdown } from "@/types/stock.types";
+import type {
+  Product,
+  ProductStockByProductQueryResult,
+} from "@/types/stock.types";
 
 interface Props {
   product: Product;
@@ -51,9 +54,9 @@ interface FormValues {
 export function DefectiveStockSheet({ product, open, onClose }: Props) {
   const [mode, setMode] = useState<Mode>("report");
 
-  const { data, loading, refetch } = useQuery<{
-    productStockByProduct: ProductStockBreakdown[];
-  }>(GET_PRODUCT_STOCK_BY_PRODUCT_QUERY, {
+  const { data, loading, refetch } = useQuery<ProductStockByProductQueryResult>(
+    GET_PRODUCT_STOCK_BY_PRODUCT_QUERY,
+    {
     variables: { productId: product.id },
     skip: !open,
     fetchPolicy: "cache-and-network",

@@ -318,11 +318,15 @@ input CreateWarehouseInput {
 type DashboardMetrics {
   approvedLeaveThisMonth: Int!
   overdueInvoices: Int!
+  overdueSupplierInvoices: Int!
   pendingLeaveRequests: Int!
   totalEmployees: Int!
   totalInvoicedAmount: Float!
   totalInvoices: Int!
   totalPaidAmount: Float!
+  totalPayableAmount: Float!
+  totalSupplierInvoices: Int!
+  totalSupplierPaidAmount: Float!
   totalUsers: Int!
 }
 
@@ -470,6 +474,13 @@ type FinanceAgingBucket {
   label: String!
 }
 
+type FinanceOverview {
+  invoicesThisMonth: Int!
+  overdueAmount: Float!
+  totalPayable: Float!
+  totalReceivable: Float!
+}
+
 type FleetReportRow {
   brand: String!
   id: String!
@@ -574,6 +585,7 @@ enum InvoiceItemSourceType {
   MANUAL
   PROJECT_MATERIAL
   PROJECT_SERVICE
+  PURCHASE_RECEIPT_LINE
   VEHICLE_EXPENSE
 }
 
@@ -719,7 +731,7 @@ type Mutation {
   createProjectTask(input: CreateProjectTaskInput!): ProjectTask!
   createPurchaseOrder(input: CreatePurchaseOrderInput!): PurchaseOrder!
 
-  """Register an incoming/outgoing stock movement"""
+  """Register an admin-only stock adjustment"""
   createStockMovement(createStockMovementInput: CreateStockMovementInput!): StockMovement!
 
   """Create a new user account"""
@@ -827,6 +839,7 @@ type Notification {
 
 enum NotificationEntityType {
   EMPLOYEE_DOCUMENT
+  INVOICE
   LEAVE_REQUEST
   PRODUCT
   PROJECT_TASK
@@ -841,6 +854,7 @@ input NotificationFilterInput {
 enum NotificationType {
   EMPLOYEE_DOCUMENT_EXPIRING
   FLEET_DOCUMENT_EXPIRING
+  INVOICE_OVERDUE
   LEAVE_REQUEST_APPROVED
   LEAVE_REQUEST_REJECTED
   LEAVE_REQUEST_SUBMITTED
@@ -1305,10 +1319,12 @@ type PurchaseOrderReceipt {
 
 type PurchaseOrderReceiptLine {
   id: ID!
+  invoicedQty: Float
   orderLine: PurchaseOrderLine
   orderLineId: String!
   qtyReceived: Float!
   receiptId: String!
+  remainingInvoiceQty: Float
 }
 
 """Lifecycle state of a supplier purchase order"""
@@ -1352,8 +1368,11 @@ type Query {
   employeesByDepartment(department: Department!): [Employee!]!
   expiringDocuments(daysAhead: Int!): [ExpiringDocumentSummary!]!
 
-  """Aging analysis for outstanding invoice amounts"""
+  """Aging analysis for outstanding client receivables"""
   financeAgingSummary: [FinanceAgingBucket!]!
+
+  """Complete finance overview totals across all invoices"""
+  financeOverview: FinanceOverview!
   fleetReport: [FleetReportRow!]!
 
   """Aggregated leave requests by status"""
@@ -1431,6 +1450,9 @@ type Query {
   """Inventory overview KPIs"""
   stockOverview: StockOverview!
   stockReport: [StockReportRow!]!
+
+  """Aging analysis for outstanding supplier payables"""
+  supplierAgingSummary: [FinanceAgingBucket!]!
 
   """Get a user by ID"""
   user(id: String!): User

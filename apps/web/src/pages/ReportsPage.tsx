@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import { ReportDataTable } from "./reports/components/ReportDataTable";
+import { FinanceAgingReportCard } from "./reports/components/FinanceAgingReportCard";
 import {
   ReportExportButtons,
   type ReportExportDefinition,
@@ -15,14 +16,17 @@ import {
   FLEET_REPORT_QUERY,
   HR_LEAVE_SUMMARY_QUERY,
   STOCK_REPORT_QUERY,
+  SUPPLIER_AGING_SUMMARY_QUERY,
 } from "@/graphql/queries/report.queries";
 import type {
-  EmployeeReportRow,
-  FinanceAgingRow,
-  FleetReportRow,
-  HrLeaveSummaryRow,
-  StockReportRow,
+  EmployeeReportQueryResult,
+  FinanceAgingQueryResult,
+  FleetReportQueryResult,
+  HrLeaveSummaryQueryResult,
+  StockReportQueryResult,
+  SupplierAgingQueryResult,
 } from "@/types/report.types";
+import { formatDate } from "@/lib/formatters";
 
 function shortId(id: string) {
   return id.length > 12 ? `${id.slice(0, 8)}...${id.slice(-4)}` : id;
@@ -33,22 +37,29 @@ export default function ReportsPage() {
   const [exporting, setExporting] = useState<string | null>(null);
 
   const { data: hrData, loading: hrLoading, error: hrError } =
-    useQuery<{ hrLeaveSummary: HrLeaveSummaryRow[] }>(HR_LEAVE_SUMMARY_QUERY);
+    useQuery<HrLeaveSummaryQueryResult>(HR_LEAVE_SUMMARY_QUERY);
 
   const { data: financeData, loading: financeLoading, error: financeError } =
-    useQuery<{ financeAgingSummary: FinanceAgingRow[] }>(FINANCE_AGING_SUMMARY_QUERY);
+    useQuery<FinanceAgingQueryResult>(FINANCE_AGING_SUMMARY_QUERY);
+
+  const {
+    data: supplierFinanceData,
+    loading: supplierFinanceLoading,
+    error: supplierFinanceError,
+  } = useQuery<SupplierAgingQueryResult>(SUPPLIER_AGING_SUMMARY_QUERY);
 
   const { data: employeeData, loading: employeeLoading, error: employeeError } =
-    useQuery<{ employeeReport: EmployeeReportRow[] }>(EMPLOYEE_REPORT_QUERY);
+    useQuery<EmployeeReportQueryResult>(EMPLOYEE_REPORT_QUERY);
 
   const { data: stockData, loading: stockLoading, error: stockError } =
-    useQuery<{ stockReport: StockReportRow[] }>(STOCK_REPORT_QUERY);
+    useQuery<StockReportQueryResult>(STOCK_REPORT_QUERY);
 
   const { data: fleetData, loading: fleetLoading, error: fleetError } =
-    useQuery<{ fleetReport: FleetReportRow[] }>(FLEET_REPORT_QUERY);
+    useQuery<FleetReportQueryResult>(FLEET_REPORT_QUERY);
 
   const leaveRows = hrData?.hrLeaveSummary ?? [];
   const agingRows = financeData?.financeAgingSummary ?? [];
+  const supplierAgingRows = supplierFinanceData?.supplierAgingSummary ?? [];
   const employeeRows = employeeData?.employeeReport ?? [];
   const stockRows = stockData?.stockReport ?? [];
   const fleetRows = fleetData?.fleetReport ?? [];
@@ -77,7 +88,7 @@ export default function ReportsPage() {
       r.position,
       r.department,
       r.contractType,
-      new Date(r.employmentDate).toLocaleDateString("ro-RO"),
+      formatDate(r.employmentDate),
       String(r.remainingLeave),
       String(r.annualLeaveDays),
     ]),
@@ -122,9 +133,7 @@ export default function ReportsPage() {
       r.model,
       String(r.year),
       r.status,
-      r.nearestDocumentExpiry
-        ? new Date(r.nearestDocumentExpiry).toLocaleDateString("ro-RO")
-        : "",
+      r.nearestDocumentExpiry ? formatDate(r.nearestDocumentExpiry) : "",
       r.nearestDocumentType ?? "",
     ]),
   };
@@ -211,55 +220,25 @@ export default function ReportsPage() {
         </CardContent>
       </Card>
 
-      {/* Finance Aging Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Finance – Aging of Outstanding Invoices</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Buckets of outstanding amounts by days past due.
-          </p>
-        </CardHeader>
-        <CardContent>
-          {financeLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Spinner className="size-5 text-primary" />
-            </div>
-          ) : financeError ? (
-            <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-red-50 px-4 py-3 text-sm text-red-700">
-              <AlertCircle className="h-4 w-4" />
-              <span>Failed to load finance aging summary.</span>
-            </div>
-          ) : agingRows.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No outstanding invoices found.</p>
-          ) : (
-            <ReportDataTable
-              rows={agingRows}
-              getRowKey={(row) => row.label}
-              columns={[
-                {
-                  header: "Aging Bucket (days)",
-                  className: "font-medium",
-                  render: (row) => row.label,
-                },
-                {
-                  header: "Outstanding Amount (EUR)",
-                  className: "text-right",
-                  render: (row) =>
-                    row.amount.toLocaleString("ro-RO", {
-                      style: "currency",
-                      currency: "EUR",
-                    }),
-                },
-                {
-                  header: "Invoice Count",
-                  className: "text-right",
-                  render: (row) => row.invoiceCount,
-                },
-              ]}
-            />
-          )}
-        </CardContent>
-      </Card>
+      <FinanceAgingReportCard
+        title="Finance – Client Receivables Aging"
+        description="Outstanding client invoice amounts grouped by days past due."
+        rows={agingRows}
+        loading={financeLoading}
+        error={Boolean(financeError)}
+        errorLabel="Failed to load client receivables aging."
+        emptyLabel="No outstanding client invoices found."
+      />
+
+      <FinanceAgingReportCard
+        title="Finance – Supplier Payables Aging"
+        description="Outstanding supplier invoice amounts grouped by days past due."
+        rows={supplierAgingRows}
+        loading={supplierFinanceLoading}
+        error={Boolean(supplierFinanceError)}
+        errorLabel="Failed to load supplier payables aging."
+        emptyLabel="No outstanding supplier invoices found."
+      />
 
       {/* Employee Report */}
       <Card>
@@ -307,8 +286,7 @@ export default function ReportsPage() {
                 },
                 {
                   header: "Employment Date",
-                  render: (row) =>
-                    new Date(row.employmentDate).toLocaleDateString("ro-RO"),
+                  render: (row) => formatDate(row.employmentDate),
                 },
                 {
                   header: "Leave Remaining",
@@ -424,9 +402,7 @@ export default function ReportsPage() {
                 {
                   header: "Nearest Doc Expiry",
                   render: (row) =>
-                    row.nearestDocumentExpiry
-                      ? new Date(row.nearestDocumentExpiry).toLocaleDateString("ro-RO")
-                      : "—",
+                    formatDate(row.nearestDocumentExpiry),
                 },
                 {
                   header: "Doc Type",

@@ -10,7 +10,11 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { GET_MY_PROJECT_TASKS_QUERY } from "@/graphql/mutations/project.queries";
-import type { ProjectTask } from "@/types/project.types";
+import type {
+  MyProjectTasksQueryResult,
+  ProjectTask,
+} from "@/types/project.types";
+import { formatDate } from "@/lib/formatters";
 
 const PRIORITY_BADGE: Record<ProjectTask["priority"], string> = {
   LOW: "bg-slate-100 text-slate-700",
@@ -19,7 +23,7 @@ const PRIORITY_BADGE: Record<ProjectTask["priority"], string> = {
 };
 
 export function MyTasksWidget() {
-  const { data, loading } = useQuery<{ myProjectTasks: ProjectTask[] }>(
+  const { data, loading } = useQuery<MyProjectTasksQueryResult>(
     GET_MY_PROJECT_TASKS_QUERY,
   );
 
@@ -51,7 +55,7 @@ export function MyTasksWidget() {
                     <span className="text-xs text-slate-500">
                       {t.status}
                       {t.dueDate
-                        ? ` · due ${new Date(t.dueDate).toLocaleDateString()}`
+                        ? ` · due ${formatDate(t.dueDate)}`
                         : ""}
                     </span>
                   </span>

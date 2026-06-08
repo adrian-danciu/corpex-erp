@@ -19,7 +19,10 @@ import {
   UserRole,
   type UserRoleType,
 } from "@/lib/schemas";
-import type { User as UserType } from "@/types/auth.types";
+import type {
+  CreateUserMutationResult,
+  User as UserType,
+} from "@/types/auth.types";
 import { generateEmail } from "@/lib/utils/email-generator";
 import { generatePassword } from "@/lib/utils/password-generator";
 import { CREATE_USER_MUTATION } from "@/graphql/mutations/user.mutations";
@@ -42,9 +45,8 @@ export default function UserCreateForm({
 
   // Apollo mutation hook (toast on error; success is shown inline because
   // we need to display the auto-generated password to the admin)
-  const [createUser, { loading: mutationLoading }] = useMutationWithToast<{
-    createUser: UserType;
-  }>(CREATE_USER_MUTATION);
+  const [createUser, { loading: mutationLoading }] =
+    useMutationWithToast<CreateUserMutationResult>(CREATE_USER_MUTATION);
 
   const {
     register,

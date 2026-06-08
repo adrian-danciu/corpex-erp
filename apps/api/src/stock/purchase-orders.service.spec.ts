@@ -1,5 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import {
+  InvoiceItemSourceType,
+  InvoiceStatus,
   PartnerType,
   PurchaseOrderStatus,
   StockMovementType,
@@ -15,11 +17,14 @@ describe('PurchaseOrdersService', () => {
     warehouse: { findUnique: jest.Mock };
     product: { findMany: jest.Mock; update: jest.Mock };
     purchaseOrder: {
+      count: jest.Mock;
       create: jest.Mock;
+      findMany: jest.Mock;
       findUnique: jest.Mock;
       update: jest.Mock;
       delete: jest.Mock;
     };
+    invoiceItem: { findMany: jest.Mock };
   };
   let tx: {
     purchaseOrder: { findUnique: jest.Mock; update: jest.Mock };
@@ -48,11 +53,14 @@ describe('PurchaseOrdersService', () => {
       warehouse: { findUnique: jest.fn() },
       product: { findMany: jest.fn(), update: jest.fn() },
       purchaseOrder: {
+        count: jest.fn(),
         create: jest.fn(),
+        findMany: jest.fn(),
         findUnique: jest.fn(),
         update: jest.fn(),
         delete: jest.fn(),
       },
+      invoiceItem: { findMany: jest.fn() },
     };
     service = new PurchaseOrdersService(
       prisma as unknown as PrismaService,
@@ -65,6 +73,51 @@ describe('PurchaseOrdersService', () => {
     warehouseId: 'warehouse-1',
     lines: [{ productId: 'product-1', qtyOrdered: 2, unitCost: 10 }],
   };
+
+  it('adds remaining uninvoiced quantities to purchase order receipt lines', async () => {
+    prisma.purchaseOrder.findMany.mockResolvedValue([
+      {
+        id: 'po-1',
+        receipts: [
+          {
+            id: 'receipt-1',
+            lines: [
+              { id: 'receipt-line-1', qtyReceived: 5 },
+              { id: 'receipt-line-2', qtyReceived: 2 },
+            ],
+          },
+        ],
+      },
+    ]);
+    prisma.purchaseOrder.count.mockResolvedValue(1);
+    prisma.invoiceItem.findMany.mockResolvedValue([
+      { sourceId: 'receipt-line-1', quantity: 3 },
+      { sourceId: 'receipt-line-2', quantity: 2 },
+    ]);
+
+    const result = await service.list({ skip: 0, take: 20 });
+
+    expect(prisma.invoiceItem.findMany).toHaveBeenCalledWith({
+      where: {
+        sourceType: InvoiceItemSourceType.PURCHASE_RECEIPT_LINE,
+        sourceId: { in: ['receipt-line-1', 'receipt-line-2'] },
+        invoice: { status: { not: InvoiceStatus.CANCELLED } },
+      },
+      select: { sourceId: true, quantity: true },
+    });
+    expect(result.items[0].receipts?.[0].lines).toEqual([
+      expect.objectContaining({
+        id: 'receipt-line-1',
+        invoicedQty: 3,
+        remainingInvoiceQty: 2,
+      }),
+      expect.objectContaining({
+        id: 'receipt-line-2',
+        invoicedQty: 2,
+        remainingInvoiceQty: 0,
+      }),
+    ]);
+  });
 
   it('rejects purchase orders without lines', async () => {
     await expect(

@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table";
 import type { Vehicle } from "@/types/fleet.types";
 import type { useVehicleDetailController } from "../hooks/useVehicleDetailController";
+import { formatDate } from "@/lib/formatters";
 
 type VehicleDetailController = ReturnType<typeof useVehicleDetailController>;
 
@@ -75,7 +76,7 @@ export function VehicleMileageTab({
                 {mileageLogs.map((log) => (
                   <TableRow key={log.id}>
                     <TableCell>
-                      {new Date(log.date).toLocaleDateString("ro-RO")}
+                      {formatDate(log.date)}
                     </TableCell>
                     <TableCell className="font-medium">
                       {log.odometer.toLocaleString()}

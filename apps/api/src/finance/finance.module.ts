@@ -6,6 +6,8 @@ import { PaymentsResolver } from './payments.resolver';
 import { PartnersService } from './partners.service';
 import { InvoicesService } from './invoices.service';
 import { PaymentsService } from './payments.service';
+import { InvoiceSourceValidationService } from './invoice-source-validation.service';
+import { ProjectInvoiceCostsService } from './project-invoice-costs.service';
 
 @Module({
   imports: [PrismaModule],
@@ -16,6 +18,8 @@ import { PaymentsService } from './payments.service';
     PartnersService,
     InvoicesService,
     PaymentsService,
+    InvoiceSourceValidationService,
+    ProjectInvoiceCostsService,
   ],
   exports: [PartnersService, InvoicesService, PaymentsService],
 })

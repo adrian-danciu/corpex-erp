@@ -62,3 +62,11 @@ export interface PayrollPeriod {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface PayrollPeriodsQueryResult {
+  payrollPeriods: PayrollPeriod[];
+}
+
+export interface PayrollPeriodQueryResult {
+  payrollPeriod: PayrollPeriod;
+}

@@ -35,9 +35,8 @@ import {
 } from "@/graphql/mutations/stock.mutations";
 import { GET_IN_TRANSIT_SUMMARY_QUERY } from "@/graphql/mutations/purchaseOrders.mutations";
 import { DefectiveStockSheet } from "@/components/stock/DefectiveStockSheet";
-import type { PaginatedResult } from "@/types/pagination.types";
-import type { Product } from "@/types/stock.types";
-import type { InTransitProductSummary } from "@/types/purchaseOrder.types";
+import type { Product, ProductsQueryResult } from "@/types/stock.types";
+import type { InTransitSummaryQueryResult } from "@/types/purchaseOrder.types";
 import { useCurrency } from "@/hooks/useCurrency";
 import { UNITS, DEFAULT_UNIT } from "@/lib/units";
 import {
@@ -71,9 +70,9 @@ export default function ProductsPage() {
   const { page, pageSize, skip, take, setPage } = usePagination();
   const { formatMoney } = useCurrency();
 
-  const { data, loading, error, refetch } = useQuery<{
-    products: PaginatedResult<Product>;
-  }>(GET_PRODUCTS_QUERY, {
+  const { data, loading, error, refetch } = useQuery<ProductsQueryResult>(
+    GET_PRODUCTS_QUERY,
+    {
     variables: {
       pagination: { skip, take },
       search: search || undefined,
@@ -81,9 +80,10 @@ export default function ProductsPage() {
     fetchPolicy: "cache-and-network",
   });
 
-  const { data: inTransitData } = useQuery<{
-    inTransitSummary: InTransitProductSummary[];
-  }>(GET_IN_TRANSIT_SUMMARY_QUERY, { fetchPolicy: "cache-and-network" });
+  const { data: inTransitData } = useQuery<InTransitSummaryQueryResult>(
+    GET_IN_TRANSIT_SUMMARY_QUERY,
+    { fetchPolicy: "cache-and-network" },
+  );
 
   const inTransitMap = new Map<string, number>(
     (inTransitData?.inTransitSummary ?? []).map((r) => [

@@ -19,11 +19,10 @@ import {
   GET_STOCK_MOVEMENTS_QUERY,
   GET_WAREHOUSES_QUERY,
 } from "@/graphql/mutations/stock.mutations";
-import type { PaginatedResult } from "@/types/pagination.types";
 import type {
-  Product,
-  StockMovement,
-  Warehouse,
+  CreateStockMovementMutationResult,
+  ProductsQueryResult,
+  WarehousesQueryResult,
 } from "@/types/stock.types";
 import { StockMovementType as StockMovementTypeEnum } from "@/types/stock.types";
 
@@ -37,22 +36,23 @@ type StockAdjustmentFormData = {
 };
 
 export default function StockAdjustmentPage() {
-  const { data: productsData } = useQuery<{
-    products: PaginatedResult<Product>;
-  }>(GET_PRODUCTS_QUERY, {
+  const { data: productsData } = useQuery<ProductsQueryResult>(
+    GET_PRODUCTS_QUERY,
+    {
     variables: { pagination: { skip: 0, take: 200 } },
     fetchPolicy: "cache-first",
   });
-  const { data: warehousesData } = useQuery<{
-    warehouses: PaginatedResult<Warehouse>;
-  }>(GET_WAREHOUSES_QUERY, {
+  const { data: warehousesData } = useQuery<WarehousesQueryResult>(
+    GET_WAREHOUSES_QUERY,
+    {
     variables: { pagination: { skip: 0, take: 100 } },
     fetchPolicy: "cache-first",
   });
 
-  const [createStockMovement, { loading: creating }] = useMutationWithToast<{
-    createStockMovement: StockMovement;
-  }>(CREATE_STOCK_MOVEMENT_MUTATION, {
+  const [createStockMovement, { loading: creating }] =
+    useMutationWithToast<CreateStockMovementMutationResult>(
+      CREATE_STOCK_MOVEMENT_MUTATION,
+      {
     refetchQueries: [{ query: GET_STOCK_MOVEMENTS_QUERY }],
     successMessage: "Adjustment registered",
   });
@@ -180,9 +180,12 @@ export default function StockAdjustmentPage() {
                   {...register("quantity", {
                     required: "Quantity is required",
                     valueAsNumber: true,
-                    min: { value: 0.01, message: "Quantity must be > 0" },
+                    min: { value: 0, message: "Quantity cannot be negative" },
                   })}
                 />
+                {errors.quantity && (
+                  <p className="text-sm text-red-600">{errors.quantity.message}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="unitCost">Unit Cost</Label>

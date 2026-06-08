@@ -87,3 +87,15 @@ export interface ExpiringDocumentSummary {
   type: DocumentType;
   count: number;
 }
+
+export interface VehicleQueryResult {
+  vehicle: Vehicle;
+}
+
+export interface VehiclesQueryResult {
+  vehicles: import("./pagination.types").PaginatedResult<Vehicle>;
+}
+
+export interface ExpiringDocumentsQueryResult {
+  expiringDocuments: ExpiringDocumentSummary[];
+}

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import type { User as UserType } from "@/types/auth.types";
+import type {
+  UpdateProfilePictureMutationResult,
+} from "@/types/auth.types";
 import { useAuthStore } from "@/stores/auth.store";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { CHANGE_PASSWORD_MUTATION, UPDATE_PROFILE_PICTURE_MUTATION } from "@/graphql/mutations/profile.mutations";
 import { User, Camera } from "lucide-react";
+import { formatDate } from "@/lib/formatters";
 
 interface PasswordFormValues {
   currentPassword: string;
@@ -68,7 +71,7 @@ export default function ProfilePage() {
     });
 
   const [updateProfilePictureMutation, { loading: updatingPicture }] =
-    useMutationWithToast<{ updateProfilePicture: UserType }>(
+    useMutationWithToast<UpdateProfilePictureMutationResult>(
       UPDATE_PROFILE_PICTURE_MUTATION,
       {
         successMessage: "Profile picture updated",
@@ -198,10 +201,10 @@ export default function ProfilePage() {
 
             <div className="space-y-1">
               <p className="text-xs text-slate-500">
-                Account created: {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : "N/A"}
+                Account created: {user?.createdAt ? formatDate(user.createdAt) : "N/A"}
               </p>
               <p className="text-xs text-slate-500">
-                Last updated: {user?.updatedAt ? new Date(user.updatedAt).toLocaleDateString() : "N/A"}
+                Last updated: {user?.updatedAt ? formatDate(user.updatedAt) : "N/A"}
               </p>
             </div>
           </CardContent>

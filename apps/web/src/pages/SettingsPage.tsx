@@ -22,37 +22,13 @@ import {
   UPDATE_COMPANY_SETTINGS_MUTATION,
 } from "@/graphql/mutations/settings.mutations";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
-
-interface CompanySettingsData {
-  companyName: string;
-  cui: string;
-  regCom: string;
-  address: string;
-  city: string;
-  country: string;
-  email: string;
-  phone: string;
-  bankName: string;
-  bankAccount: string;
-  defaultInvoiceSeries: string;
-  defaultVatRate: number;
-  paymentTermsDays: number;
-  defaultAnnualLeaveDays: number;
-  defaultCountry: string;
-  fleetExpiryThresholdItp: number;
-  fleetExpiryThresholdRca: number;
-  fleetExpiryThresholdCasco: number;
-  fleetExpiryThresholdRovinieta: number;
-  payrollTaxCasRate: number;
-  payrollTaxCassRate: number;
-  payrollTaxIncomeRate: number;
-  payrollTaxCamRate: number;
-  payrollPersonalDeduction: number;
-  payrollTaxRuleVersion: string;
-}
+import type {
+  CompanySettings,
+  CompanySettingsQueryResult,
+} from "@/types/settings.types";
 
 export default function SettingsPage() {
-  const { data, loading, error } = useQuery<{ companySettings: CompanySettingsData }>(
+  const { data, loading, error } = useQuery<CompanySettingsQueryResult>(
     GET_COMPANY_SETTINGS_QUERY,
   );
 
@@ -68,31 +44,31 @@ export default function SettingsPage() {
     register: regCompany,
     handleSubmit: submitCompany,
     reset: resetCompany,
-  } = useForm<Pick<CompanySettingsData, "companyName" | "cui" | "regCom" | "address" | "city" | "country" | "email" | "phone" | "bankName" | "bankAccount">>();
+  } = useForm<Pick<CompanySettings, "companyName" | "cui" | "regCom" | "address" | "city" | "country" | "email" | "phone" | "bankName" | "bankAccount">>();
 
   const {
     register: regInvoice,
     handleSubmit: submitInvoice,
     reset: resetInvoice,
-  } = useForm<Pick<CompanySettingsData, "defaultInvoiceSeries" | "defaultVatRate" | "paymentTermsDays">>();
+  } = useForm<Pick<CompanySettings, "defaultInvoiceSeries" | "defaultVatRate" | "paymentTermsDays">>();
 
   const {
     register: regHr,
     handleSubmit: submitHr,
     reset: resetHr,
-  } = useForm<Pick<CompanySettingsData, "defaultAnnualLeaveDays" | "defaultCountry">>();
+  } = useForm<Pick<CompanySettings, "defaultAnnualLeaveDays" | "defaultCountry">>();
 
   const {
     register: regFleet,
     handleSubmit: submitFleet,
     reset: resetFleet,
-  } = useForm<Pick<CompanySettingsData, "fleetExpiryThresholdItp" | "fleetExpiryThresholdRca" | "fleetExpiryThresholdCasco" | "fleetExpiryThresholdRovinieta">>();
+  } = useForm<Pick<CompanySettings, "fleetExpiryThresholdItp" | "fleetExpiryThresholdRca" | "fleetExpiryThresholdCasco" | "fleetExpiryThresholdRovinieta">>();
 
   const {
     register: regPayroll,
     handleSubmit: submitPayroll,
     reset: resetPayroll,
-  } = useForm<Pick<CompanySettingsData, "payrollTaxCasRate" | "payrollTaxCassRate" | "payrollTaxIncomeRate" | "payrollTaxCamRate" | "payrollPersonalDeduction" | "payrollTaxRuleVersion">>();
+  } = useForm<Pick<CompanySettings, "payrollTaxCasRate" | "payrollTaxCassRate" | "payrollTaxIncomeRate" | "payrollTaxCamRate" | "payrollPersonalDeduction" | "payrollTaxRuleVersion">>();
 
   useEffect(() => {
     if (data?.companySettings) {

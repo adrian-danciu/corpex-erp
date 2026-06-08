@@ -42,10 +42,10 @@ import {
 import { GET_VEHICLES_QUERY } from "@/graphql/queries/fleet.queries";
 import type {
   Project,
-  ProjectVehicleAssignment,
+  ProjectVehiclesQueryResult,
 } from "@/types/project.types";
-import type { Vehicle } from "@/types/fleet.types";
-import type { PaginatedResult } from "@/types/pagination.types";
+import type { VehiclesQueryResult } from "@/types/fleet.types";
+import { formatDate } from "@/lib/formatters";
 
 interface Props {
   project: Project;
@@ -62,16 +62,16 @@ export function VehiclesTab({ project, isProjectManager }: Props) {
 
   const variables = { projectId: project.id };
 
-  const { data, refetch } = useQuery<{
-    projectVehicles: ProjectVehicleAssignment[];
-  }>(GET_PROJECT_VEHICLES_QUERY, {
+  const { data, refetch } = useQuery<ProjectVehiclesQueryResult>(
+    GET_PROJECT_VEHICLES_QUERY,
+    {
     variables,
     fetchPolicy: "cache-and-network",
   });
 
-  const { data: vehiclesData } = useQuery<{
-    vehicles: PaginatedResult<Vehicle>;
-  }>(GET_VEHICLES_QUERY, {
+  const { data: vehiclesData } = useQuery<VehiclesQueryResult>(
+    GET_VEHICLES_QUERY,
+    {
     variables: { pagination: { skip: 0, take: 200 } },
   });
 
@@ -171,11 +171,11 @@ export function VehiclesTab({ project, isProjectManager }: Props) {
                           : a.vehicleId}
                       </TableCell>
                       <TableCell className="text-slate-700">
-                        {new Date(a.startDate).toLocaleDateString()}
+                        {formatDate(a.startDate)}
                       </TableCell>
                       <TableCell className="text-slate-700">
                         {a.endDate ? (
-                          new Date(a.endDate).toLocaleDateString()
+                          formatDate(a.endDate)
                         ) : (
                           <Badge
                             variant="outline"

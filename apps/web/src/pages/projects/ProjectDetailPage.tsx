@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { GET_PROJECT_QUERY } from "@/graphql/mutations/project.queries";
-import type { Project } from "@/types/project.types";
+import type { ProjectQueryResult } from "@/types/project.types";
 import { ProjectMemberRole } from "@/types/project.types";
 import { useAuthStore } from "@/stores/auth.store";
 import { OverviewTab } from "@/components/projects/tabs/OverviewTab";
@@ -24,7 +24,7 @@ export default function ProjectDetailPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
 
-  const { data, loading, error, refetch } = useQuery<{ project: Project }>(
+  const { data, loading, error, refetch } = useQuery<ProjectQueryResult>(
     GET_PROJECT_QUERY,
     {
       variables: { projectId: id },
