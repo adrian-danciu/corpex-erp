@@ -1,4 +1,5 @@
 import type { NavigateFunction } from "react-router-dom";
+import { InlineError } from "@/components/common/InlineError";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -87,7 +88,10 @@ export function MaterialAllocationDialog({
         </DialogHeader>
         <div className="space-y-3">
           {error && (
-            <div className="space-y-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+            <InlineError
+              className="flex-col items-start p-3 text-red-800"
+              icon={false}
+            >
               <p>{error}</p>
               {purchaseDraft && (
                 <Button
@@ -108,7 +112,7 @@ export function MaterialAllocationDialog({
                   Create purchase order draft
                 </Button>
               )}
-            </div>
+            </InlineError>
           )}
           <div>
             <Label>Product</Label>

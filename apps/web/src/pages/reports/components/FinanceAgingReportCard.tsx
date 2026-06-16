@@ -1,4 +1,4 @@
-import { AlertCircle } from "lucide-react";
+import { InlineError } from "@/components/common/InlineError";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import type { FinanceAgingRow } from "@/types/report.types";
@@ -36,10 +36,7 @@ export function FinanceAgingReportCard({
             <Spinner className="size-5 text-primary" />
           </div>
         ) : error ? (
-          <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-red-50 px-4 py-3 text-sm text-red-700">
-            <AlertCircle className="h-4 w-4" />
-            <span>{errorLabel}</span>
-          </div>
+          <InlineError>{errorLabel}</InlineError>
         ) : rows.length === 0 ? (
           <p className="text-sm text-muted-foreground">{emptyLabel}</p>
         ) : (

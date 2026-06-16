@@ -1,3 +1,4 @@
+import { InlineError } from "@/components/common/InlineError";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -74,9 +75,9 @@ export function ServiceDialog({
         </DialogHeader>
         <div className="space-y-3">
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+            <InlineError className="p-3 text-red-800" icon={false}>
               {error}
-            </div>
+            </InlineError>
           )}
           <div>
             <Label>Description</Label>

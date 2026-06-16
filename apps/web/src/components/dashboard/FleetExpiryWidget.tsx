@@ -15,7 +15,7 @@ export function FleetExpiryWidget() {
   const summaries = (data?.expiringDocuments ?? []).filter((s) => s.count > 0);
 
   return (
-    <Card>
+    <Card className="w-full min-w-0">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">Fleet — Expiring Documents</CardTitle>
         <Car className="h-4 w-4 text-muted-foreground" />

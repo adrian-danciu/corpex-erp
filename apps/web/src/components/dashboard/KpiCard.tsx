@@ -10,7 +10,7 @@ type KpiCardProps = {
 
 export function KpiCard({ title, value, sub, icon, accent }: KpiCardProps) {
   return (
-    <div className="rounded-lg border bg-card p-6 shadow-sm">
+    <div className="w-full min-w-0 rounded-lg border bg-card p-6 shadow-sm">
       <div className="flex items-center justify-between pb-2">
         <h3 className="text-sm font-medium">{title}</h3>
         {icon}

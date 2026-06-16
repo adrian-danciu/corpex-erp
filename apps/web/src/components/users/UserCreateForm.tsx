@@ -1,11 +1,11 @@
-import { useForm, Controller, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { useMutationWithToast } from "@/hooks/useMutationWithToast";
+import { InlineError } from "@/components/common/InlineError";
 import { Button } from "../ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import {
   Select,
   SelectContent,
@@ -19,13 +19,14 @@ import {
   UserRole,
   type UserRoleType,
 } from "@/lib/schemas";
+import { generatePassword } from "@/lib/utils/password-generator";
+import { CREATE_USER_MUTATION } from "@/graphql/mutations/user.mutations";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import type {
   CreateUserMutationResult,
   User as UserType,
 } from "@/types/auth.types";
 import { generateEmail } from "@/lib/utils/email-generator";
-import { generatePassword } from "@/lib/utils/password-generator";
-import { CREATE_USER_MUTATION } from "@/graphql/mutations/user.mutations";
 
 interface UserCreateFormProps {
   initialFirstName?: string;
@@ -43,8 +44,6 @@ export default function UserCreateForm({
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
 
-  // Apollo mutation hook (toast on error; success is shown inline because
-  // we need to display the auto-generated password to the admin)
   const [createUser, { loading: mutationLoading }] =
     useMutationWithToast<CreateUserMutationResult>(CREATE_USER_MUTATION);
 
@@ -63,7 +62,6 @@ export default function UserCreateForm({
     },
   });
 
-  // Watch firstName and lastName for email generation
   const firstName = useWatch({ control, name: "firstName" });
   const lastName = useWatch({ control, name: "lastName" });
 
@@ -75,10 +73,7 @@ export default function UserCreateForm({
       setErrorMessage("");
       setSuccessMessage("");
 
-      // Generate password
       const password = generatePassword();
-
-      // Prepare mutation variables
       const createUserInput = {
         firstName: data.firstName,
         lastName: data.lastName,
@@ -87,25 +82,18 @@ export default function UserCreateForm({
         role: data.role,
       };
 
-      console.log("Creating user with data:", createUserInput);
-
-      // Call GraphQL mutation
       const result = await createUser({
         variables: { createUserInput },
       });
-
-      console.log("User created successfully:", result.data);
 
       if (result.data?.createUser && onUserCreated) {
         onUserCreated(result.data.createUser);
       }
 
-      // Show success message
       setSuccessMessage(
         `User created successfully! Email: ${generatedEmail}\nPassword has been sent to the user's email.`
       );
 
-      // Reset form
       reset();
 
     } catch (error) {
@@ -126,7 +114,6 @@ export default function UserCreateForm({
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Name Fields Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName">
@@ -159,7 +146,6 @@ export default function UserCreateForm({
             </div>
           </div>
 
-          {/* Auto-generated Email Display */}
           <div className="space-y-2">
             <Label htmlFor="email">
               Email Address <span className="text-slate-500">(auto-generated)</span>
@@ -177,7 +163,6 @@ export default function UserCreateForm({
             </p>
           </div>
 
-          {/* Role Selection */}
           <div className="space-y-2">
             <Label htmlFor="role">
               Role <span className="text-red-500">*</span>
@@ -207,7 +192,6 @@ export default function UserCreateForm({
             </p>
           </div>
 
-          {/* Password Info */}
           <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
             <p className="text-sm text-blue-800">
               <strong>Note:</strong> A secure password will be automatically generated and sent to the user's email address.
@@ -215,21 +199,18 @@ export default function UserCreateForm({
             </p>
           </div>
 
-          {/* Success Message */}
           {successMessage && (
             <div className="bg-green-50 border border-green-200 rounded-md p-4">
               <p className="text-sm text-green-800 whitespace-pre-line">{successMessage}</p>
             </div>
           )}
 
-          {/* Error Message */}
           {errorMessage && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-4">
-              <p className="text-sm text-red-800">{errorMessage}</p>
-            </div>
+            <InlineError className="p-4 text-red-800" icon={false}>
+              {errorMessage}
+            </InlineError>
           )}
 
-          {/* Submit Button */}
           <Button type="submit" className="w-full" disabled={mutationLoading}>
             {mutationLoading ? "Creating User..." : "Create User"}
           </Button>

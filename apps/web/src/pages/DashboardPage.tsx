@@ -1,5 +1,6 @@
 import { useQuery } from "@apollo/client/react";
-import { AlertCircle, Briefcase, Users as UsersIcon, FileText, AlertTriangle } from "lucide-react";
+import { AlertTriangle, Briefcase, FileText, Users as UsersIcon } from "lucide-react";
+import { InlineError } from "@/components/common/InlineError";
 import { PageLoading } from "@/components/ui/page-loading";
 import { FleetExpiryWidget } from "@/components/dashboard/FleetExpiryWidget";
 import { FinanceAgingChart } from "@/components/dashboard/FinanceAgingChart";
@@ -20,7 +21,6 @@ import {
   Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from "recharts";
-import type { PieLabelRenderProps } from "recharts";
 import type {
   DashboardMetricsQueryResult,
   FinanceAgingQueryResult,
@@ -67,8 +67,8 @@ export default function DashboardPage() {
     : [];
 
   return (
-    <div className="space-y-8">
-      <div>
+    <div className="min-w-0 space-y-8">
+      <div className="min-w-0">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-slate-500 mt-2">
           Welcome back, {user?.firstName}! Here's what's happening today.
@@ -78,16 +78,13 @@ export default function DashboardPage() {
       {loading && <PageLoading message="Loading dashboard..." />}
 
       {error && !loading && (
-        <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-red-50 px-4 py-3 text-sm text-red-700">
-          <AlertCircle className="h-4 w-4" />
-          <span>Failed to load dashboard metrics.</span>
-        </div>
+        <InlineError>Failed to load dashboard metrics.</InlineError>
       )}
 
       {metrics && !loading && !error && (
         <>
           {/* KPI Grid */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid min-w-0 items-stretch gap-4 md:grid-cols-2 lg:grid-cols-4">
             <KpiCard
               title="Total Users"
               value={metrics.totalUsers}
@@ -173,8 +170,8 @@ export default function DashboardPage() {
             />
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
+          <div className="grid min-w-0 items-stretch gap-6 lg:grid-cols-2">
+            <Card className="w-full min-w-0">
               <CardHeader>
                 <CardTitle className="text-base">Finance – Supplier Paid vs Outstanding</CardTitle>
               </CardHeader>
@@ -200,6 +197,16 @@ export default function DashboardPage() {
                     })} />
                   </PieChart>
                 </ResponsiveContainer>
+                <div className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs text-slate-600">
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block h-2 w-2 rounded-full bg-blue-500" />
+                    Paid
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
+                    Outstanding
+                  </span>
+                </div>
               </CardContent>
             </Card>
 
@@ -213,9 +220,9 @@ export default function DashboardPage() {
           </div>
 
           {/* Charts row */}
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid min-w-0 items-stretch gap-6 lg:grid-cols-3">
             {/* Finance: Paid vs Outstanding */}
-            <Card>
+            <Card className="w-full min-w-0">
               <CardHeader>
                 <CardTitle className="text-base">Finance – Client Collected vs Outstanding</CardTitle>
               </CardHeader>
@@ -241,15 +248,21 @@ export default function DashboardPage() {
                     })} />
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="flex justify-center gap-4 mt-2 text-xs text-slate-600">
-                  <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-green-500" />Collected</span>
-                  <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-amber-500" />Outstanding</span>
+                <div className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs text-slate-600">
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+                    Collected
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
+                    Outstanding
+                  </span>
                 </div>
               </CardContent>
             </Card>
 
             {/* HR: Leave by Status */}
-            <Card>
+            <Card className="w-full min-w-0">
               <CardHeader>
                 <CardTitle className="text-base">HR – Leave Requests by Status</CardTitle>
               </CardHeader>
@@ -266,7 +279,7 @@ export default function DashboardPage() {
                         outerRadius={75}
                         dataKey="count"
                         nameKey="status"
-                        label={({ name, value }: PieLabelRenderProps) => `${String(name).charAt(0) + String(name).slice(1).toLowerCase()} (${value})`}
+                        label={false}
                         labelLine={false}
                       >
                         {leaveRows.map((row) => (
@@ -276,6 +289,24 @@ export default function DashboardPage() {
                       <Tooltip />
                     </PieChart>
                   </ResponsiveContainer>
+                )}
+                {leaveRows.length > 0 && (
+                  <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs text-slate-600">
+                    {leaveRows.map((row) => (
+                      <span key={row.status} className="flex items-center gap-1">
+                        <span
+                          className="inline-block h-2 w-2 rounded-full"
+                          style={{
+                            backgroundColor:
+                              LEAVE_COLORS[row.status] ?? "#94a3b8",
+                          }}
+                        />
+                        {String(row.status).charAt(0) +
+                          String(row.status).slice(1).toLowerCase()}{" "}
+                        ({row.count})
+                      </span>
+                    ))}
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -291,14 +322,16 @@ export default function DashboardPage() {
           </div>
 
           {/* Notifications + Project widgets */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid min-w-0 items-stretch gap-4 md:grid-cols-2 lg:grid-cols-3">
             <NotificationsWidget />
             <MyProjectsWidget />
             <MyTasksWidget />
           </div>
 
           {/* Fleet Expiry Widget */}
-          <FleetExpiryWidget />
+          <div className="grid min-w-0 items-stretch gap-4">
+            <FleetExpiryWidget />
+          </div>
         </>
       )}
     </div>

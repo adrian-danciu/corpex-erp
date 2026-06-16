@@ -27,7 +27,7 @@ export function FinanceAgingChart({
   title,
 }: FinanceAgingChartProps) {
   return (
-    <Card>
+    <Card className="w-full min-w-0">
       <CardHeader>
         <CardTitle className="text-base">{title}</CardTitle>
       </CardHeader>
@@ -61,6 +61,17 @@ export function FinanceAgingChart({
               />
             </BarChart>
           </ResponsiveContainer>
+        )}
+        {!rows.every((row) => row.amount === 0) && (
+          <div className="mt-3 flex justify-center text-xs text-slate-600">
+            <span className="flex items-center gap-1">
+              <span
+                className="inline-block h-2 w-2 rounded-full"
+                style={{ backgroundColor: barColor }}
+              />
+              {barName}
+            </span>
+          </div>
         )}
       </CardContent>
     </Card>

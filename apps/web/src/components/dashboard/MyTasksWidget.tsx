@@ -30,7 +30,7 @@ export function MyTasksWidget() {
   const tasks = (data?.myProjectTasks ?? []).slice(0, 5);
 
   return (
-    <Card>
+    <Card className="w-full min-w-0">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">Tasks assigned to me</CardTitle>
         <ListTodo className="h-4 w-4 text-muted-foreground" />

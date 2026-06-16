@@ -1,5 +1,10 @@
 import { Plus, Trash2 } from "lucide-react";
-import { Controller, useFieldArray, useFormContext } from "react-hook-form";
+import {
+  Controller,
+  useFieldArray,
+  useFormContext,
+  useWatch,
+} from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -29,7 +34,6 @@ export function PurchaseOrderLineEditor({ products, disabled }: Props) {
   const {
     control,
     register,
-    watch,
     formState: { errors },
   } = useFormContext<CreatePurchaseOrderFormData>();
 
@@ -38,7 +42,7 @@ export function PurchaseOrderLineEditor({ products, disabled }: Props) {
     name: "lines",
   });
 
-  const lines = watch("lines") ?? [];
+  const lines = useWatch({ control, name: "lines" }) ?? [];
   const subtotal = lines.reduce(
     (sum, line) =>
       sum + (Number(line.qtyOrdered) || 0) * (Number(line.unitCost) || 0),

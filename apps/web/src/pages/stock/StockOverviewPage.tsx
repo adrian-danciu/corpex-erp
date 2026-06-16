@@ -90,9 +90,9 @@ export default function StockOverviewPage() {
         </Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
         <InTransitWidget />
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Low Stock Alerts</CardTitle>
           </CardHeader>
@@ -100,7 +100,7 @@ export default function StockOverviewPage() {
             {lowStock.length === 0 ? (
               <p className="text-sm text-slate-500">No products below minimum stock.</p>
             ) : (
-              <Table>
+              <Table className="min-w-[560px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>SKU</TableHead>
@@ -114,7 +114,11 @@ export default function StockOverviewPage() {
                   {lowStock.map((product) => (
                     <TableRow key={product.id}>
                       <TableCell className="font-mono text-xs">{product.sku}</TableCell>
-                      <TableCell>{product.name}</TableCell>
+                      <TableCell>
+                        <div className="max-w-[260px] truncate">
+                          {product.name}
+                        </div>
+                      </TableCell>
                       <TableCell className="font-medium text-red-600">{product.currentStock}</TableCell>
                       <TableCell>{product.minimumStock}</TableCell>
                       <TableCell>{product.unit}</TableCell>

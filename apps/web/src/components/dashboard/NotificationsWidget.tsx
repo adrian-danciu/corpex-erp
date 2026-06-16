@@ -12,7 +12,7 @@ export function NotificationsWidget() {
     useNotifications({ take: WIDGET_SIZE });
 
   return (
-    <Card>
+    <Card className="w-full min-w-0">
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <div className="flex items-center gap-2">
           <Bell className="h-4 w-4 text-muted-foreground" />

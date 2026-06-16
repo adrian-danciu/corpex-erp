@@ -129,19 +129,26 @@ export default function FinanceOverviewPage() {
   const now = new Date();
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
           <h1 className="text-3xl font-bold text-slate-900">Finance</h1>
           <p className="text-slate-600 mt-1">Financial overview and management</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate("/finance/partners/new")} className="gap-2">
+        <div className="grid grid-cols-[auto_auto] justify-start gap-2 lg:flex lg:w-auto lg:justify-end">
+          <Button
+            variant="outline"
+            onClick={() => navigate("/finance/partners/new")}
+            className="gap-2"
+          >
             <Building2 className="h-4 w-4" />
             New Partner
           </Button>
-          <Button onClick={() => navigate("/finance/client-invoices/new")} className="gap-2">
+          <Button
+            onClick={() => navigate("/finance/client-invoices/new")}
+            className="gap-2"
+          >
             <Plus className="h-4 w-4" />
             New Client Invoice
           </Button>
@@ -212,10 +219,15 @@ export default function FinanceOverviewPage() {
       </div>
 
       {/* Recent Client Invoices */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+      <Card className="min-w-0">
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle>Recent Client Invoices</CardTitle>
-          <Button variant="outline" size="sm" onClick={() => navigate("/finance/client-invoices")}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/finance/client-invoices")}
+            className="w-full sm:w-auto"
+          >
             View Client Invoices
           </Button>
         </CardHeader>
@@ -229,10 +241,15 @@ export default function FinanceOverviewPage() {
       </Card>
 
       {/* Recent Supplier Invoices */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+      <Card className="min-w-0">
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle>Recent Supplier Invoices</CardTitle>
-          <Button variant="outline" size="sm" onClick={() => navigate("/finance/supplier-invoices")}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/finance/supplier-invoices")}
+            className="w-full sm:w-auto"
+          >
             View Supplier Invoices
           </Button>
         </CardHeader>

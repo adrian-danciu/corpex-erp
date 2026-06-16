@@ -11,7 +11,6 @@ import "./App.css";
 import { apolloClient } from "./lib/apollo-client";
 import LoginPage from "./pages/LoginPage";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
-import Layout from "./components/layout/Layout";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import { PageLoading } from "@/components/ui/page-loading";
 import { Toaster } from "@/components/ui/sonner";
@@ -158,11 +157,7 @@ function App() {
         <Routes>
           <Route
             path="/"
-            element={
-              <Layout>
-                <LoginPage />
-              </Layout>
-            }
+            element={<LoginPage />}
           />
 
           <Route path="/dashboard" element={<ProtectedPage component={DashboardPage} />} />

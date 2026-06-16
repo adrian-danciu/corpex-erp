@@ -29,7 +29,7 @@ export function PayrollActions({
   approvePayroll,
 }: PayrollActionsProps) {
   return (
-    <div className="flex flex-wrap justify-end gap-2">
+    <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
       <Button
         variant="outline"
         size="sm"

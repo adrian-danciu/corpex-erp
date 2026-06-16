@@ -1,14 +1,22 @@
-import { useState } from "react";
-import { useQuery } from "@apollo/client/react";
-import { useMutationWithToast } from "@/hooks/useMutationWithToast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { GET_EMPLOYEES_QUERY } from "@/graphql/mutations/employee.mutations";
 import { gql } from "@apollo/client";
-import type { Employee, EmployeesQueryResult } from "@/types/hr.types";
-import type { User } from "@/types/auth.types";
-import UserCreateForm from "@/components/users/UserCreateForm";
+import { useQuery } from "@apollo/client/react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/page-loading";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import UserCreateForm from "@/components/users/UserCreateForm";
+import { GET_EMPLOYEES_QUERY } from "@/graphql/mutations/employee.mutations";
+import { useMutationWithToast } from "@/hooks/useMutationWithToast";
+import type { User } from "@/types/auth.types";
+import type { Employee, EmployeesQueryResult } from "@/types/hr.types";
 
 const LINK_EMPLOYEE_USER_MUTATION = gql`
   mutation LinkEmployeeUser($linkEmployeeUserInput: LinkEmployeeUserInput!) {
@@ -26,15 +34,25 @@ const LINK_EMPLOYEE_USER_MUTATION = gql`
   }
 `;
 
+function getEmployeeDisplayName(employee: Employee) {
+  return (
+    [employee.firstName, employee.lastName].filter(Boolean).join(" ") ||
+    (employee.user &&
+      [employee.user.firstName, employee.user.lastName].filter(Boolean).join(" ")) ||
+    "Unknown"
+  );
+}
+
 export default function UsersAdminPage() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
 
   const { data, loading, error, refetch } = useQuery<EmployeesQueryResult>(
     GET_EMPLOYEES_QUERY,
     {
-    variables: { pagination: { skip: 0, take: 100 } },
-    fetchPolicy: "cache-and-network",
-  });
+      variables: { pagination: { skip: 0, take: 100 } },
+      fetchPolicy: "cache-and-network",
+    },
+  );
 
   const [linkEmployeeUser] = useMutationWithToast(LINK_EMPLOYEE_USER_MUTATION, {
     successMessage: "Account linked",
@@ -94,47 +112,33 @@ export default function UsersAdminPage() {
           {withoutAccount.length === 0 ? (
             <p className="text-sm text-slate-500">All employees have accounts.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-xs font-medium text-slate-600">
-                    <th className="py-2">Name</th>
-                    <th className="py-2">Department</th>
-                    <th className="py-2">Position</th>
-                    <th className="py-2 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {withoutAccount.map((emp) => (
-                    <tr key={emp.id} className="border-b last:border-0">
-                      <td className="py-2">
-                        {[
-                          emp.firstName,
-                          emp.lastName,
-                        ]
-                          .filter(Boolean)
-                          .join(" ") ||
-                          (emp.user &&
-                            [emp.user.firstName, emp.user.lastName]
-                              .filter(Boolean)
-                              .join(" ")) ||
-                          "Unknown"}
-                      </td>
-                      <td className="py-2">{emp.department}</td>
-                      <td className="py-2">{emp.position}</td>
-                      <td className="py-2 text-right">
-                        <Button
-                          size="sm"
-                          onClick={() => setSelectedEmployee(emp)}
-                        >
-                          Generate account
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Department</TableHead>
+                  <TableHead>Position</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {withoutAccount.map((employee) => (
+                  <TableRow key={employee.id}>
+                    <TableCell>{getEmployeeDisplayName(employee)}</TableCell>
+                    <TableCell>{employee.department}</TableCell>
+                    <TableCell>{employee.position}</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        size="sm"
+                        onClick={() => setSelectedEmployee(employee)}
+                      >
+                        Generate account
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
@@ -147,40 +151,26 @@ export default function UsersAdminPage() {
           {withAccount.length === 0 ? (
             <p className="text-sm text-slate-500">No employees with accounts yet.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-xs font-medium text-slate-600">
-                    <th className="py-2">Name</th>
-                    <th className="py-2">Email</th>
-                    <th className="py-2">Role</th>
-                    <th className="py-2">Department</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {withAccount.map((emp) => (
-                    <tr key={emp.id} className="border-b last:border-0">
-                      <td className="py-2">
-                        {[
-                          emp.firstName,
-                          emp.lastName,
-                        ]
-                          .filter(Boolean)
-                          .join(" ") ||
-                          (emp.user &&
-                            [emp.user.firstName, emp.user.lastName]
-                              .filter(Boolean)
-                              .join(" ")) ||
-                          "Unknown"}
-                      </td>
-                      <td className="py-2">{emp.user?.email}</td>
-                      <td className="py-2">{emp.user?.role}</td>
-                      <td className="py-2">{emp.department}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Department</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {withAccount.map((employee) => (
+                  <TableRow key={employee.id}>
+                    <TableCell>{getEmployeeDisplayName(employee)}</TableCell>
+                    <TableCell>{employee.user?.email}</TableCell>
+                    <TableCell>{employee.user?.role}</TableCell>
+                    <TableCell>{employee.department}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

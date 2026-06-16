@@ -67,27 +67,37 @@ export default function PartnerDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/finance/partners")}>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/finance/partners")}
+            className="shrink-0"
+          >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold text-slate-900">{partner.name}</h1>
+          <div className="min-w-0">
+            <div className="flex min-w-0 flex-wrap items-center gap-3">
+              <h1 className="break-words text-2xl font-bold text-slate-900 sm:text-3xl">{partner.name}</h1>
               <PartnerTypeBadge type={partner.partnerType} />
             </div>
             <p className="text-slate-600 mt-1">CUI: {partner.cui}</p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
+        <div className="flex w-full gap-2 overflow-x-auto pb-1 lg:w-auto lg:justify-end lg:overflow-visible">
+          <Button variant="outline" className="shrink-0 gap-2">
             <Edit className="h-4 w-4" />
             Edit
           </Button>
-          <Button variant="destructive" className="gap-2" onClick={() => setDeleteDialogOpen(true)} disabled={deleting}>
+          <Button
+            variant="destructive"
+            className="shrink-0 gap-2"
+            onClick={() => setDeleteDialogOpen(true)}
+            disabled={deleting}
+          >
             <Trash2 className="h-4 w-4" />
             {deleting ? "Deleting..." : "Delete"}
           </Button>

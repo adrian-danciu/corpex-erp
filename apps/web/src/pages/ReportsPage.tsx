@@ -1,15 +1,12 @@
 import { useQuery } from "@apollo/client/react";
-import { AlertCircle } from "lucide-react";
-import { Spinner } from "@/components/ui/spinner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
-import { ReportDataTable } from "./reports/components/ReportDataTable";
 import { FinanceAgingReportCard } from "./reports/components/FinanceAgingReportCard";
 import {
   ReportExportButtons,
   type ReportExportDefinition,
 } from "./reports/components/ReportExportButtons";
+import { ReportTableCard } from "./reports/components/ReportTableCard";
 import {
   EMPLOYEE_REPORT_QUERY,
   FINANCE_AGING_SUMMARY_QUERY,
@@ -27,10 +24,6 @@ import type {
   SupplierAgingQueryResult,
 } from "@/types/report.types";
 import { formatDate } from "@/lib/formatters";
-
-function shortId(id: string) {
-  return id.length > 12 ? `${id.slice(0, 8)}...${id.slice(-4)}` : id;
-}
 
 export default function ReportsPage() {
   const [leaveFilter, setLeaveFilter] = useState<string>("ALL");
@@ -66,6 +59,9 @@ export default function ReportsPage() {
 
   const filteredLeaveRows =
     leaveFilter === "ALL" ? leaveRows : leaveRows.filter((r) => r.status === leaveFilter);
+
+  const shortId = (id: string) =>
+    id.length > 12 ? `${id.slice(0, 8)}...${id.slice(-4)}` : id;
 
   const employeeExport = {
     title: "HR Employee Report",
@@ -161,15 +157,16 @@ export default function ReportsPage() {
         </p>
       </div>
 
-      {/* HR Leave Summary */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>HR – Leave Requests by Status</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Overview of leave requests grouped by current status.
-            </p>
-          </div>
+      <ReportTableCard
+        title="HR – Leave Requests by Status"
+        description="Overview of leave requests grouped by current status."
+        rows={filteredLeaveRows}
+        loading={hrLoading}
+        error={Boolean(hrError)}
+        errorLabel="Failed to load HR leave summary."
+        emptyLabel="No leave requests found."
+        getRowKey={(row) => row.status}
+        actions={
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">Filter status</span>
             <Select value={leaveFilter} onValueChange={setLeaveFilter}>
@@ -185,40 +182,21 @@ export default function ReportsPage() {
               </SelectContent>
             </Select>
           </div>
-        </CardHeader>
-        <CardContent>
-          {hrLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Spinner className="size-5 text-primary" />
-            </div>
-          ) : hrError ? (
-            <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-red-50 px-4 py-3 text-sm text-red-700">
-              <AlertCircle className="h-4 w-4" />
-              <span>Failed to load HR leave summary.</span>
-            </div>
-          ) : filteredLeaveRows.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No leave requests found.</p>
-          ) : (
-            <ReportDataTable
-              rows={filteredLeaveRows}
-              getRowKey={(row) => row.status}
-              columns={[
-                {
-                  header: "Status",
-                  className: "font-medium",
-                  render: (row) =>
-                    row.status.charAt(0) + row.status.slice(1).toLowerCase(),
-                },
-                {
-                  header: "Count",
-                  className: "text-right",
-                  render: (row) => row.count,
-                },
-              ]}
-            />
-          )}
-        </CardContent>
-      </Card>
+        }
+        columns={[
+          {
+            header: "Status",
+            className: "font-medium",
+            render: (row) =>
+              row.status.charAt(0) + row.status.slice(1).toLowerCase(),
+          },
+          {
+            header: "Count",
+            className: "text-right",
+            render: (row) => row.count,
+          },
+        ]}
+      />
 
       <FinanceAgingReportCard
         title="Finance – Client Receivables Aging"
@@ -240,179 +218,124 @@ export default function ReportsPage() {
         emptyLabel="No outstanding supplier invoices found."
       />
 
-      {/* Employee Report */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>HR – Employee Report</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Full list of employees with contract and status information.
-            </p>
-          </div>
+      <ReportTableCard
+        title="HR – Employee Report"
+        description="Full list of employees with contract and status information."
+        rows={employeeRows}
+        loading={employeeLoading}
+        error={Boolean(employeeError)}
+        errorLabel="Failed to load employee report."
+        emptyLabel="No employees found."
+        getRowKey={(row) => row.id}
+        actions={
           <ReportExportButtons
             report={employeeExport}
             disabled={employeeRows.length === 0}
             exporting={exporting}
             runExport={runExport}
           />
-        </CardHeader>
-        <CardContent>
-          {employeeLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Spinner className="size-5 text-primary" />
-            </div>
-          ) : employeeError ? (
-            <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-red-50 px-4 py-3 text-sm text-red-700">
-              <AlertCircle className="h-4 w-4" />
-              <span>Failed to load employee report.</span>
-            </div>
-          ) : employeeRows.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No employees found.</p>
-          ) : (
-            <ReportDataTable
-              rows={employeeRows}
-              getRowKey={(row) => row.id}
-              columns={[
-                {
-                  header: "Name",
-                  className: "font-medium",
-                  render: (row) => `${row.firstName} ${row.lastName}`,
-                },
-                { header: "Position", render: (row) => row.position },
-                { header: "Department", render: (row) => row.department },
-                {
-                  header: "Contract",
-                  render: (row) => row.contractType.replace("_", " "),
-                },
-                {
-                  header: "Employment Date",
-                  render: (row) => formatDate(row.employmentDate),
-                },
-                {
-                  header: "Leave Remaining",
-                  className: "text-right",
-                  render: (row) =>
-                    `${row.remainingLeave} / ${row.annualLeaveDays}`,
-                },
-              ]}
-            />
-          )}
-        </CardContent>
-      </Card>
+        }
+        columns={[
+          {
+            header: "Name",
+            className: "font-medium",
+            render: (row) => `${row.firstName} ${row.lastName}`,
+          },
+          { header: "Position", render: (row) => row.position },
+          { header: "Department", render: (row) => row.department },
+          {
+            header: "Contract",
+            render: (row) => row.contractType.replace("_", " "),
+          },
+          {
+            header: "Employment Date",
+            render: (row) => formatDate(row.employmentDate),
+          },
+          {
+            header: "Leave Remaining",
+            className: "text-right",
+            render: (row) =>
+              `${row.remainingLeave} / ${row.annualLeaveDays}`,
+          },
+        ]}
+      />
 
-      {/* Stock Report */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Stock – Current Inventory</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Net stock per product per warehouse based on all movements.
-            </p>
-          </div>
+      <ReportTableCard
+        title="Stock – Current Inventory"
+        description="Net stock per product per warehouse based on all movements."
+        rows={stockRows}
+        loading={stockLoading}
+        error={Boolean(stockError)}
+        errorLabel="Failed to load stock report."
+        emptyLabel="No stock data found."
+        getRowKey={(row) => `${row.productId}-${row.warehouseName}`}
+        actions={
           <ReportExportButtons
             report={stockExport}
             disabled={stockRows.length === 0}
             exporting={exporting}
             runExport={runExport}
           />
-        </CardHeader>
-        <CardContent>
-          {stockLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Spinner className="size-5 text-primary" />
-            </div>
-          ) : stockError ? (
-            <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-red-50 px-4 py-3 text-sm text-red-700">
-              <AlertCircle className="h-4 w-4" />
-              <span>Failed to load stock report.</span>
-            </div>
-          ) : stockRows.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No stock data found.</p>
-          ) : (
-            <ReportDataTable
-              rows={stockRows}
-              getRowKey={(row) => `${row.productId}-${row.warehouseName}`}
-              columns={[
-                {
-                  header: "Product",
-                  className: "font-medium",
-                  render: (row) => row.productName,
-                },
-                {
-                  header: "SKU",
-                  className: "text-muted-foreground",
-                  render: (row) => row.sku,
-                },
-                { header: "Warehouse", render: (row) => row.warehouseName },
-                {
-                  header: "Qty",
-                  className: "text-right font-medium",
-                  render: (row) => row.quantity,
-                },
-              ]}
-            />
-          )}
-        </CardContent>
-      </Card>
+        }
+        columns={[
+          {
+            header: "Product",
+            className: "font-medium",
+            render: (row) => row.productName,
+          },
+          {
+            header: "SKU",
+            className: "text-muted-foreground",
+            render: (row) => row.sku,
+          },
+          { header: "Warehouse", render: (row) => row.warehouseName },
+          {
+            header: "Qty",
+            className: "text-right font-medium",
+            render: (row) => row.quantity,
+          },
+        ]}
+      />
 
-      {/* Fleet Report */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Fleet – Vehicle Status Report</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              All vehicles with status and nearest document expiry.
-            </p>
-          </div>
+      <ReportTableCard
+        title="Fleet – Vehicle Status Report"
+        description="All vehicles with status and nearest document expiry."
+        rows={fleetRows}
+        loading={fleetLoading}
+        error={Boolean(fleetError)}
+        errorLabel="Failed to load fleet report."
+        emptyLabel="No vehicles found."
+        getRowKey={(row) => row.id}
+        actions={
           <ReportExportButtons
             report={fleetExport}
             disabled={fleetRows.length === 0}
             exporting={exporting}
             runExport={runExport}
           />
-        </CardHeader>
-        <CardContent>
-          {fleetLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Spinner className="size-5 text-primary" />
-            </div>
-          ) : fleetError ? (
-            <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-red-50 px-4 py-3 text-sm text-red-700">
-              <AlertCircle className="h-4 w-4" />
-              <span>Failed to load fleet report.</span>
-            </div>
-          ) : fleetRows.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No vehicles found.</p>
-          ) : (
-            <ReportDataTable
-              rows={fleetRows}
-              getRowKey={(row) => row.id}
-              columns={[
-                {
-                  header: "Plate",
-                  className: "font-medium",
-                  render: (row) => row.plateNumber,
-                },
-                {
-                  header: "Vehicle",
-                  render: (row) => `${row.brand} ${row.model}`,
-                },
-                { header: "Year", render: (row) => row.year },
-                { header: "Status", render: (row) => row.status },
-                {
-                  header: "Nearest Doc Expiry",
-                  render: (row) =>
-                    formatDate(row.nearestDocumentExpiry),
-                },
-                {
-                  header: "Doc Type",
-                  render: (row) => row.nearestDocumentType ?? "—",
-                },
-              ]}
-            />
-          )}
-        </CardContent>
-      </Card>
+        }
+        columns={[
+          {
+            header: "Plate",
+            className: "font-medium",
+            render: (row) => row.plateNumber,
+          },
+          {
+            header: "Vehicle",
+            render: (row) => `${row.brand} ${row.model}`,
+          },
+          { header: "Year", render: (row) => row.year },
+          { header: "Status", render: (row) => row.status },
+          {
+            header: "Nearest Doc Expiry",
+            render: (row) => formatDate(row.nearestDocumentExpiry),
+          },
+          {
+            header: "Doc Type",
+            render: (row) => row.nearestDocumentType ?? "—",
+          },
+        ]}
+      />
     </div>
   );
 }

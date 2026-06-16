@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useApolloClient } from "@apollo/client/react";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { Plus } from "lucide-react";
+import { InlineError } from "@/components/common/InlineError";
 import {
   Card,
   CardContent,
@@ -105,9 +106,9 @@ export function TasksTab({ project, isProjectManager }: Props) {
   return (
     <div className="space-y-4">
       {error && (
-        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-800 border border-red-200">
+        <InlineError className="p-3 text-red-800" icon={false}>
           {error}
-        </div>
+        </InlineError>
       )}
 
       <Card>

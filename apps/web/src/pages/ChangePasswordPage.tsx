@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { useAuthStore } from "@/stores/auth.store";
 import { CHANGE_PASSWORD_MUTATION } from "@/graphql/mutations/profile.mutations";
+import { InlineError } from "@/components/common/InlineError";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,9 +74,9 @@ export default function ChangePasswordPage() {
         </CardHeader>
         <CardContent>
           {formError && (
-            <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+            <InlineError className="mb-4 p-3 text-red-600" icon={false}>
               {formError}
-            </div>
+            </InlineError>
           )}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">

@@ -106,10 +106,10 @@ export default function InvoicesPage({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
           <h1 className="text-3xl font-bold text-slate-900">
             {directionConfig.listTitle}
           </h1>
@@ -117,10 +117,15 @@ export default function InvoicesPage({
             {directionConfig.listDescription}
           </p>
         </div>
-        <Button onClick={() => navigate(directionConfig.createPath)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          {directionConfig.createButtonLabel}
-        </Button>
+        <div className="flex w-full gap-2 overflow-x-auto pb-1 lg:w-auto lg:justify-end lg:overflow-visible">
+          <Button
+            onClick={() => navigate(directionConfig.createPath)}
+            className="shrink-0 gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            {directionConfig.createButtonLabel}
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}

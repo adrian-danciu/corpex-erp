@@ -1,15 +1,8 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useQuery } from "@apollo/client/react";
 import { format } from "date-fns";
-import {
-  AlertCircle,
-  ExternalLink,
-  FileText,
-  Filter,
-  Loader2,
-  Trash2,
-  Upload,
-} from "lucide-react";
+import { ExternalLink, FileText, Filter, Loader2, Trash2, Upload } from "lucide-react";
+import { InlineError } from "@/components/common/InlineError";
 import {
   GET_EMPLOYEE_DOCUMENTS_QUERY,
   CREATE_EMPLOYEE_DOCUMENT_MUTATION,
@@ -184,32 +177,34 @@ export default function DocumentsPage() {
   const busy = uploading || creating;
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="min-w-0 space-y-6">
+      <div className="min-w-0">
         <h1 className="text-3xl font-bold tracking-tight">Documents</h1>
         <p className="mt-2 text-slate-500">
           Employee file storage for contracts, identity documents, diplomas, and certificates.
         </p>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+      <div className="min-w-0 space-y-6">
+        <Card className="min-w-0 overflow-hidden">
+          <CardHeader className="px-4 sm:px-6">
+            <CardTitle className="flex min-w-0 items-center gap-2">
               <Upload className="h-5 w-5" />
               Upload Document
             </CardTitle>
-            <CardDescription>Accepted formats: PDF, JPG, PNG, WEBP. Maximum size: 10 MB.</CardDescription>
+            <CardDescription>
+              Accepted formats: PDF, JPG, PNG, WEBP. Maximum size: 10 MB.
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            <form className="space-y-4" onSubmit={handleSubmit}>
+          <CardContent className="px-4 sm:px-6">
+            <form className="min-w-0 space-y-4" onSubmit={handleSubmit}>
               <div className="space-y-2">
                 <Label>Employee</Label>
                 <Select value={employeeId} onValueChange={setEmployeeId} disabled={employeesLoading}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full min-w-0">
                     <SelectValue placeholder="Select employee" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-w-[calc(100vw-2rem)]">
                     {employees.map((employee) => (
                       <SelectItem key={employee.id} value={employee.id}>
                         {employee.firstName} {employee.lastName} · {employee.position}
@@ -222,7 +217,7 @@ export default function DocumentsPage() {
               <div className="space-y-2">
                 <Label>Document Type</Label>
                 <Select value={type} onValueChange={(value) => setType(value as EmployeeDocumentType)}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full min-w-0">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -251,10 +246,11 @@ export default function DocumentsPage() {
                   id="document-file"
                   type="file"
                   accept="application/pdf,image/jpeg,image/png,image/webp"
+                  className="text-sm"
                   onChange={(event) => setFile(event.target.files?.[0] ?? null)}
                 />
                 {file && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="break-all text-xs text-muted-foreground">
                     {file.name} · {formatBytes(file.size)}
                   </p>
                 )}
@@ -292,22 +288,22 @@ export default function DocumentsPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="gap-4 lg:flex lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
+        <Card className="min-w-0 overflow-hidden">
+          <CardHeader className="gap-4 px-4 sm:px-6 lg:flex lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
+              <CardTitle className="flex min-w-0 items-center gap-2">
                 <FileText className="h-5 w-5" />
                 Document Registry
               </CardTitle>
               <CardDescription>Browse all employee documents stored in the system.</CardDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center lg:w-auto">
               <Filter className="h-4 w-4 text-muted-foreground" />
               <Select value={filterEmployeeId} onValueChange={setFilterEmployeeId}>
-                <SelectTrigger className="w-[260px]">
+                <SelectTrigger className="w-full min-w-0 sm:w-[260px]">
                   <SelectValue placeholder="Filter by employee" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-w-[calc(100vw-2rem)]">
                   <SelectItem value="ALL">All employees</SelectItem>
                   {employees.map((employee) => (
                     <SelectItem key={employee.id} value={employee.id}>
@@ -318,20 +314,17 @@ export default function DocumentsPage() {
               </Select>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 sm:px-6">
             {documentsLoading ? (
               <div className="flex items-center justify-center py-16">
                 <Spinner className="size-6 text-primary" />
               </div>
             ) : documentsError ? (
-              <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-red-50 px-4 py-3 text-sm text-red-700">
-                <AlertCircle className="h-4 w-4" />
-                <span>Failed to load documents.</span>
-              </div>
+              <InlineError>Failed to load documents.</InlineError>
             ) : documents.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted-foreground">No documents found.</p>
             ) : (
-              <Table>
+              <Table className="min-w-[760px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Document</TableHead>

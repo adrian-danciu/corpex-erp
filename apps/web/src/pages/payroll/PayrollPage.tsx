@@ -52,36 +52,42 @@ export default function PayrollPage() {
   } = usePayrollController();
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="min-w-0 space-y-6">
+      <div className="min-w-0">
         <h1 className="text-3xl font-bold tracking-tight">Payroll</h1>
         <p className="mt-2 text-slate-500">
           Generate monthly payroll from gross salaries, calculate Romanian taxes, approve and mark paid.
         </p>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
-        <div className="space-y-6">
-          <PayrollGenerateCard
-            generating={generating}
-            handleGenerate={handleGenerate}
-            month={month}
-            notes={notes}
-            setMonth={setMonth}
-            setNotes={setNotes}
-            setYear={setYear}
-            year={year}
-          />
-          <PayrollPeriodList
-            activePeriodId={activePeriodId}
-            periods={periods}
-            periodsError={periodsError}
-            periodsLoading={periodsLoading}
-            setSelectedPeriodId={setSelectedPeriodId}
-          />
-        </div>
+      <div className="min-w-0 space-y-6">
+        <Card className="min-w-0 overflow-hidden">
+          <CardContent className="grid gap-6 pt-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.8fr)]">
+            <PayrollGenerateCard
+              embedded
+              generating={generating}
+              handleGenerate={handleGenerate}
+              month={month}
+              notes={notes}
+              setMonth={setMonth}
+              setNotes={setNotes}
+              setYear={setYear}
+              year={year}
+            />
+            <div className="border-t pt-6 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+              <PayrollPeriodList
+                embedded
+                activePeriodId={activePeriodId}
+                periods={periods}
+                periodsError={periodsError}
+                periodsLoading={periodsLoading}
+                setSelectedPeriodId={setSelectedPeriodId}
+              />
+            </div>
+          </CardContent>
+        </Card>
 
-        <Card>
+        <Card className="min-w-0 overflow-hidden">
           <CardHeader className="gap-4 lg:flex lg:flex-row lg:items-center lg:justify-between">
             <div>
               <CardTitle>

@@ -1,3 +1,4 @@
+import { InlineError } from "@/components/common/InlineError";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,9 +32,9 @@ export function MaterialRemoveDialog({
         {material && (
           <div className="space-y-3 text-sm">
             {error && (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-red-800">
+              <InlineError className="p-3 text-red-800" icon={false}>
                 {error}
-              </div>
+              </InlineError>
             )}
             <p className="text-slate-700">
               Removing this allocation will return{" "}

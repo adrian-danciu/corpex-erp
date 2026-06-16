@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { InlineError } from "@/components/common/InlineError";
 import type { Project } from "@/types/project.types";
 import { useCurrency } from "@/hooks/useCurrency";
 import { MaterialAllocationDialog } from "./materials/MaterialAllocationDialog";
@@ -46,9 +47,9 @@ export function MaterialsTab({ project, isProjectManager }: Props) {
   return (
     <div className="space-y-4">
       {error && !confirmRemove && (
-        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-800 border border-red-200">
+        <InlineError className="p-3 text-red-800" icon={false}>
           {error}
-        </div>
+        </InlineError>
       )}
 
       <MaterialsTable

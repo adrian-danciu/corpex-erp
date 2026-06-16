@@ -50,14 +50,19 @@ export function InvoiceDetailHeader({
     invoice.payments.length === 0;
 
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={goBack}>
+    <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={goBack}
+          className="shrink-0"
+        >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold text-slate-900">
+        <div className="min-w-0">
+          <div className="flex min-w-0 flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
               {invoice.series}-{String(invoice.number).padStart(4, "0")}
             </h1>
             <InvoiceStatusBadge status={invoice.status} />
@@ -70,10 +75,10 @@ export function InvoiceDetailHeader({
           </p>
         </div>
       </div>
-      <div className="flex gap-2">
+      <div className="flex w-full gap-2 overflow-x-auto pb-1 lg:w-auto lg:justify-end lg:overflow-visible">
         <Button
           variant="outline"
-          className="gap-2"
+          className="shrink-0 gap-2"
           onClick={downloadPdf}
           disabled={pdfLoading}
         >
@@ -85,7 +90,11 @@ export function InvoiceDetailHeader({
           {pdfLoading ? "Generating..." : "Download PDF"}
         </Button>
         {invoice.status === InvoiceStatus.DRAFT && (
-          <Button variant="outline" className="gap-2" onClick={markAsSent}>
+          <Button
+            variant="outline"
+            className="shrink-0 gap-2"
+            onClick={markAsSent}
+          >
             <Send className="h-4 w-4" />
             {labels.statusAdvance}
           </Button>
@@ -98,12 +107,13 @@ export function InvoiceDetailHeader({
             buttonLabel={labels.paymentButton}
             title={labels.paymentDialog}
             outstandingLabel={labels.remaining}
+            triggerClassName="shrink-0"
           />
         )}
         {canCancel && (
           <Button
             variant="destructive"
-            className="gap-2"
+            className="shrink-0 gap-2"
             onClick={() => setCancelDialogOpen(true)}
           >
             <XCircle className="h-4 w-4" />

@@ -26,7 +26,9 @@ import {
   Receipt,
   ChevronDown,
   Boxes,
+  Car,
   Truck,
+  WalletCards,
   AlertTriangle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -132,6 +134,12 @@ const menuItems: MenuItem[] = [
     roles: [],
   },
   {
+    title: "Payroll",
+    href: "/payroll",
+    icon: WalletCards,
+    roles: ["ADMIN", "HR", "FINANCE", "MANAGEMENT"],
+  },
+  {
     title: "Finance",
     href: "/finance",
     icon: DollarSign,
@@ -162,6 +170,12 @@ const menuItems: MenuItem[] = [
     href: "/reports",
     icon: BarChart3,
     roles: ["ADMIN", "MANAGER"],
+  },
+  {
+    title: "Fleet",
+    href: "/fleet",
+    icon: Car,
+    roles: ["ADMIN", "FLEET", "MANAGEMENT"],
   },
   {
     title: "Profile",
@@ -293,7 +307,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* Mobile Menu Sheet */}
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-        <SheetContent side="left" className="w-64 p-0">
+        <SheetContent side="left" className="flex h-full w-64 flex-col p-0">
           <SheetHeader className="border-b p-4">
             <SheetTitle>
               <span className="sr-only">Menu</span>
@@ -304,7 +318,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               />
             </SheetTitle>
           </SheetHeader>
-          <nav className="flex-1 space-y-1 p-2">
+          <nav className="flex-1 space-y-1 overflow-y-auto p-2">
             {visibleMenuItems.map((item) => renderMobileMenuItem(item))}
           </nav>
         </SheetContent>

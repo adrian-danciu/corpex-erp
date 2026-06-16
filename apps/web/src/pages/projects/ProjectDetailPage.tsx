@@ -1,10 +1,17 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@apollo/client/react";
 import { ArrowLeft } from "lucide-react";
 import { PageLoading } from "@/components/ui/page-loading";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { GET_PROJECT_QUERY } from "@/graphql/mutations/project.queries";
 import type { ProjectQueryResult } from "@/types/project.types";
@@ -19,10 +26,24 @@ import { TasksTab } from "@/components/projects/tabs/TasksTab";
 import { FeedTab } from "@/components/projects/tabs/FeedTab";
 import { InvoicesTab } from "@/components/projects/tabs/InvoicesTab";
 
+const PROJECT_TABS = [
+  { value: "overview", label: "Overview" },
+  { value: "team", label: "Team" },
+  { value: "materials", label: "Materials" },
+  { value: "services", label: "Services" },
+  { value: "vehicles", label: "Vehicles" },
+  { value: "tasks", label: "Tasks" },
+  { value: "feed", label: "Feed" },
+  { value: "invoices", label: "Invoices" },
+] as const;
+
+type ProjectTabValue = (typeof PROJECT_TABS)[number]["value"];
+
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const [activeTab, setActiveTab] = useState<ProjectTabValue>("overview");
 
   const { data, loading, error, refetch } = useQuery<ProjectQueryResult>(
     GET_PROJECT_QUERY,
@@ -90,16 +111,35 @@ export default function ProjectDetailPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid grid-cols-8">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="team">Team</TabsTrigger>
-          <TabsTrigger value="materials">Materials</TabsTrigger>
-          <TabsTrigger value="services">Services</TabsTrigger>
-          <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
-          <TabsTrigger value="tasks">Tasks</TabsTrigger>
-          <TabsTrigger value="feed">Feed</TabsTrigger>
-          <TabsTrigger value="invoices">Invoices</TabsTrigger>
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as ProjectTabValue)}
+        className="space-y-4"
+      >
+        <div className="md:hidden">
+          <Select
+            value={activeTab}
+            onValueChange={(value) => setActiveTab(value as ProjectTabValue)}
+          >
+            <SelectTrigger aria-label="Project section" className="w-full">
+              <SelectValue placeholder="Select section" />
+            </SelectTrigger>
+            <SelectContent>
+              {PROJECT_TABS.map((tab) => (
+                <SelectItem key={tab.value} value={tab.value}>
+                  {tab.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <TabsList className="hidden md:grid md:grid-cols-8">
+          {PROJECT_TABS.map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value}>
+              {tab.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         <TabsContent value="overview">

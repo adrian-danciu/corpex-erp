@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/formatters";
+import { cn } from "@/lib/utils";
 import type {
   Invoice,
   RecordPaymentFormValues,
@@ -32,6 +33,7 @@ interface PaymentDialogProps {
   buttonLabel: string;
   title: string;
   outstandingLabel: string;
+  triggerClassName?: string;
 }
 
 export function PaymentDialog({
@@ -41,6 +43,7 @@ export function PaymentDialog({
   buttonLabel,
   title,
   outstandingLabel,
+  triggerClassName,
 }: PaymentDialogProps) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState(
@@ -65,7 +68,7 @@ export function PaymentDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
+        <Button className={cn("gap-2", triggerClassName)}>
           <CreditCard className="h-4 w-4" />
           {buttonLabel}
         </Button>

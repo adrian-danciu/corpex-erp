@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@apollo/client/react";
 import { useMutationWithToast } from "@/hooks/useMutationWithToast";
 import { Paperclip, Send, X } from "lucide-react";
+import { InlineError } from "@/components/common/InlineError";
 import {
   Card,
   CardContent,
@@ -9,6 +10,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { GET_PROJECT_FEED_QUERY } from "@/graphql/mutations/project.queries";
 import {
@@ -132,9 +135,9 @@ export function FeedTab({ project }: Props) {
   return (
     <div className="space-y-4">
       {error && (
-        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-800 border border-red-200">
+        <InlineError className="p-3 text-red-800" icon={false}>
           {error}
-        </div>
+        </InlineError>
       )}
 
       <Card>
@@ -149,37 +152,46 @@ export function FeedTab({ project }: Props) {
             rows={3}
           />
           <div className="flex items-center justify-between">
-            <label className="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+            <Label
+              htmlFor="project-feed-attachment"
+              className="inline-flex cursor-pointer items-center gap-2 text-sm font-normal text-slate-600"
+            >
               <Paperclip className="h-4 w-4" />
-              <input
+              <Input
+                id="project-feed-attachment"
                 type="file"
                 accept="image/jpeg,image/png,image/webp,application/pdf"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                 className="hidden"
               />
               {file ? file.name : "Attach (image / PDF, max 10MB)"}
+            </Label>
+            <div className="flex items-center gap-2">
               {file && (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={(e) => {
                     e.preventDefault();
                     setFile(null);
                   }}
-                  className="ml-1 text-slate-400 hover:text-red-600"
+                  className="h-7 w-7 text-slate-400 hover:text-red-600"
+                  aria-label="Remove attachment"
                 >
                   <X className="h-3 w-3" />
-                </button>
+                </Button>
               )}
-            </label>
-            <Button
-              size="sm"
-              onClick={submitPost}
-              disabled={posting || uploading}
-              className="gap-2"
-            >
-              <Send className="h-4 w-4" />
-              {uploading ? "Uploading..." : posting ? "Posting..." : "Post"}
-            </Button>
+              <Button
+                size="sm"
+                onClick={submitPost}
+                disabled={posting || uploading}
+                className="gap-2"
+              >
+                <Send className="h-4 w-4" />
+                {uploading ? "Uploading..." : posting ? "Posting..." : "Post"}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -232,7 +244,10 @@ export function FeedTab({ project }: Props) {
                         {new Date(entry.createdAt).toLocaleString()}
                       </span>
                       {(isOwnPost || user?.role === "ADMIN") && !isAuto && (
-                        <button
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
                           onClick={() =>
                             deletePost({
                               variables: {
@@ -240,10 +255,11 @@ export function FeedTab({ project }: Props) {
                               },
                             })
                           }
-                          className="text-slate-400 hover:text-red-600"
+                          className="h-6 w-6 text-slate-400 hover:text-red-600"
+                          aria-label="Delete post"
                         >
                           <X className="h-3 w-3" />
-                        </button>
+                        </Button>
                       )}
                     </div>
                     <div className="text-sm text-slate-900 whitespace-pre-wrap">

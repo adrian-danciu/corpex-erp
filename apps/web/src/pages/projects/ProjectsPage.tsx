@@ -4,6 +4,7 @@ import { FolderKanban, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -71,19 +72,24 @@ export default function ProjectsPage() {
   const projects = data?.projects ?? [];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+    <div className="min-w-0 space-y-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
           <h1 className="text-3xl font-bold text-slate-900">Projects</h1>
           <p className="text-slate-600 mt-1">
             Client jobs with materials, vehicles, team and tasks
           </p>
         </div>
         {canCreate && (
-          <Button onClick={() => navigate("/projects/new")} className="gap-2">
-            <Plus className="h-4 w-4" />
-            New project
-          </Button>
+          <div className="flex w-full gap-2 overflow-x-auto pb-1 lg:w-auto lg:justify-end lg:overflow-visible">
+            <Button
+              onClick={() => navigate("/projects/new")}
+              className="shrink-0 gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              New project
+            </Button>
+          </div>
         )}
       </div>
 
@@ -121,15 +127,21 @@ export default function ProjectsPage() {
                 ))}
               </SelectContent>
             </Select>
-            <label className="flex items-center gap-2 text-sm text-slate-700">
+            <div className="flex items-center gap-2">
               <Checkbox
+                id="projects-only-mine"
                 checked={onlyMine}
                 onCheckedChange={(checked) =>
                   setFilter("onlyMine", checked === true ? "true" : null)
                 }
               />
-              My projects only
-            </label>
+              <Label
+                htmlFor="projects-only-mine"
+                className="text-sm font-normal text-slate-700"
+              >
+                My projects only
+              </Label>
+            </div>
           </div>
 
           {projects.length === 0 ? (
@@ -150,16 +162,12 @@ export default function ProjectsPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Client</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Budget</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {projects.map((project) => (
-                  <TableRow
-                    key={project.id}
-                    className="cursor-pointer"
-                    onClick={() => navigate(`/projects/${project.id}`)}
-                  >
+                  <TableRow key={project.id}>
                     <TableCell className="font-mono text-slate-900">
                       {project.code}
                     </TableCell>
@@ -172,8 +180,14 @@ export default function ProjectsPage() {
                     <TableCell>
                       <ProjectStatusBadge status={project.status} />
                     </TableCell>
-                    <TableCell className="text-right text-slate-700">
-                      {project.budget.toLocaleString()} {project.currency}
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/projects/${project.id}`)}
+                      >
+                        View Details
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

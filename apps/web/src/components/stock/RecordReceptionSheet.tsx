@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,9 +52,9 @@ export function RecordReceptionSheet({ order, open, onClose, onSaved }: Props) {
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<RecordReceiptFormData>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -97,7 +97,7 @@ export function RecordReceptionSheet({ order, open, onClose, onSaved }: Props) {
     awaitRefetchQueries: true,
   });
 
-  const lineValues = watch("lines");
+  const lineValues = useWatch({ control, name: "lines" });
 
   const onSubmit = async (values: RecordReceiptFormData) => {
     const filtered = values.lines.filter((l) => Number(l.qtyReceived) > 0);

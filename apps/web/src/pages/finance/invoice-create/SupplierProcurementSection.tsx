@@ -134,19 +134,24 @@ export function SupplierProcurementSection({
               {selectedPurchaseOrder.receipts.map((receipt) => {
                 const checked = selectedReceiptIds.includes(receipt.id);
                 const lineCount = receipt.lines?.length ?? 0;
+                const checkboxId = `receipt-${receipt.id}`;
 
                 return (
-                  <label
+                  <div
                     key={receipt.id}
                     className="flex cursor-pointer items-start gap-3 rounded-md p-2 hover:bg-slate-50"
                   >
                     <Checkbox
+                      id={checkboxId}
                       checked={checked}
                       onCheckedChange={(value) =>
                         selectReceipt(receipt.id, value === true)
                       }
                     />
-                    <span className="space-y-0.5 text-sm">
+                    <Label
+                      htmlFor={checkboxId}
+                      className="space-y-0.5 text-sm font-normal"
+                    >
                       <span className="block font-medium text-slate-900">
                         {receipt.formattedNumber}
                       </span>
@@ -154,8 +159,8 @@ export function SupplierProcurementSection({
                         {formatDate(receipt.receivedDate)}{" "}
                         · {lineCount} line{lineCount === 1 ? "" : "s"}
                       </span>
-                    </span>
-                  </label>
+                    </Label>
+                  </div>
                 );
               })}
             </div>
