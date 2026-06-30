@@ -58,9 +58,10 @@ export function InTransitWidget({ limit = 5 }: { limit?: number }) {
           </p>
         ) : (
           <div className="space-y-3">
-            <Table className="min-w-[540px]">
+            <Table className="min-w-[620px]">
               <TableHeader>
                 <TableRow>
+                  <TableHead>SKU</TableHead>
                   <TableHead>Product</TableHead>
                   <TableHead>Open POs</TableHead>
                   <TableHead>ETA</TableHead>
@@ -70,9 +71,12 @@ export function InTransitWidget({ limit = 5 }: { limit?: number }) {
               <TableBody>
                 {rows.map((row) => (
                   <TableRow key={row.productId}>
+                    <TableCell className="font-mono text-xs">
+                      {row.productSku}
+                    </TableCell>
                     <TableCell>
                       <div className="max-w-[260px] truncate font-medium text-slate-900">
-                        {row.productSku} · {row.productName}
+                        {row.productName}
                       </div>
                     </TableCell>
                     <TableCell>
